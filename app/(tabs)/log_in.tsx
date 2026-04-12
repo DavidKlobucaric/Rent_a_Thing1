@@ -102,7 +102,7 @@ export default function SignInScreen() {
 
 
                 <View style={{flexDirection:"row", alignItems:"center", justifyContent: "center", paddingTop:25}}>
-                    <Text style={{fontSize:15}}>Don't have an account?</Text>
+                    <Text style={{fontSize:15}}> Don{"'"}t have an account?</Text>
                     <Text style={{color:"#614D9B", fontSize: 15, fontWeight:"bold"}}> Sign Up</Text>
                 </View>
 
