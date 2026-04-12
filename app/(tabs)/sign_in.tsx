@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 import {
@@ -9,7 +10,7 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    Image, SafeAreaView, Animated,
+    Image, Animated,
 } from 'react-native';
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -56,7 +57,7 @@ export default function SignInScreen() {
 
 
                 <View>
-                    <Text style={[styles.SignInText,{paddingTop:10}]}> FULL NAME</Text>
+                    <Text style={[styles.SignInText,{paddingTop:10}]}> USERNAME</Text>
 
                     <TextInput style={styles.SignInTextField} placeholder={"Joe Doe"}>
 
