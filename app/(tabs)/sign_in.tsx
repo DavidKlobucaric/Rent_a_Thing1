@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        paddingTop: 50,
+        paddingTop: 35,
         paddingBottom: 30,
     },
     TextStyle:{

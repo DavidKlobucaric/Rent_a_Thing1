@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        paddingTop: 50,
+        paddingTop: 65,
         paddingBottom: 30,
     },
     TextStyle:{
