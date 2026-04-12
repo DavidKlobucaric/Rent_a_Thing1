@@ -38,22 +38,6 @@ export default function SignInScreen() {
             </View>
 
             <View style={styles.card}>
-                <View style={styles.textContainers}>
-                    <TouchableOpacity style={styles.button}>
-                        <Image
-                            source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}}
-                            style={styles.googleIcon}
-                        />
-                        <Text style={{fontSize: 14, fontWeight: "500"}}>Sign up with Google</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={{flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10}}>
-                    <View style={styles.line}/>
-                    <Text style={{fontSize: 11}}>OR WITH EMAIL</Text>
-                    <View style={styles.line}/>
-                </View>
-
 
                 <View>
                     <Text style={[styles.SignInText,{paddingTop:10}]}> FULL NAME</Text>
@@ -92,6 +76,26 @@ export default function SignInScreen() {
                 <TouchableOpacity style={styles.SignInButton}>
                     <Text style={{color:"white",fontSize:18}}> Sign Up</Text>
                 </TouchableOpacity>
+
+
+                <View style={{flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10}}>
+                    <View style={styles.line}/>
+                    <Text style={{fontSize: 11}}>OR WITH GOOGLE</Text>
+                    <View style={styles.line}/>
+                </View>
+
+                <View style={[styles.textContainers, { paddingVertical: 0 }]}>
+                    <TouchableOpacity style={styles.button}>
+                        <Image
+                            source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}}
+                            style={styles.googleIcon}
+                        />
+                        <Text style={{fontSize: 14, fontWeight: "500"}}>Sign up with Google</Text>
+                    </TouchableOpacity>
+                </View>
+
+
+
             </View>
 
             <View style={{flexDirection:"row", alignItems:"center", justifyContent: "center", paddingTop:25}}>
@@ -131,136 +135,102 @@ export default function SignInScreen() {
 
 
 
-    const styles = StyleSheet.create({
-        titleContainer: {
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            paddingTop: 40,
-            paddingBottom: 10,
-
-        },
-
-        TextStyle:{
-            fontSize: 18,
-            fontWeight: "normal",
-            textAlign:"center",
-            lineHeight: 25,
-            color: "#3E4949"
-
-        },
-
-        card: {
-            backgroundColor: '#FFFFFF',
-            width: '90%',
-            borderRadius: 24,
-            padding: 24,
-            shadowColor: '#000',
-            shadowOpacity: 0.05,
-            shadowRadius: 10,
-            elevation: 5,
-            alignSelf: 'center',
-
-
-        },
-
-        SignInText:{
-            fontSize: 12,
-            fontWeight: "bold",
-            paddingTop: 20,
-            paddingBottom: 10,
-
-        },
-
-        textContainer: {
-
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingHorizontal: 30,
-            paddingBottom: 20,
-
-        },
-
-        textContainers:{
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingVertical: 20,
-        },
-
-        MainPage: {
-            flex: 1,
-            backgroundColor: '#F8F9FA',
-        },
-
-        button:{
-            width: '100%',
-            flexDirection:"row",
-            alignItems: "center",
-            gap: 8,
-            justifyContent: "center",
-            paddingBottom: 10,
-            paddingTop: 10,
-            borderRadius: 9999,
-            backgroundColor: "white",
-            borderWidth: 0.5,
-            borderColor: "black",
-
-        },
-
-        SignInButton: {
-            width: '100%',
-            flexDirection:"row",
-            alignItems: "center",
-            gap: 8,
-            justifyContent: "center",
-            paddingBottom: 10,
-            paddingTop: 10,
-            borderRadius: 9999,
-            backgroundColor: "#097F8C",
-            borderWidth: 0.5,
-            borderColor: "black",
-
-        },
-
-        SignInTextField:{
-            width: '100%',
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 8,
-            justifyContent: "center",
-            paddingVertical: 10,
-            paddingHorizontal: 20,
-            borderRadius: 9999,
-            backgroundColor: "#E7E8E9",
-            borderWidth: 0.5,
-            borderColor: "black",
-
-
-
-        },
-
-        googleIcon: {
-            width: 22,
-            height: 22,
-        },
-
-        line: {
-            width: 100,
-            height: 1,
-            backgroundColor: '#e0e0e0',
-            marginVertical: 24,
-
-        },
-
-        iconCircle: {
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            backgroundColor: '#ffffff',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 5,
-
-
-        }
-    });
+const styles = StyleSheet.create({
+    titleContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingTop: 50,
+        paddingBottom: 30,
+    },
+    TextStyle:{
+        fontSize: 18,
+        fontWeight: "normal",
+        textAlign:"center",
+        lineHeight: 25,
+        color: "#3E4949"
+    },
+    card: {
+        backgroundColor: '#FFFFFF',
+        width: '90%',
+        borderRadius: 24,
+        padding: 24,
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 5,
+        alignSelf: 'center',
+    },
+    SignInText:{
+        fontSize: 12,
+        fontWeight: "bold",
+        paddingTop: 20,
+        paddingBottom: 10,
+    },
+    textContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 20,
+        paddingBottom: 20,
+    },
+    textContainers:{
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 30,
+    },
+    MainPage: {
+        flex: 1,
+        backgroundColor: '#F8F9FA',
+    },
+    button:{
+        width: '100%',
+        flexDirection:"row",
+        alignItems: "center",
+        gap: 8,
+        justifyContent: "center",
+        paddingVertical: 12,
+        borderRadius: 9999,
+        backgroundColor: "white",
+        borderWidth: 0.5,
+        borderColor: "#E5E7EB",
+    },
+    SignInButton: {
+        width: '100%',
+        flexDirection:"row",
+        alignItems: "center",
+        gap: 8,
+        justifyContent: "center",
+        paddingVertical: 14,
+        borderRadius: 9999,
+        backgroundColor: "#097F8C",
+        marginTop: 20,
+    },
+    SignInTextField:{
+        width: '100%',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 9999,
+        backgroundColor: "#E7E8E9",
+        fontSize: 14,
+    },
+    googleIcon: {
+        width: 22,
+        height: 22,
+    },
+    line: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#e0e0e0',
+        marginVertical: 44,
+        marginBottom: 40,
+    },
+    iconCircle: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: 'white',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 5,
+    }
+});
