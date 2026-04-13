@@ -17,10 +17,32 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 
 import ScrollView = Animated.ScrollView;
+import {registerUser} from "@/src/api/authApi";
 
-
-export default function SignInScreen() {
+export default function SignInScreen({navigation}:any) {
     const [agreed, setAgreed] = useState(false);
+    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
+    const handleSignUp = async () => {
+        if (!agreed) {
+            alert("Please agree with the terms and conditions.");
+            return;
+        }
+        console.log("Sending request...");
+
+        const register = await registerUser(username, email, password);
+
+        console.log("RESPONSE:", register);
+        if (register.success) {
+            alert("User registered successfully!");
+            navigation.navigate("index");
+        }
+        else{
+            alert(register.message);
+        }
+    }
 
     return (
 
@@ -43,20 +65,29 @@ export default function SignInScreen() {
                 <View>
                     <Text style={[styles.SignInText,{paddingTop:10}]}> USERNAME</Text>
 
-                    <TextInput style={styles.SignInTextField} placeholder={"Joe Doe"}>
-
+                    <TextInput
+                        style={styles.SignInTextField}
+                        placeholder={"Joe Doe"}
+                        value={username}
+                        onChangeText={setUsername}>
                     </TextInput>
 
                     <Text style={styles.SignInText}> EMAIL ADRESS</Text>
 
-                    <TextInput style={styles.SignInTextField} placeholder={"Joe@example.com"}>
-
+                    <TextInput
+                        style={styles.SignInTextField}
+                        placeholder={"Joe@example.com"}
+                        value={email}
+                        onChangeText={setEmail}>
                     </TextInput>
 
                     <Text style={styles.SignInText}>PASSWORD</Text>
 
-                    <TextInput style={styles.SignInTextField} placeholder={"********"}>
-
+                    <TextInput
+                        style={styles.SignInTextField}
+                        placeholder={"********"}
+                        value={password}
+                        onChangeText={setPassword}>
                     </TextInput>
 
 
@@ -74,7 +105,7 @@ export default function SignInScreen() {
 
 
 
-                <TouchableOpacity style={styles.SignInButton}>
+                <TouchableOpacity style={styles.SignInButton} onPress={handleSignUp}>
                     <Text style={{color:"white",fontSize:18}}> Sign Up</Text>
                 </TouchableOpacity>
 

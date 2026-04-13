@@ -9,7 +9,7 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json'
     },
-    timeout: 5000,
+    timeout: 10000,
 });
 
 //ENDPOINTS:
@@ -30,9 +30,7 @@ export const registerUser = async (username, email, password) => {
             message: response.data.message || "Verifikacijski kod poslan na Mail"
         };
     } catch (error) {
-        console.log("FULL ERROR:", error);
-        console.log("RESPONSE:", error.response);
-        console.log("DATA:", error.response?.data);
+
         const message =
             error.response?.data?.message ||
             "Registracija korisnika nije uspjela.";
@@ -95,7 +93,7 @@ export const loginUser = async (email, password) => {
 
 export const resendCode = async (email) => {
     try{
-        const response = await api.post("auth/resend?email=${email}", {
+        const response = await api.post('auth/resend?email=${email}', {
             email
         })
         return {
