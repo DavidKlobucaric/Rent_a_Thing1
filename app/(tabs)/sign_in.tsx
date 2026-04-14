@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 
 import {
@@ -10,13 +10,12 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    Image, Animated,
+    SafeAreaView,
+    Image, ScrollView,
 } from 'react-native';
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
-
-import ScrollView = Animated.ScrollView;
 import {registerUser} from "@/src/api/authApi";
 
 export default function SignInScreen({navigation}:any) {
@@ -46,13 +45,11 @@ export default function SignInScreen({navigation}:any) {
 
     return (
 
-
-
-        <SafeAreaView style={styles.MainPage}>
-            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        <SafeAreaView style={styles.MainPage }>
+            <ScrollView contentContainerStyle={{ paddingBottom: 40 }} >
 
             <View style={styles.titleContainer}>
-                <Text style={{fontSize: 35, fontWeight: "bold"}}>Create Account</Text>
+                <Text style={styles.TitleText}>Create Account</Text>
             </View>
 
             <View style={styles.textContainer}>
@@ -87,18 +84,21 @@ export default function SignInScreen({navigation}:any) {
                         style={styles.SignInTextField}
                         placeholder={"********"}
                         value={password}
-                        onChangeText={setPassword}>
+                        onChangeText={setPassword}
+                        secureTextEntry={true}>
+
                     </TextInput>
+
 
 
                 </View>
 
                 <TouchableOpacity
-                    style={{flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20, marginTop:20}}
+                    style={styles.Checkbox}
                     onPress={() => setAgreed(!agreed)}
                 >
-                    <Text style={{fontSize: 18}}>{agreed ? '✅' : '☐'}</Text>
-                    <Text style={{fontSize: 13, color: '#6B7280', flex: 1, lineHeight: 18}}>
+                    <Text style={styles.BigText}>{agreed ? '✅' : '☐'}</Text>
+                    <Text style={styles.TermsText}>
                         I agree to the Terms of Service and Privacy Policy.
                     </Text>
                 </TouchableOpacity>
@@ -106,13 +106,13 @@ export default function SignInScreen({navigation}:any) {
 
 
                 <TouchableOpacity style={styles.SignInButton} onPress={handleSignUp}>
-                    <Text style={{color:"white",fontSize:18}}> Sign Up</Text>
+                    <Text style={[styles.BigText,{color:"white", fontWeight: "600"}]}> Sign Up</Text>
                 </TouchableOpacity>
 
 
-                <View style={{flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10}}>
+                <View style={[styles.centerContainer,{ gap: 10}]}>
                     <View style={styles.line}/>
-                    <Text style={{fontSize: 11}}>OR WITH GOOGLE</Text>
+                    <Text style={styles.SmallText}>OR WITH GOOGLE</Text>
                     <View style={styles.line}/>
                 </View>
 
@@ -122,7 +122,7 @@ export default function SignInScreen({navigation}:any) {
                             source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}}
                             style={styles.googleIcon}
                         />
-                        <Text style={{fontSize: 14, fontWeight: "500"}}>Sign up with Google</Text>
+                        <Text style={[styles.MediumText,{ fontWeight: "500"}]}>Sign up with Google</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -130,32 +130,26 @@ export default function SignInScreen({navigation}:any) {
 
             </View>
 
-            <View style={{flexDirection:"row", alignItems:"center", justifyContent: "center", paddingTop:25}}>
-                <Text style={{fontSize:15}}> Already have an account?</Text>
-                <Text style={{color:"#614D9B", fontSize: 15, fontWeight:"bold"}}> Log In</Text>
+            <View style={[styles.centerContainer,{ paddingTop:25}]}>
+                <Text style={styles.MediumText}> Already have an account?</Text>
+                <Text style={[styles.MediumText,{color:"#614D9B", fontWeight:"bold"}]}> Log In</Text>
             </View>
 
                 <View style={{alignItems:"center"}}>
-
-                        <View style={{flexDirection:"row", alignItems: "center", justifyContent: "center", paddingTop:20, gap:50} }>
-
+                        <View style={[styles.centerContainer,{ paddingTop:20, gap:50}]}>
                             <View style={styles.iconCircle}>
                                 <MaterialIcons name="shield" size={25} color="#614D9B" />
 
                             </View>
                             <View style={styles.iconCircle}>
-
-
                                 <MaterialIcons name="groups" size={35} color="#614D9B" />
                             </View>
-
-
                         </View>
 
-                            <View style={{alignItems: "center", justifyContent: "center", flexDirection:"row",gap:30 }}>
-                                <Text style={{fontSize:10}}>Secure & Private</Text>
-                                <Text style={{fontSize:10}}>Community Trust</Text>
-                            </View>
+                        <View style={[styles.centerContainer,{ gap:30 }]}>
+                                <Text style={styles.SmallText}>Secure & Private</Text>
+                                <Text style={styles.SmallText}>Community Trust</Text>
+                        </View>
                 </View>
 
             </ScrollView>
@@ -172,8 +166,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        paddingTop: 35,
-        paddingBottom: 30,
+        paddingTop: 55,
+        paddingBottom: 10,
     },
     TextStyle:{
         fontSize: 18,
@@ -181,6 +175,10 @@ const styles = StyleSheet.create({
         textAlign:"center",
         lineHeight: 25,
         color: "#3E4949"
+    },
+    TitleText:{
+        fontSize: 35,
+        fontWeight: "bold"
     },
     card: {
         backgroundColor: '#FFFFFF',
@@ -220,7 +218,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 8,
         justifyContent: "center",
-        paddingVertical: 12,
+        padding:10,
         borderRadius: 9999,
         backgroundColor: "white",
         borderWidth: 0.5,
@@ -232,7 +230,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 8,
         justifyContent: "center",
-        paddingVertical: 14,
+        padding:10,
         borderRadius: 9999,
         backgroundColor: "#097F8C",
         marginTop: 20,
@@ -245,6 +243,32 @@ const styles = StyleSheet.create({
         backgroundColor: "#E7E8E9",
         fontSize: 14,
     },
+
+    Checkbox:{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 10,
+        marginTop:20
+    },
+
+    BigText:{
+        fontSize:18,
+    },
+
+    MediumText:{
+        fontSize:15,
+    },
+    SmallText:{
+        fontSize:10,
+    },
+
+    TermsText:{
+        fontSize: 13,
+        color: '#6B7280',
+        flex: 1,
+        lineHeight: 18,
+    },
     googleIcon: {
         width: 22,
         height: 22,
@@ -253,8 +277,14 @@ const styles = StyleSheet.create({
         flex: 1,
         height: 1,
         backgroundColor: '#e0e0e0',
-        marginVertical: 44,
-        marginBottom: 40,
+        marginVertical: 30,
+        marginBottom: 30,
+    },
+
+    centerContainer:{
+        flexDirection:"row",
+        alignItems: "center",
+        justifyContent: "center",
     },
     iconCircle: {
         width: 56,
