@@ -13,6 +13,8 @@ import {
     SafeAreaView,
     Image,
 } from 'react-native';
+import { useRouter } from "expo-router";
+
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
@@ -23,7 +25,7 @@ export default function SignInScreen({navigation}:any) {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
+    const router = useRouter();
     const handleSignUp = async () => {
         if (!agreed) {
             alert("Please agree with the terms and conditions.");
@@ -100,7 +102,7 @@ export default function SignInScreen({navigation}:any) {
                     style={styles.Checkbox}
                     onPress={() => setAgreed(!agreed)}
                 >
-                    <Text style={styles.BigText}>{agreed ? '✅' : '☐'}</Text>
+                    <MaterialIcons name={agreed ? "check-box" : "check-box-outline-blank"} size={22} color={agreed ? "#097F8C" : "#6B7280"} />
                     <Text style={styles.TermsText}>
                         I agree to the Terms of Service and Privacy Policy.
                     </Text>
@@ -125,7 +127,7 @@ export default function SignInScreen({navigation}:any) {
                             source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}}
                             style={styles.googleIcon}
                         />
-                        <Text style={[styles.MediumText,{ fontWeight: "500"}]}>Sign up with Google</Text>
+                        <Text style={[styles.MediumText,{ fontWeight: "400"}]}>Sign up with Google</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -135,17 +137,20 @@ export default function SignInScreen({navigation}:any) {
 
             <View style={[styles.centerContainer,{ paddingTop:5, marginTop: 30,}]}>
                 <Text style={styles.MediumText}> Already have an account?</Text>
-                <Text style={[styles.MediumText,{color:"#097F8C", fontWeight:"600"}]}> Log In</Text>
+                <TouchableOpacity onPress={() => router.push('/log_in')}>
+                    <Text style={[styles.MediumText,{color:"#097F8C", fontWeight:"600"}]}> Log In</Text>
+                </TouchableOpacity>
+
             </View>
 
                 <View style={{alignItems:"center"}}>
                         <View style={[styles.centerContainer,{ paddingTop:20, gap:50}]}>
                             <View style={styles.iconCircle}>
-                                <MaterialIcons name="shield" size={25} color="black" />
+                                <MaterialIcons name="shield" size={25} color="#3E4949" />
 
                             </View>
                             <View style={styles.iconCircle}>
-                                <MaterialIcons name="groups" size={35} color="black" />
+                                <MaterialIcons name="groups" size={35} color="#3E4949" />
                             </View>
                         </View>
 
@@ -183,6 +188,7 @@ const styles = StyleSheet.create({
         fontSize: 32,
         fontWeight: "600",
         letterSpacing: -0.5,
+        paddingTop:15
     },
     card: {
 

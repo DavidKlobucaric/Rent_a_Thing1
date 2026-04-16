@@ -1,5 +1,5 @@
-import { Image } from 'expo-image';
-import React, { useState } from 'react';
+import {Image} from 'expo-image';
+import React, {useState} from 'react';
 import {
     StyleSheet,
     Text,
@@ -9,23 +9,82 @@ import {
     TouchableOpacity,
     FlatList
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Fontisto, Ionicons } from '@expo/vector-icons';
-import {Link} from "expo-router";
-
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {Fontisto, Ionicons} from '@expo/vector-icons';
+import {Link, Redirect} from "expo-router";
 
 
 const ALL_ITEMS = [
-    { id: 1, name: 'Hammer', category: 'tools', image:'https://cdn-icons-png.flaticon.com/512/2991/2991148.png', price: 12 },
-    { id: 2, name: 'Screwdriver set', category: 'tools', image:'https://cdn-icons-png.flaticon.com/512/2991/2991148.png', price: 13 },
-    { id: 3, name: 'Power drill', category: 'tools', image:'https://cdn-icons-png.flaticon.com/512/2991/2991148.png', price: 11 },
-    { id: 4, name: 'Tent', category: 'camping', image:'https://cdn-icons-png.flaticon.com/512/2991/2991148.png', price: 12 },
-    { id: 5, name: 'Sleeping bag', category: 'camping', image:'https://cdn-icons-png.flaticon.com/512/2991/2991148.png', price: 14 },
-    { id: 6, name: 'Laptop', category: 'electronics', image:'https://cdn-icons-png.flaticon.com/512/2991/2991148.png', price: 17},
-    { id: 7, name: 'Camera', category: 'electronics', image:'https://cdn-icons-png.flaticon.com/512/2991/2991148.png', price: 16 },
-    { id: 8, name: 'Chess set', category: 'games', image:'https://cdn-icons-png.flaticon.com/512/2991/2991148.png', price: 13 },
-    { id: 9, name: 'Football', category: 'sports', image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png', price: 12},
-    { id: 10, name: 'T-shirt', category: 'clothes', image:'https://cdn-icons-png.flaticon.com/512/2991/2991148.png', price: 18},
+    {
+        id: 1,
+        name: 'Hammer',
+        category: 'tools',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 12
+    },
+    {
+        id: 2,
+        name: 'Screwdriver set',
+        category: 'tools',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 13
+    },
+    {
+        id: 3,
+        name: 'Power drill',
+        category: 'tools',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 11
+    },
+    {
+        id: 4,
+        name: 'Tent',
+        category: 'camping',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 12
+    },
+    {
+        id: 5,
+        name: 'Sleeping bag',
+        category: 'camping',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 14
+    },
+    {
+        id: 6,
+        name: 'Laptop',
+        category: 'electronics',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 17
+    },
+    {
+        id: 7,
+        name: 'Camera',
+        category: 'electronics',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 16
+    },
+    {
+        id: 8,
+        name: 'Chess set',
+        category: 'games',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 13
+    },
+    {
+        id: 9,
+        name: 'Football',
+        category: 'sports',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 12
+    },
+    {
+        id: 10,
+        name: 'T-shirt',
+        category: 'clothes',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 18
+    },
 ];
 
 type Category = {
@@ -75,11 +134,10 @@ const CATEGORIES: Category[] = [
 ];
 
 const NEARBY_ITEMS = [
-    { id: 1, name: 'Bosch Power Drill', distance: '0.8 km away', price: 12 },
-    { id: 2, name: 'Epson Projector', distance: '1.2 km away', price: 30 },
-    { id: 3, name: 'Karcher K5 Washer', distance: '2.5 km away', price: 18 },
+    {id: 1, name: 'Bosch Power Drill', distance: '0.8 km away', price: 12},
+    {id: 2, name: 'Epson Projector', distance: '1.2 km away', price: 30},
+    {id: 3, name: 'Karcher K5 Washer', distance: '2.5 km away', price: 18},
 ];
-
 
 
 export default function HomeScreen() {
@@ -100,20 +158,18 @@ export default function HomeScreen() {
         item.name.toLowerCase().includes(searchText.toLowerCase())
     );
 
-    return (
-
-
+     return (
 
         <SafeAreaView style={styles.container}>
             <ScrollView
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 40 }}
+                contentContainerStyle={{paddingBottom: 40}}
             >
 
                 {/*-------------------------------- SEARCH BAR --------------------------------*/}
 
                 <View style={styles.searchBar}>
-                    <Fontisto name="search" style={styles.searchIcon} />
+                    <Fontisto name="search" style={styles.searchIcon}/>
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Search..."
@@ -131,7 +187,7 @@ export default function HomeScreen() {
                 {/*-------------------------------- CATEGORY TABS --------------------------------*/}
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.tabsContainer}
+                            contentContainerStyle={styles.tabsContainer}
                 >
                     {CATEGORIES.map((cat) => {
                         const isActive = activeCategory === cat.id;
@@ -168,30 +224,30 @@ export default function HomeScreen() {
 
                 {/*-------------------------------- SEARCH RESULTS --------------------------------*/}
 
-                <View  style={styles.listContainer}>
+                <View style={styles.listContainer}>
                     {filteredData.length === 0 ? (
                         <Text style={styles.emptyText}>
                             {`Nema rezultata za "${searchText}"`}
                         </Text>
                     ) : (
 
-                            <FlatList
-                                data={filteredData}
-                                keyExtractor={(item) => item.id.toString()}
-                                scrollEnabled={true}
-                                horizontal={true}
-                                renderItem={({ item }) => (
-                                    <View style={styles.itemCard}>
-                                        <Image source={{uri: item.image}} style={styles.itemImage}></Image>
-                                        <Text style={styles.itemName}>{item.name}</Text>
-                                        <View style={{flexDirection:"row"}}>
-                                            <Text style={styles.price}>${item.price}</Text>
-                                            <Text style={styles.perDay}>/day</Text>
-                                        </View>
-
+                        <FlatList
+                            data={filteredData}
+                            keyExtractor={(item) => item.id.toString()}
+                            scrollEnabled={true}
+                            horizontal={true}
+                            renderItem={({item}) => (
+                                <View style={styles.itemCard}>
+                                    <Image source={{uri: item.image}} style={styles.itemImage}></Image>
+                                    <Text style={styles.itemName}>{item.name}</Text>
+                                    <View style={{flexDirection: "row"}}>
+                                        <Text style={styles.price}>${item.price}</Text>
+                                        <Text style={styles.perDay}>/day</Text>
                                     </View>
-                                )}
-                            />
+
+                                </View>
+                            )}
+                        />
 
                     )}
 
@@ -205,7 +261,7 @@ export default function HomeScreen() {
                     <View key={item.id} style={styles.card}>
 
                         <Image
-                            source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }}
+                            source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}}
                             style={styles.thumbnail}
                         />
 
@@ -213,7 +269,7 @@ export default function HomeScreen() {
                             <Text style={styles.itemTitle}>{item.name}</Text>
                             <Text style={styles.distanceText}>{item.distance}</Text>
 
-                            <View style={{ flexDirection: 'row' }}>
+                            <View style={{flexDirection: 'row'}}>
                                 <Text style={styles.price}>${item.price}</Text>
                                 <Text style={styles.perDay}>/day</Text>
                             </View>
@@ -238,9 +294,8 @@ export default function HomeScreen() {
 
             </ScrollView>
         </SafeAreaView>
-    );
+);
 }
-
 
 
 const styles = StyleSheet.create({
@@ -304,7 +359,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         padding: 15,
         borderRadius: 10,
-        marginTop:15,
+        marginTop: 15,
         marginBottom: 10,
         marginHorizontal: 10
 
@@ -312,7 +367,7 @@ const styles = StyleSheet.create({
 
     itemName: {
         fontSize: 16,
-        paddingTop:10,
+        paddingTop: 10,
     },
     emptyText: {
         textAlign: 'center',

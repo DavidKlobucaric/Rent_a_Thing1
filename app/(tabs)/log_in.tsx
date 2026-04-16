@@ -14,13 +14,15 @@ import {
 
 } from 'react-native';
 
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useRouter } from "expo-router";
 
 export default function SignInScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
+    const router = useRouter();
 
     return (
         <SafeAreaView style={styles.MainPage}>
@@ -43,6 +45,7 @@ export default function SignInScreen() {
                             <TextInput
                                 style={styles.SignInTextField}
                                 placeholder={"Joe@example.com"}
+                                placeholderTextColor={"#9CA3AF"}
                                 value={email}
                                 onChangeText={setEmail}
                                 autoCapitalize="none"
@@ -53,6 +56,7 @@ export default function SignInScreen() {
                             <TextInput
                                 style={styles.SignInTextField}
                                 placeholder={"********"}
+                                placeholderTextColor={"#9CA3AF"}
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry={true}/>
@@ -61,15 +65,18 @@ export default function SignInScreen() {
 
                                 <TouchableOpacity onPress={() => setRememberMe(!rememberMe)}>
                                     <View style={[styles.centerContainer,{paddingTop:0}]}>
-                                        <Text style={styles.BigText}>{rememberMe ? '✅' : '☐'}</Text>
+                                        <MaterialIcons name={rememberMe ? "check-box" : "check-box-outline-blank"} size={22} color={rememberMe? "#097F8C" : "#6B7280"} />
                                         <Text style={[styles.SmallText,{ color: '#6B7280'}]}>Remember me</Text>
                                     </View>
                                 </TouchableOpacity>
 
                                 <View style={{marginLeft:"auto"}}>
-                                    <Text style={[styles.SmallText,{ color: '#097F8C', fontWeight: '600'}]}>
-                                        Forgot password?
-                                    </Text>
+                                    <TouchableOpacity>
+                                        <Text style={[styles.SmallText,{ color: '#097F8C', fontWeight: '600'}]}>
+                                            Forgot password?
+                                        </Text>
+                                    </TouchableOpacity>
+
                                 </View>
 
 
@@ -81,7 +88,7 @@ export default function SignInScreen() {
                     <TouchableOpacity
                         style={styles.SignInButton}
                     >
-                        <Text style={[styles.BigText,{color:"white", fontWeight: "600"}]}>Log In</Text>
+                        <Text style={[styles.MediumText,{color:"white", fontWeight: "600"}]}>Log In</Text>
                     </TouchableOpacity>
 
                     <View style={[styles.centerContainer,{paddingTop:0,}]}>
@@ -96,7 +103,7 @@ export default function SignInScreen() {
                                 source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}}
                                 style={styles.googleIcon}
                             />
-                            <Text style={[styles.MediumText,{ fontWeight: "500"}]}>Sign in with Google</Text>
+                            <Text style={[styles.MediumText,{ fontWeight: "400"}]}>Sign in with Google</Text>
                         </TouchableOpacity>
 
                     </View>
@@ -108,17 +115,20 @@ export default function SignInScreen() {
 
                 <View style={[styles.centerContainer,{paddingTop:25, gap:0}]}>
                     <Text style={styles.MediumText}> Don{"'"}t have an account?</Text>
-                    <Text style={[styles.MediumText,{color:"#097F8C",fontWeight: "600"}]}> Sign Up</Text>
+                    <TouchableOpacity onPress={() => router.push('/sign_in')}>
+                        <Text style={[styles.MediumText,{color:"#097F8C",fontWeight: "600"}]}> Sign Up</Text>
+                    </TouchableOpacity>
+
                 </View>
 
 
                 <View style={{alignItems:"center", paddingTop: 30}}>
                     <View style={[styles.centerContainer,{paddingTop:0, gap: 50}]}>
                         <View style={styles.iconCircle}>
-                            <MaterialIcons name="shield" size={25} color="black" />
+                            <MaterialIcons name="shield" size={25} color="#3E4949" />
                         </View>
                         <View style={styles.iconCircle}>
-                            <MaterialIcons name="groups" size={35} color="black" />
+                            <MaterialIcons name="groups" size={35} color="#3E4949" />
                         </View>
                     </View>
                     <View style={[styles.centerContainer, {gap:30,paddingTop:0}]}>
@@ -151,6 +161,7 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         fontSize: 32,
         letterSpacing: -0.5,
+        paddingTop:15
     },
     card: {
         width: '100%',
