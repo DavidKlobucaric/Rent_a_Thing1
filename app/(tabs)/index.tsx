@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Fontisto, Ionicons } from '@expo/vector-icons';
+import {Link} from "expo-router";
 
 
 
@@ -348,6 +349,7 @@ const styles = StyleSheet.create({
     distanceText: {
         fontSize: 12,
         color: '#888',
+
     },
     price: {
         fontWeight: '700',
@@ -371,6 +373,7 @@ const styles = StyleSheet.create({
     rentText: {
         color: '#fff',
         fontSize: 11,
+
     },
 
     itemImage: {

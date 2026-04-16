@@ -11,11 +11,11 @@ import {
     StyleSheet,
     Image,
     SafeAreaView,
-    Animated,
+
 } from 'react-native';
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import ScrollView = Animated.ScrollView;
+
 
 export default function SignInScreen() {
     const [email, setEmail] = useState('');
@@ -24,7 +24,7 @@ export default function SignInScreen() {
 
     return (
         <SafeAreaView style={styles.MainPage}>
-            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+
 
                 <View style={styles.titleContainer}>
                     <Text style={styles.TextTitle}>Welcome Back!</Text>
@@ -67,7 +67,7 @@ export default function SignInScreen() {
                                 </TouchableOpacity>
 
                                 <View style={{marginLeft:"auto"}}>
-                                    <Text style={[styles.SmallText,{ color: '#614D9B', fontWeight: '600'}]}>
+                                    <Text style={[styles.SmallText,{ color: '#097F8C', fontWeight: '600'}]}>
                                         Forgot password?
                                     </Text>
                                 </View>
@@ -108,17 +108,17 @@ export default function SignInScreen() {
 
                 <View style={[styles.centerContainer,{paddingTop:25, gap:0}]}>
                     <Text style={styles.MediumText}> Don{"'"}t have an account?</Text>
-                    <Text style={[styles.MediumText,{color:"#614D9B",fontWeight: "600"}]}> Sign Up</Text>
+                    <Text style={[styles.MediumText,{color:"#097F8C",fontWeight: "600"}]}> Sign Up</Text>
                 </View>
 
 
                 <View style={{alignItems:"center", paddingTop: 30}}>
                     <View style={[styles.centerContainer,{paddingTop:0, gap: 50}]}>
                         <View style={styles.iconCircle}>
-                            <MaterialIcons name="shield" size={25} color="#614D9B" />
+                            <MaterialIcons name="shield" size={25} color="black" />
                         </View>
                         <View style={styles.iconCircle}>
-                            <MaterialIcons name="groups" size={35} color="#614D9B" />
+                            <MaterialIcons name="groups" size={35} color="black" />
                         </View>
                     </View>
                     <View style={[styles.centerContainer, {gap:30,paddingTop:0}]}>
@@ -127,7 +127,7 @@ export default function SignInScreen() {
                     </View>
                 </View>
 
-            </ScrollView>
+
         </SafeAreaView>
     );
 }
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        paddingTop: 55,
+        paddingTop: 45,
         paddingBottom: 10,
     },
     TextStyle:{
@@ -148,31 +148,28 @@ const styles = StyleSheet.create({
         color: "#3E4949"
     },
     TextTitle:{
-        fontWeight: "bold",
-        fontSize: 35,
+        fontWeight: "600",
+        fontSize: 32,
+        letterSpacing: -0.5,
     },
     card: {
-        backgroundColor: '#FFFFFF',
-        width: '90%',
-        borderRadius: 24,
-        padding: 24,
-        shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 5,
+        width: '100%',
+        borderRadius: 14,
+        padding: 20,
+        paddingTop:0,
         alignSelf: 'center',
     },
     SignInText:{
         fontSize: 12,
-        fontWeight: "bold",
-        paddingTop: 20,
+        fontWeight: "600",
+        paddingTop: 15,
         paddingBottom: 10,
     },
     textContainer: {
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 20,
-        paddingBottom: 20,
+        paddingBottom: 10,
     },
     textContainers:{
         alignItems: 'center',
@@ -208,8 +205,9 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 8,
         justifyContent: "center",
-        padding:10,
-        borderRadius: 9999,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 14,
         backgroundColor: "white",
         borderWidth: 0.5,
         borderColor: "#E5E7EB",
@@ -220,17 +218,20 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 8,
         justifyContent: "center",
-        padding:10,
-        borderRadius: 9999,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius:  14,
         backgroundColor: "#097F8C",
         marginTop: 20,
     },
     SignInTextField:{
         width: '100%',
-        paddingVertical: 12,
+        paddingVertical: 10,
         paddingHorizontal: 20,
-        borderRadius: 9999,
-        backgroundColor: "#E7E8E9",
+        borderRadius: 14,
+        backgroundColor: "#ffff",
+        borderWidth: 0.5,
+        borderColor: "#BDC9C8",
         fontSize: 14,
     },
     googleIcon: {
@@ -247,10 +248,12 @@ const styles = StyleSheet.create({
     iconCircle: {
         width: 56,
         height: 56,
-        borderRadius: 28,
+        borderRadius: 9999,
         backgroundColor: 'white',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 5,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
     }
 });
