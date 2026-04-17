@@ -72,7 +72,7 @@ export default function SignInScreen({navigation}:any) {
                         onChangeText={setUsername}>
                     </TextInput>
 
-                    <Text style={styles.SignInText}> EMAIL ADRESS</Text>
+                    <Text style={styles.SignInText}> EMAIL ADDRESS</Text>
 
                     <TextInput
                         style={styles.SignInTextField}
@@ -178,11 +178,12 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
     },
     TextStyle:{
-        fontSize: 18,
+        fontSize: 15,
         fontWeight: "normal",
         textAlign:"center",
         lineHeight: 25,
-        color: "#3E4949"
+        color: "#3E4949",
+
     },
     TitleText:{
         fontSize: 32,
@@ -274,7 +275,7 @@ const styles = StyleSheet.create({
         fontSize:15,
     },
     SmallText:{
-        fontSize:10,
+        fontSize:11,
     },
 
     TermsText:{

@@ -53,14 +53,14 @@ const ALL_ITEMS = [
     {
         id: 6,
         name: 'Laptop',
-        category: 'electronics',
+        category: 'tech',
         image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
         price: 17
     },
     {
         id: 7,
         name: 'Camera',
-        category: 'electronics',
+        category: 'tech',
         image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
         price: 16
     },
@@ -108,8 +108,8 @@ const CATEGORIES: Category[] = [
         inactiveIcon: 'flame-outline',
     },
     {
-        id: 'electronics',
-        label: 'ELECTRONICS',
+        id: 'tech',
+        label: 'TECH',
         activeIcon: 'laptop',
         inactiveIcon: 'laptop-outline',
     },
@@ -160,12 +160,8 @@ export default function HomeScreen() {
 
      return (
 
-        <SafeAreaView style={styles.container}>
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{paddingBottom: 40}}
-            >
-
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+            <ScrollView showsVerticalScrollIndicator={false}>
                 {/*-------------------------------- SEARCH BAR --------------------------------*/}
 
                 <View style={styles.searchBar}>
@@ -188,6 +184,9 @@ export default function HomeScreen() {
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}
                             contentContainerStyle={styles.tabsContainer}
+                            nestedScrollEnabled={true}
+
+
                 >
                     {CATEGORIES.map((cat) => {
                         const isActive = activeCategory === cat.id;
@@ -207,7 +206,7 @@ export default function HomeScreen() {
                                     <Ionicons
                                         name={isActive ? cat.activeIcon : cat.inactiveIcon}
                                         size={24}
-                                        color={isActive ? '#fff' : '#555'}
+                                        color={isActive ? '#fff' : '#6B7280'}
                                     />
                                 </View>
 
@@ -302,14 +301,19 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F8F9FA',
+
     },
 
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        margin: 16,
+        marginHorizontal: 16,
+        marginTop: 16,
+        marginBottom: 10,
         padding: 10,
-        backgroundColor: '#EFEFEF',
+        backgroundColor: '#ffff',
+        borderWidth: 0.5,
+        borderColor: "#BDC9C8",
         borderRadius: 12,
     },
     searchIcon: {
@@ -325,49 +329,64 @@ const styles = StyleSheet.create({
     },
 
     tabsContainer: {
-        paddingHorizontal: 12,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        paddingRight: 30,
+
+
+
     },
     tab: {
         alignItems: 'center',
-        marginHorizontal: 6,
-        width: 64,
+        marginHorizontal: 4,
+        minWidth: 56,
+        paddingHorizontal: 4,
     },
     iconCircle: {
         width: 52,
         height: 52,
         borderRadius: 9999,
-        backgroundColor: '#EBEBEB',
+        backgroundColor: 'white',
+        borderWidth: 0.5,
+        borderColor: "#BDC9C8",
         justifyContent: 'center',
         alignItems: 'center',
+
+
     },
     iconCircleActive: {
-        backgroundColor: '#5c2d91',
+        backgroundColor: '#097F8C',
     },
     tabLabel: {
-        fontSize: 10,
+        fontSize: 11,
+        paddingTop:2,
         color: '#999',
+        textAlign: 'center',
     },
     tabLabelActive: {
-        color: '#5c2d91',
+        color: '#097F8C',
     },
 
     listContainer: {
-        paddingHorizontal: 16,
-        marginTop: 10,
+        marginTop: 8,
+
     },
     itemCard: {
         backgroundColor: 'white',
-        padding: 15,
-        borderRadius: 10,
-        marginTop: 15,
-        marginBottom: 10,
-        marginHorizontal: 10
+        padding: 12,
+        borderRadius: 12,
+        marginTop: 8,
+        marginBottom: 8,
+        marginRight: 12,
+        marginLeft: 0,
 
     },
 
     itemName: {
+        fontWeight:"600",
         fontSize: 16,
         paddingTop: 10,
+
     },
     emptyText: {
         textAlign: 'center',
@@ -375,19 +394,22 @@ const styles = StyleSheet.create({
     },
 
     sectionTitle: {
-        marginTop: 20,
+        marginTop: 24,
+        marginLeft:12,
+        marginBottom: 12,
         fontSize: 16,
         fontWeight: '700',
-        paddingHorizontal: 15,
     },
 
     card: {
         flexDirection: 'row',
         backgroundColor: '#fff',
-        margin: 15,
+        marginHorizontal: 16,
+        marginVertical: 8,
         padding: 15,
         borderRadius: 15,
         alignItems: 'center',
+
     },
     thumbnail: {
         width: 60,
@@ -397,9 +419,12 @@ const styles = StyleSheet.create({
     cardContent: {
         flex: 1,
         paddingHorizontal: 20,
+        gap:2
     },
     itemTitle: {
-        fontWeight: '700',
+        fontWeight: '600',
+
+
     },
     distanceText: {
         fontSize: 12,
@@ -407,8 +432,8 @@ const styles = StyleSheet.create({
 
     },
     price: {
-        fontWeight: '700',
-        color: '#00646F',
+        fontWeight: '600',
+        color: '#097F8C',
     },
     perDay: {
         color: '#999',
@@ -420,14 +445,14 @@ const styles = StyleSheet.create({
         gap: 20,
     },
     rentButton: {
-        backgroundColor: '#00646F',
+        backgroundColor: '#097F8C',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 20,
     },
     rentText: {
         color: '#fff',
-        fontSize: 11,
+        fontSize: 12,
 
     },
 

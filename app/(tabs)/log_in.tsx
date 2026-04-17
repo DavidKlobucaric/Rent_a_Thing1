@@ -93,7 +93,7 @@ export default function SignInScreen() {
 
                     <View style={[styles.centerContainer,{paddingTop:0,}]}>
                         <View style={styles.line}/>
-                        <Text style={{fontSize:10}}>OR WITH GOOGLE</Text>
+                        <Text style={{fontSize:11}}>OR WITH GOOGLE</Text>
                         <View style={styles.line}/>
                     </View>
 
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
     },
     TextStyle:{
-        fontSize: 18,
+        fontSize: 15,
         fontWeight: "normal",
         textAlign:"center",
         lineHeight: 25,
