@@ -169,7 +169,7 @@ export default function HomeScreen() {
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Search..."
-                        placeholderTextColor="#999"
+                        placeholderTextColor="#9CA3AF"
                         value={searchText}
                         onChangeText={setSearchText}
                     />
@@ -307,22 +307,26 @@ const styles = StyleSheet.create({
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginHorizontal: 16,
-        marginTop: 16,
+        marginHorizontal: 10,
+        marginTop: 10,
         marginBottom: 10,
-        padding: 10,
+        paddingHorizontal: 15,
+        paddingVertical: 5,
         backgroundColor: '#ffff',
         borderWidth: 0.5,
         borderColor: "#BDC9C8",
         borderRadius: 12,
     },
     searchIcon: {
-        fontSize: 15,
+        fontSize: 16,
         color: '#888',
         marginRight: 8,
     },
     searchInput: {
         flex: 1,
+        height: 45,
+        fontSize: 16,
+        color: '#333',
     },
     clearBtn: {
         color: '#999',
@@ -332,8 +336,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 8,
         paddingRight: 30,
-
-
 
     },
     tab: {
