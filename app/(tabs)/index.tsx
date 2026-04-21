@@ -104,8 +104,8 @@ const CATEGORIES: Category[] = [
     {
         id: 'camping',
         label: 'CAMPING',
-        activeIcon: 'flame',
-        inactiveIcon: 'flame-outline',
+        activeIcon: 'bonfire',
+        inactiveIcon: 'bonfire-outline',
     },
     {
         id: 'tech',
@@ -278,14 +278,12 @@ export default function HomeScreen() {
                             <TouchableOpacity onPress={() => toggleFavorite(item.id)}>
                                 <Ionicons
                                     name={favorites.includes(item.id) ? 'heart' : 'heart-outline'}
-                                    size={22}
+                                    size={24}
                                     color={favorites.includes(item.id) ? '#e74c3c' : '#ccc'}
                                 />
                             </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.rentButton}>
-                                <Text style={styles.rentText}>RENT</Text>
-                            </TouchableOpacity>
+
                         </View>
 
                     </View>
@@ -446,17 +444,8 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end',
         gap: 20,
     },
-    rentButton: {
-        backgroundColor: '#097F8C',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
-    },
-    rentText: {
-        color: '#fff',
-        fontSize: 12,
 
-    },
+
 
     itemImage: {
         width: 160,
