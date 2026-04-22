@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 
 import {
@@ -10,27 +10,48 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    Image, Animated,
+    SafeAreaView,
+    Image,
 } from 'react-native';
+import { useRouter } from "expo-router";
+
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
+import {registerUser} from "@/src/api/authApi";
 
-import ScrollView = Animated.ScrollView;
-
-
-export default function SignInScreen() {
+export default function SignInScreen({navigation}:any) {
     const [agreed, setAgreed] = useState(false);
+    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const router = useRouter();
+    const handleSignUp = async () => {
+        if (!agreed) {
+            alert("Please agree with the terms and conditions.");
+            return;
+        }
+        console.log("Sending request...");
+
+        const register = await registerUser(username, email, password);
+
+        console.log("RESPONSE:", register);
+        if (register.success) {
+            alert("User registered successfully!");
+            navigation.navigate("index");
+        }
+        else{
+            alert(register.message);
+        }
+    }
 
     return (
 
+        <SafeAreaView style={styles.MainPage }>
 
-
-        <SafeAreaView style={styles.MainPage}>
-            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
 
             <View style={styles.titleContainer}>
-                <Text style={{fontSize: 35, fontWeight: "bold"}}>Create Account</Text>
+                <Text style={styles.TitleText}>Create Account</Text>
             </View>
 
             <View style={styles.textContainer}>
@@ -43,45 +64,60 @@ export default function SignInScreen() {
                 <View>
                     <Text style={[styles.SignInText,{paddingTop:10}]}> USERNAME</Text>
 
-                    <TextInput style={styles.SignInTextField} placeholder={"Joe Doe"}>
-
+                    <TextInput
+                        style={styles.SignInTextField}
+                        placeholder={"Joe Doe"}
+                        placeholderTextColor={"#9CA3AF"}
+                        value={username}
+                        onChangeText={setUsername}>
                     </TextInput>
 
-                    <Text style={styles.SignInText}> EMAIL ADRESS</Text>
+                    <Text style={styles.SignInText}> EMAIL ADDRESS</Text>
 
-                    <TextInput style={styles.SignInTextField} placeholder={"Joe@example.com"}>
-
+                    <TextInput
+                        style={styles.SignInTextField}
+                        placeholder={"Joe@example.com"}
+                        placeholderTextColor={"#9CA3AF"}
+                        value={email}
+                        onChangeText={setEmail}>
                     </TextInput>
 
                     <Text style={styles.SignInText}>PASSWORD</Text>
 
-                    <TextInput style={styles.SignInTextField} placeholder={"********"}>
+                    <TextInput
+                        style={styles.SignInTextField}
+                        placeholder={"********"}
+                        placeholderTextColor={"#9CA3AF"}
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry={true}>
 
                     </TextInput>
+
 
 
                 </View>
 
                 <TouchableOpacity
-                    style={{flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20, marginTop:20}}
+                    style={styles.Checkbox}
                     onPress={() => setAgreed(!agreed)}
                 >
-                    <Text style={{fontSize: 18}}>{agreed ? '✅' : '☐'}</Text>
-                    <Text style={{fontSize: 13, color: '#6B7280', flex: 1, lineHeight: 18}}>
+                    <MaterialIcons name={agreed ? "check-box" : "check-box-outline-blank"} size={22} color={agreed ? "#097F8C" : "#6B7280"} />
+                    <Text style={styles.TermsText}>
                         I agree to the Terms of Service and Privacy Policy.
                     </Text>
                 </TouchableOpacity>
 
 
 
-                <TouchableOpacity style={styles.SignInButton}>
-                    <Text style={{color:"white",fontSize:18}}> Sign Up</Text>
+                <TouchableOpacity style={styles.SignInButton} onPress={handleSignUp}>
+                    <Text style={[styles.MediumText,{color:"white", fontWeight: "600"}]}> Sign Up</Text>
                 </TouchableOpacity>
 
 
-                <View style={{flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10}}>
+                <View style={[styles.centerContainer,{ gap: 10, marginVertical: 20}]}>
                     <View style={styles.line}/>
-                    <Text style={{fontSize: 11}}>OR WITH GOOGLE</Text>
+                    <Text style={styles.SmallText}>OR WITH GOOGLE</Text>
                     <View style={styles.line}/>
                 </View>
 
@@ -91,7 +127,7 @@ export default function SignInScreen() {
                             source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}}
                             style={styles.googleIcon}
                         />
-                        <Text style={{fontSize: 14, fontWeight: "500"}}>Sign up with Google</Text>
+                        <Text style={[styles.MediumText,{ fontWeight: "400"}]}>Sign up with Google</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -99,35 +135,32 @@ export default function SignInScreen() {
 
             </View>
 
-            <View style={{flexDirection:"row", alignItems:"center", justifyContent: "center", paddingTop:25}}>
-                <Text style={{fontSize:15}}> Already have an account?</Text>
-                <Text style={{color:"#614D9B", fontSize: 15, fontWeight:"bold"}}> Log In</Text>
+            <View style={[styles.centerContainer,{ paddingTop:5, marginTop: 30,}]}>
+                <Text style={styles.MediumText}> Already have an account?</Text>
+                <TouchableOpacity onPress={() => router.push('/log_in')}>
+                    <Text style={[styles.MediumText,{color:"#097F8C", fontWeight:"600"}]}> Log In</Text>
+                </TouchableOpacity>
+
             </View>
 
                 <View style={{alignItems:"center"}}>
-
-                        <View style={{flexDirection:"row", alignItems: "center", justifyContent: "center", paddingTop:20, gap:50} }>
-
+                        <View style={[styles.centerContainer,{ paddingTop:20, gap:50}]}>
                             <View style={styles.iconCircle}>
-                                <MaterialIcons name="shield" size={25} color="#614D9B" />
+                                <MaterialIcons name="shield" size={25} color="#3E4949" />
 
                             </View>
                             <View style={styles.iconCircle}>
-
-
-                                <MaterialIcons name="groups" size={35} color="#614D9B" />
+                                <MaterialIcons name="groups" size={35} color="#3E4949" />
                             </View>
-
-
                         </View>
 
-                            <View style={{alignItems: "center", justifyContent: "center", flexDirection:"row",gap:30 }}>
-                                <Text style={{fontSize:10}}>Secure & Private</Text>
-                                <Text style={{fontSize:10}}>Community Trust</Text>
-                            </View>
+                        <View style={[styles.centerContainer,{ gap:30 }]}>
+                                <Text style={styles.SmallText}>Secure & Private</Text>
+                                <Text style={styles.SmallText}>Community Trust</Text>
+                        </View>
                 </View>
 
-            </ScrollView>
+
         </SafeAreaView>
 
 
@@ -141,38 +174,43 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        paddingTop: 50,
-        paddingBottom: 30,
+        paddingTop: 45,
+        paddingBottom: 10,
     },
     TextStyle:{
-        fontSize: 18,
+        fontSize: 15,
         fontWeight: "normal",
         textAlign:"center",
         lineHeight: 25,
-        color: "#3E4949"
+        color: "#3E4949",
+
+    },
+    TitleText:{
+        fontSize: 32,
+        fontWeight: "600",
+        letterSpacing: -0.5,
+        paddingTop:15
     },
     card: {
-        backgroundColor: '#FFFFFF',
-        width: '90%',
-        borderRadius: 24,
-        padding: 24,
-        shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 5,
+
+        width: '100%',
+        borderRadius: 14,
+        padding: 20,
+        paddingTop:0,
         alignSelf: 'center',
+
     },
     SignInText:{
         fontSize: 12,
-        fontWeight: "bold",
-        paddingTop: 20,
+        fontWeight: "600",
+        paddingTop: 15,
         paddingBottom: 10,
     },
     textContainer: {
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 20,
-        paddingBottom: 20,
+        paddingBottom: 10,
     },
     textContainers:{
         alignItems: 'center',
@@ -189,8 +227,9 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 8,
         justifyContent: "center",
-        paddingVertical: 12,
-        borderRadius: 9999,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 14,
         backgroundColor: "white",
         borderWidth: 0.5,
         borderColor: "#E5E7EB",
@@ -201,18 +240,49 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 8,
         justifyContent: "center",
-        paddingVertical: 14,
-        borderRadius: 9999,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius:  14,
         backgroundColor: "#097F8C",
         marginTop: 20,
+
     },
     SignInTextField:{
         width: '100%',
-        paddingVertical: 12,
+        paddingVertical: 10,
         paddingHorizontal: 20,
-        borderRadius: 9999,
-        backgroundColor: "#E7E8E9",
+        borderRadius: 14,
+        backgroundColor: "#ffff",
+        borderWidth: 0.5,
+        borderColor: "#BDC9C8",
         fontSize: 14,
+
+    },
+
+    Checkbox:{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginTop: 24,
+        marginBottom: 5,
+    },
+
+    BigText:{
+        fontSize:18,
+    },
+
+    MediumText:{
+        fontSize:15,
+    },
+    SmallText:{
+        fontSize:11,
+    },
+
+    TermsText:{
+        fontSize: 13,
+        color: '#6B7280',
+        flex: 1,
+        lineHeight: 18,
     },
     googleIcon: {
         width: 22,
@@ -221,17 +291,23 @@ const styles = StyleSheet.create({
     line: {
         flex: 1,
         height: 1,
-        backgroundColor: '#e0e0e0',
-        marginVertical: 44,
-        marginBottom: 40,
+        backgroundColor: '#E5E7EB',
+    },
+
+    centerContainer:{
+        flexDirection:"row",
+        alignItems: "center",
+        justifyContent: "center",
     },
     iconCircle: {
         width: 56,
         height: 56,
-        borderRadius: 28,
+        borderRadius: 9999,
         backgroundColor: 'white',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 5,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
     }
 });

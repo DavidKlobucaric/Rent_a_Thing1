@@ -1,391 +1,457 @@
-import { Image } from 'expo-image';
-import React, { useState } from 'react';
-import {Platform, StyleSheet, Text, View, TextInput,ScrollView, TouchableOpacity,FlatList} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import {EvilIcons, Feather, Fontisto, Ionicons, MaterialCommunityIcons} from '@expo/vector-icons';
+import {Image} from 'expo-image';
+import React, {useState} from 'react';
+import {
+    StyleSheet,
+    Text,
+    View,
+    TextInput,
+    ScrollView,
+    TouchableOpacity,
+    FlatList
+} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {Fontisto, Ionicons} from '@expo/vector-icons';
+import {Link, Redirect} from "expo-router";
 
 
+const ALL_ITEMS = [
+    {
+        id: 1,
+        name: 'Hammer',
+        category: 'tools',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 12
+    },
+    {
+        id: 2,
+        name: 'Screwdriver set',
+        category: 'tools',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 13
+    },
+    {
+        id: 3,
+        name: 'Power drill',
+        category: 'tools',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 11
+    },
+    {
+        id: 4,
+        name: 'Tent',
+        category: 'camping',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 12
+    },
+    {
+        id: 5,
+        name: 'Sleeping bag',
+        category: 'camping',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 14
+    },
+    {
+        id: 6,
+        name: 'Laptop',
+        category: 'tech',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 17
+    },
+    {
+        id: 7,
+        name: 'Camera',
+        category: 'tech',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 16
+    },
+    {
+        id: 8,
+        name: 'Chess set',
+        category: 'games',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 13
+    },
+    {
+        id: 9,
+        name: 'Football',
+        category: 'sports',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 12
+    },
+    {
+        id: 10,
+        name: 'T-shirt',
+        category: 'clothes',
+        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+        price: 18
+    },
+];
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+type Category = {
+    id: string;
+    label: string;
+    activeIcon: React.ComponentProps<typeof Ionicons>['name'];
+    inactiveIcon: React.ComponentProps<typeof Ionicons>['name'];
+};
+
+const CATEGORIES: Category[] = [
+    {
+        id: 'tools',
+        label: 'TOOLS',
+        activeIcon: 'construct',
+        inactiveIcon: 'construct-outline',
+    },
+    {
+        id: 'camping',
+        label: 'CAMPING',
+        activeIcon: 'bonfire',
+        inactiveIcon: 'bonfire-outline',
+    },
+    {
+        id: 'tech',
+        label: 'TECH',
+        activeIcon: 'laptop',
+        inactiveIcon: 'laptop-outline',
+    },
+    {
+        id: 'games',
+        label: 'GAMES',
+        activeIcon: 'game-controller',
+        inactiveIcon: 'game-controller-outline',
+    },
+    {
+        id: 'sports',
+        label: 'SPORTS',
+        activeIcon: 'football',
+        inactiveIcon: 'football-outline',
+    },
+    {
+        id: 'clothes',
+        label: 'CLOTHES',
+        activeIcon: 'shirt',
+        inactiveIcon: 'shirt-outline',
+    },
+];
+
+const NEARBY_ITEMS = [
+    {id: 1, name: 'Bosch Power Drill', distance: '0.8 km away', price: 12},
+    {id: 2, name: 'Epson Projector', distance: '1.2 km away', price: 30},
+    {id: 3, name: 'Karcher K5 Washer', distance: '2.5 km away', price: 18},
+];
+
 
 export default function HomeScreen() {
-
-    const [liked, setLiked] = useState(false);
-
-    const ALL_ITEMS = [
-        { id: 1, name: 'Hammer',           category: 'tools' },
-        { id: 2, name: 'Screwdriver set',  category: 'tools' },
-        { id: 3, name: 'Power drill',      category: 'tools' },
-        { id: 4, name: 'Tent',             category: 'camping' },
-        { id: 5, name: 'Sleeping bag',     category: 'camping' },
-        { id: 6, name: 'Laptop',           category: 'electronics' },
-        { id: 7, name: 'Camera',           category: 'electronics' },
-        { id: 8, name: 'Chess set',        category: 'games' },
-        { id: 9, name: 'Football',         category: 'sports' },
-        { id: 10, name: 'T-shirt',         category: 'clothes' },
-    ];
-
-    const CATEGORIES = [
-        { id: 'tools',       label: 'TOOLS',       iconName: 'construct' },
-        { id: 'camping',     label: 'CAMPING',     iconName: 'bonfire' },
-        { id: 'electronics', label: 'ELECTRONICS', iconName: 'laptop' },
-        { id: 'games',       label: 'GAMES',       iconName: 'game-controller' },
-        { id: 'sports',      label: 'SPORTS',      iconName: 'football' },
-        { id: 'clothes',     label: 'CLOTHES',     iconName: 'shirt' },
-    ];
-
     const [searchText, setSearchText] = useState('');
     const [activeCategory, setActiveCategory] = useState('tools');
+    const [favorites, setFavorites] = useState<number[]>([]);
 
+    const toggleFavorite = (id: number) => {
+        setFavorites(prev =>
+            prev.includes(id)
+                ? prev.filter(f => f !== id)
+                : [...prev, id]
+        );
+    };
 
     const filteredData = ALL_ITEMS.filter(item =>
         item.category === activeCategory &&
         item.name.toLowerCase().includes(searchText.toLowerCase())
     );
-    return (
+
+     return (
+
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+                {/*-------------------------------- SEARCH BAR --------------------------------*/}
+
+                <View style={styles.searchBar}>
+                    <Fontisto name="search" style={styles.searchIcon}/>
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Search..."
+                        placeholderTextColor="#9CA3AF"
+                        value={searchText}
+                        onChangeText={setSearchText}
+                    />
+                    {searchText.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearchText('')}>
+                            <Text style={styles.clearBtn}>✕</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/*-------------------------------- CATEGORY TABS --------------------------------*/}
+
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.tabsContainer}
+                            nestedScrollEnabled={true}
 
 
-         <SafeAreaView style={styles.container}>
-             <ScrollView>
-
-
-                                <View style={styles.searchBar}>
-                                    <Fontisto name={"search"} style={styles.searchIcon}></Fontisto>
-                                    <TextInput
-                                        style={styles.searchInput}
-                                        placeholder="Search for tools, cameras, or bikes..."
-                                        placeholderTextColor="#999"
-                                        value={searchText}
-                                        onChangeText={setSearchText}
+                >
+                    {CATEGORIES.map((cat) => {
+                        const isActive = activeCategory === cat.id;
+                        return (
+                            <TouchableOpacity
+                                key={cat.id}
+                                style={styles.tab}
+                                onPress={() => {
+                                    setActiveCategory(cat.id);
+                                    setSearchText('');
+                                }}
+                            >
+                                <View style={[
+                                    styles.iconCircle,
+                                    isActive && styles.iconCircleActive
+                                ]}>
+                                    <Ionicons
+                                        name={isActive ? cat.activeIcon : cat.inactiveIcon}
+                                        size={24}
+                                        color={isActive ? '#fff' : '#6B7280'}
                                     />
-                                    {searchText.length > 0 && (
-                                        <TouchableOpacity onPress={() => setSearchText('')}>
-                                            <Text style={styles.clearBtn}>✕</Text>
-                                        </TouchableOpacity>
-                                    )}
                                 </View>
 
-                                <View>
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContainer}>{CATEGORIES.map((cat) => {
-                                            const isActive = activeCategory === cat.id;
-                                            return (
-                                                <TouchableOpacity
-                                                    key={cat.id}
-                                                    style={styles.tab}
-                                                    onPress={() => {
-                                                        setActiveCategory(cat.id);
-                                                        setSearchText('');
-                                                    }}
-                                                    activeOpacity={0.7}
-                                                >
-                                                    <View style={[styles.iconCircle, isActive && styles.iconCircleActive]}>
+                                <Text style={[
+                                    styles.tabLabel,
+                                    isActive && styles.tabLabelActive
+                                ]}>
+                                    {cat.label}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
 
+                {/*-------------------------------- SEARCH RESULTS --------------------------------*/}
 
-                                                            <Ionicons
-                                                                name={isActive ? cat.iconName : `${cat.iconName}-outline`}
-                                                                size={24}
-                                                                color={isActive ? '#fff' : '#555'}
-                                                            />
+                <View style={styles.listContainer}>
+                    {filteredData.length === 0 ? (
+                        <Text style={styles.emptyText}>
+                            {`Nema rezultata za "${searchText}"`}
+                        </Text>
+                    ) : (
 
-                                                    </View>
-                                                    <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
-                                                        {cat.label}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            );
-                                        })}
-                                    </ScrollView>
-                                </View>
-                <View>
                         <FlatList
                             data={filteredData}
                             keyExtractor={(item) => item.id.toString()}
-                            contentContainerStyle={styles.listContainer}
-                            ListEmptyComponent={
-                                <Text style={styles.emptyText}>{`Nema rezultata za "${searchText}"`}</Text>
-                            }
-                            renderItem={({ item }) => (
+                            scrollEnabled={true}
+                            horizontal={true}
+                            renderItem={({item}) => (
                                 <View style={styles.itemCard}>
+                                    <Image source={{uri: item.image}} style={styles.itemImage}></Image>
                                     <Text style={styles.itemName}>{item.name}</Text>
+                                    <View style={{flexDirection: "row"}}>
+                                        <Text style={styles.price}>${item.price}</Text>
+                                        <Text style={styles.perDay}>/day</Text>
+                                    </View>
+
                                 </View>
                             )}
                         />
 
+                    )}
+
                 </View>
 
+                {/* -------------------------------- NEARBY SECTION -------------------------------- */}
 
-                <View>
-                    <Text style={styles.NearbyText}>Nearby You</Text>
-                </View>
+                <Text style={styles.sectionTitle}>Nearby You</Text>
 
-                        <View style={styles.TabCard}>
-                                <Image
-                                    source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}}
-                                    style={styles.googleIcon}>
-                                </Image>
-                                <View style={styles.TabsCard}>
-                                    <View>
-                                        <Text style={{fontWeight:"bold"}}>Bosch Power Drill</Text>
-                                    </View>
+                {NEARBY_ITEMS.map((item) => (
+                    <View key={item.id} style={styles.card}>
 
-                                    <View>
-                                        <Text style={{fontWeight:300}}>0.8 km away</Text>
-                                    </View>
+                        <Image
+                            source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}}
+                            style={styles.thumbnail}
+                        />
 
-                                    <View style={{flexDirection:"row", alignItems:"center"}}>
-                                        <Text style={{color:"#00646F", fontWeight:"bold", fontSize:16}}> $12</Text>
-                                        <Text> /day</Text>
-                                    </View>
-                                </View>
+                        <View style={styles.cardContent}>
+                            <Text style={styles.itemTitle}>{item.name}</Text>
+                            <Text style={styles.distanceText}>{item.distance}</Text>
 
-                            <View>
-                                <TouchableOpacity onPress={() => setLiked(!liked)}>
-                                    <Ionicons style={{textAlign:"right"}}
-                                        name={liked ? 'heart' : 'heart-outline'}
-                                        size={24}
-                                        color={liked ? '#e74c3c' : '#ccc'}
-                                    />
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.RentButton}>
-                                    <Text style={{color:"white"}}>RENT NOW</Text>
-                                </TouchableOpacity>
+                            <View style={{flexDirection: 'row'}}>
+                                <Text style={styles.price}>${item.price}</Text>
+                                <Text style={styles.perDay}>/day</Text>
                             </View>
                         </View>
 
-                     <View style={styles.TabCard}>
-                                <Image
-                                    source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}}
-                                    style={styles.googleIcon}>
-                                </Image>
-                                        <View style={styles.TabsCard}>
-                                            <View>
-                                                <Text style={{fontWeight:"bold"}}>Bosch Power Drill</Text>
-                                            </View>
+                        <View style={styles.actions}>
+                            <TouchableOpacity onPress={() => toggleFavorite(item.id)}>
+                                <Ionicons
+                                    name={favorites.includes(item.id) ? 'heart' : 'heart-outline'}
+                                    size={24}
+                                    color={favorites.includes(item.id) ? '#e74c3c' : '#ccc'}
+                                />
+                            </TouchableOpacity>
 
-                                            <View>
-                                                <Text style={{fontWeight:300}}>0.8 km away</Text>
-                                            </View>
 
-                                            <View style={{flexDirection:"row", alignItems:"center"}}>
-                                                <Text style={{color:"#00646F", fontWeight:"bold", fontSize:16}}> $12</Text>
-                                                <Text> /day</Text>
-                                            </View>
-                                        </View>
+                        </View>
 
-                                        <View>
-                                            <TouchableOpacity onPress={() => setLiked(!liked)}>
-                                                <Ionicons style={{textAlign:"right"}}
-                                                          name={liked ? 'heart' : 'heart-outline'}
-                                                          size={24}
-                                                          color={liked ? '#e74c3c' : '#ccc'}
-                                                />
-                                            </TouchableOpacity>
-
-                                            <TouchableOpacity style={styles.RentButton}>
-                                                <Text style={{color:"white"}}>RENT NOW</Text>
-                                            </TouchableOpacity>
-                                        </View>
                     </View>
+                ))}
 
-                                         <View style={styles.TabCard}>
-                                            <Image
-                                                source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}}
-                                                style={styles.googleIcon}>
-                                            </Image>
-                                            <View style={styles.TabsCard}>
-                                                <View>
-                                                    <Text style={{fontWeight:"bold"}}>Bosch Power Drill</Text>
-                                                </View>
-
-                                                <View>
-                                                    <Text style={{fontWeight:300}}>0.8 km away</Text>
-                                                </View>
-
-                                                <View style={{flexDirection:"row", alignItems:"center"}}>
-                                                    <Text style={{color:"#00646F", fontWeight:"bold", fontSize:16}}> $12</Text>
-                                                    <Text> /day</Text>
-                                                </View>
-                                            </View>
-
-                                                <View>
-                                                    <TouchableOpacity onPress={() => setLiked(!liked)}>
-                                                        <Ionicons style={{textAlign:"right"}}
-                                                                  name={liked ? 'heart' : 'heart-outline'}
-                                                                  size={24}
-                                                                  color={liked ? '#e74c3c' : '#ccc'}
-                                                        />
-                                                    </TouchableOpacity>
-
-                                                    <TouchableOpacity style={styles.RentButton}>
-                                                        <Text style={{color:"white"}}>RENT NOW</Text>
-                                                    </TouchableOpacity>
-                                                </View>
-
-                                         </View>
-             </ScrollView>
-         </SafeAreaView>
-
-    );
+            </ScrollView>
+        </SafeAreaView>
+);
 }
+
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'white',
+        backgroundColor: '#F8F9FA',
+
     },
 
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginHorizontal: 16,
-        marginVertical: 20,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        backgroundColor: '#F3F4F5',
-        borderRadius: 10,
+        marginHorizontal: 10,
+        marginTop: 10,
+        marginBottom: 10,
+        paddingHorizontal: 15,
+        paddingVertical: 5,
+        backgroundColor: '#ffff',
+        borderWidth: 0.5,
+        borderColor: "#BDC9C8",
+        borderRadius: 12,
     },
-
     searchIcon: {
         fontSize: 16,
+        color: '#888',
         marginRight: 8,
     },
-
     searchInput: {
         flex: 1,
-        fontSize: 14,
-        color: '#222',
+        height: 45,
+        fontSize: 16,
+        color: '#333',
     },
-
     clearBtn: {
-        fontSize: 14,
         color: '#999',
-        paddingHorizontal: 4,
     },
-
-
 
     tabsContainer: {
         paddingHorizontal: 10,
-        paddingBottom: 10,
+        paddingVertical: 8,
+        paddingRight: 30,
 
     },
-
     tab: {
         alignItems: 'center',
-        marginHorizontal: 8,
-        width: 64,
+        marginHorizontal: 4,
+        minWidth: 56,
+        paddingHorizontal: 4,
     },
-
     iconCircle: {
         width: 52,
         height: 52,
-        borderRadius: 26,
-        backgroundColor: '#f0f0f0',
+        borderRadius: 9999,
+        backgroundColor: 'white',
+        borderWidth: 0.5,
+        borderColor: "#BDC9C8",
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 4,
-    },
 
+
+    },
     iconCircleActive: {
-        backgroundColor: '#5c2d91',
+        backgroundColor: '#097F8C',
     },
-
-    icon: {
-        fontSize: 22,
-    },
-
     tabLabel: {
-        fontSize: 9,
-        fontWeight: '600',
-        color: '#888',
+        fontSize: 11,
+        paddingTop:2,
+        color: '#999',
         textAlign: 'center',
-        letterSpacing: 0.5,
     },
-
     tabLabelActive: {
-        color: '#5c2d91',
+        color: '#097F8C',
     },
 
     listContainer: {
-        paddingHorizontal: 16,
-        paddingTop: 8,
-    },
+        marginTop: 8,
 
+    },
     itemCard: {
-        backgroundColor: '#f9f9f9',
-        padding: 16,
-        borderRadius: 10,
-        marginBottom: 10,
-        borderWidth: 1,
-        borderColor: '#eee',
+        backgroundColor: 'white',
+        padding: 12,
+        borderRadius: 12,
+        marginTop: 8,
+        marginBottom: 8,
+        marginRight: 12,
+        marginLeft: 0,
+
     },
 
     itemName: {
-        fontSize: 15,
-        color: '#222',
-        fontWeight: '500',
-    },
+        fontWeight:"600",
+        fontSize: 16,
+        paddingTop: 10,
 
+    },
     emptyText: {
         textAlign: 'center',
-        color: '#aaa',
-        paddingTop: 40,
-        fontSize: 14,
+        color: '#bbb',
     },
 
-    NearbyText:{
-        marginTop: 40,
-        fontSize: 15,
-        textAlign: 'left',
-        fontWeight: 'bold',
-        paddingHorizontal: 16,
-
+    sectionTitle: {
+        marginTop: 24,
+        marginLeft:12,
+        marginBottom: 12,
+        fontSize: 16,
+        fontWeight: '700',
     },
 
-    googleIcon: {
-        width: 22,
-        height: 22,
-    },
-
-    TabCard:{
+    card: {
         flexDirection: 'row',
-        shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 5,
-        padding: 16,
-        marginTop: 16,
-        backgroundColor: '#FFFFFF',
-        width: '90%',
-        borderRadius: 14,
-        alignSelf: 'center',
-    },
-
-    TabsCard:{
-        flexDirection: 'column',
-        paddingHorizontal: 16,
-        gap:4,
-        flex:1,
+        backgroundColor: '#fff',
+        marginHorizontal: 16,
+        marginVertical: 8,
+        padding: 15,
+        borderRadius: 15,
+        alignItems: 'center',
 
     },
+    thumbnail: {
+        width: 60,
+        height: 60,
+        borderRadius: 10,
+    },
+    cardContent: {
+        flex: 1,
+        paddingHorizontal: 20,
+        gap:2
+    },
+    itemTitle: {
+        fontWeight: '600',
 
-    RentButton:{
-        backgroundColor: '#00646F',
-        borderRadius: 9999,
-        justifyContent: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        marginTop: 32,
 
-    }
+    },
+    distanceText: {
+        fontSize: 12,
+        color: '#888',
+
+    },
+    price: {
+        fontWeight: '600',
+        color: '#097F8C',
+    },
+    perDay: {
+        color: '#999',
+        marginLeft: 5,
+    },
+
+    actions: {
+        alignItems: 'flex-end',
+        gap: 20,
+    },
 
 
 
+    itemImage: {
+        width: 160,
+        height: 160,
+        borderRadius: 10,
+        backgroundColor: 'white',
 
-
+    },
 });

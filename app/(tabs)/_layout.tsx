@@ -52,6 +52,8 @@ export default function TabLayout() {
                 tabBarIcon: ({ color }) => <MaterialIcons name="account-circle" size={28} color={color} />,
             }}
         />
+
+
     </Tabs>
   );
 }
