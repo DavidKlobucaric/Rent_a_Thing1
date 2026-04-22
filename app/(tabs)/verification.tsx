@@ -89,7 +89,7 @@ export default function VerificationScreen({ navigation, route }: any) {
 
     return (
         <SafeAreaView style={styles.MainPage}>
-            <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+
 
 
                 <View style={styles.titleContainer}>
@@ -191,7 +191,7 @@ export default function VerificationScreen({ navigation, route }: any) {
                     </View>
                 </View>
 
-            </ScrollView>
+
         </SafeAreaView>
     );
 }
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
         marginVertical: 10,
     },
     codeInput: {
-        width: 50,
+        width:"15%",
         height: 60,
         borderRadius: 16,
         borderWidth: 2,

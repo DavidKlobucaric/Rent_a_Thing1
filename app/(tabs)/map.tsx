@@ -3,12 +3,12 @@ import {
     StyleSheet, View, Text, TextInput, TouchableOpacity,
     ActivityIndicator, Keyboard, ScrollView, SafeAreaView,
 } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import Mapbox, { MapView, Camera, PointAnnotation } from '@rnmapbox/maps';
 import { Fontisto, Ionicons } from "@expo/vector-icons";
 
+Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '');
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
-
 
 interface Coordinate {
     latitude: number;
@@ -17,46 +17,38 @@ interface Coordinate {
 
 export default function MapScreen() {
 
-    const mapRef = useRef<MapView>(null);
+    const cameraRef = useRef<Camera>(null);
     const [searchText, setSearchText] = useState('');
     const [loading, setLoading] = useState(false);
-
     const [markerCoordinate, setMarkerCoordinate] = useState<Coordinate | null>(null);
     const [markerTitle, setMarkerTitle] = useState('');
+    const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
     const performSearch = async () => {
         if (!searchText.trim()) return;
-
         Keyboard.dismiss();
         setLoading(true);
 
         try {
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchText)}&limit=1`,
-                {
-                    headers: {
-                        'User-Agent': 'MyReactNativeApp/1.0 (your@email.com)'
-                    }
-                }
+                { headers: { 'User-Agent': 'MyReactNativeApp/1.0 (your@email.com)' } }
             );
             const data = await response.json();
 
             if (data?.length > 0) {
                 const { lat, lon, display_name } = data[0];
                 const shortName = display_name.split(',')[0];
+                const latitude = parseFloat(lat);
+                const longitude = parseFloat(lon);
 
-                const newRegion = {
-                    latitude: parseFloat(lat),
-                    longitude: parseFloat(lon),
-                    latitudeDelta: 0.09,
-                    longitudeDelta: 0.0421,
-                };
-
-                mapRef.current?.animateToRegion(newRegion, 1000);
-                setMarkerCoordinate({
-                    latitude: parseFloat(lat),
-                    longitude: parseFloat(lon),
+                cameraRef.current?.setCamera({
+                    centerCoordinate: [longitude, latitude],
+                    zoomLevel: 13,
+                    animationDuration: 1000,
                 });
+
+                setMarkerCoordinate({ latitude, longitude });
                 setMarkerTitle(shortName);
                 setSearchText(shortName);
             } else {
@@ -76,9 +68,6 @@ export default function MapScreen() {
         setMarkerTitle('');
     };
 
-    const [activeCategory, setActiveCategory] = useState<string | null>(null);
-
-    // Fix 3: explicit string type on parameter
     const handleCategorySelect = (categoryName: string) => {
         setActiveCategory(prev => prev === categoryName ? null : categoryName);
     };
@@ -88,25 +77,30 @@ export default function MapScreen() {
 
             {/* MAPA */}
             <MapView
-                ref={mapRef}
                 style={styles.map}
-                initialRegion={{
-                    latitude: 45.8150,
-                    longitude: 15.9819,
-                    latitudeDelta: 0.05,
-                    longitudeDelta: 0.05,
-                }}
-                scrollEnabled
-                zoomEnabled
-                rotateEnabled
-                pitchEnabled
-                showsUserLocation
+                scrollEnabled={true}
+                zoomEnabled={true}
+                rotateEnabled={true}
+                pitchEnabled={true}
+                logoEnabled={false}
+                attributionEnabled={false}
             >
+                <Camera
+                    ref={cameraRef}
+                    centerCoordinate={[15.9819, 45.8150]}
+                    zoomLevel={12}
+                />
+
                 {markerCoordinate && (
-                    <Marker
-                        coordinate={markerCoordinate}
+                    <PointAnnotation
+                        id="searched-location"
+                        coordinate={[markerCoordinate.longitude, markerCoordinate.latitude]}
                         title={markerTitle}
-                    />
+                    >
+                        <View style={styles.marker}>
+                            <View style={styles.markerDot} />
+                        </View>
+                    </PointAnnotation>
                 )}
             </MapView>
 
@@ -155,7 +149,6 @@ export default function MapScreen() {
                 style={styles.categoryContainer}
                 contentContainerStyle={styles.categoryContent}
             >
-
                 {(
                     [
                         { name: 'Tools', icon: 'hammer-outline', iconActive: 'hammer' },
@@ -166,14 +159,10 @@ export default function MapScreen() {
                     ] as { name: string; icon: IoniconName; iconActive: IoniconName }[]
                 ).map((category) => {
                     const isActive = activeCategory === category.name;
-
                     return (
                         <TouchableOpacity
                             key={category.name}
-                            style={[
-                                styles.CategoryButton,
-                                isActive && styles.CategoryButtonActive
-                            ]}
+                            style={[styles.CategoryButton, isActive && styles.CategoryButtonActive]}
                             onPress={() => handleCategorySelect(category.name)}
                         >
                             <Ionicons
@@ -181,10 +170,7 @@ export default function MapScreen() {
                                 size={20}
                                 color={isActive ? '#fff' : '#6B7280'}
                             />
-                            <Text style={[
-                                styles.categoryText,
-                                isActive && styles.categoryTextActive
-                            ]}>
+                            <Text style={[styles.categoryText, isActive && styles.categoryTextActive]}>
                                 {category.name}
                             </Text>
                         </TouchableOpacity>
@@ -197,7 +183,6 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-
     container: {
         flex: 1,
         backgroundColor: '#f5f5f5',
@@ -205,7 +190,22 @@ const styles = StyleSheet.create({
     map: {
         flex: 1,
     },
-
+    marker: {
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: 'rgba(9,127,140,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    markerDot: {
+        width: 14,
+        height: 14,
+        borderRadius: 7,
+        backgroundColor: '#097F8C',
+        borderWidth: 2,
+        borderColor: '#fff',
+    },
     searchContainer: {
         position: 'absolute',
         top: 50,
@@ -253,7 +253,6 @@ const styles = StyleSheet.create({
     buttonDisabled: {
         opacity: 0.7,
     },
-
     categoryContainer: {
         position: 'absolute',
         top: 115,
