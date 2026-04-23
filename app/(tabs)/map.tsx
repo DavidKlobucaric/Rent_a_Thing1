@@ -5,9 +5,7 @@ import {
 } from 'react-native';
 
 
-import{
-    SafeAreaView
-}from 'react-native-safe-area-context';
+
 
 import Mapbox, { MapView, Camera, PointAnnotation } from '@rnmapbox/maps';
 import { Fontisto, Ionicons } from "@expo/vector-icons";
@@ -79,7 +77,7 @@ export default function MapScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
 
             {/* MAPA */}
             <MapView
@@ -90,6 +88,7 @@ export default function MapScreen() {
                 pitchEnabled={true}
                 logoEnabled={false}
                 attributionEnabled={false}
+                scaleBarEnabled={false}
             >
                 <Camera
                     ref={cameraRef}
@@ -184,14 +183,14 @@ export default function MapScreen() {
                 })}
             </ScrollView>
 
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#F8F9FA',
     },
     map: {
         flex: 1,

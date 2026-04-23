@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     },
     TitleText:{
         fontSize: 32,
-        fontWeight: "600",
+        fontWeight: "500",
         letterSpacing: -0.5,
         paddingTop:15
     },

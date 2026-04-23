@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
         color: "#3E4949"
     },
     TextTitle:{
-        fontWeight: "600",
+        fontWeight: "500",
         fontSize: 32,
         letterSpacing: -0.5,
         paddingTop:15
