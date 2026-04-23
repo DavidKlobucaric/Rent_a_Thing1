@@ -1,8 +1,14 @@
 import React, { useState, useRef } from 'react';
 import {
     StyleSheet, View, Text, TextInput, TouchableOpacity,
-    ActivityIndicator, Keyboard, ScrollView, SafeAreaView,
+    ActivityIndicator, Keyboard, ScrollView,
 } from 'react-native';
+
+
+import{
+    SafeAreaView
+}from 'react-native-safe-area-context';
+
 import Mapbox, { MapView, Camera, PointAnnotation } from '@rnmapbox/maps';
 import { Fontisto, Ionicons } from "@expo/vector-icons";
 

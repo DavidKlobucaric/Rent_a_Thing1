@@ -10,10 +10,13 @@ import {
     TouchableOpacity,
     StyleSheet,
     Image,
-    SafeAreaView,
+
 
 } from 'react-native';
 
+import{
+    SafeAreaView
+}from 'react-native-safe-area-context';
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
@@ -147,7 +150,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        paddingTop: 45,
+        paddingTop: 0,
         paddingBottom: 10,
     },
     TextStyle:{

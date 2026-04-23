@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Fontisto, Ionicons} from '@expo/vector-icons';
-import {Link, Redirect} from "expo-router";
+
 
 
 const ALL_ITEMS = [

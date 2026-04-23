@@ -11,7 +11,7 @@ import {
     Platform,
 } from 'react-native';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import ScrollView = Animated.ScrollView;
+
 
 export default function VerificationScreen({ navigation, route }: any) {
     const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -94,15 +94,15 @@ export default function VerificationScreen({ navigation, route }: any) {
 
                 <View style={styles.titleContainer}>
                     <View style={styles.verificationIcon}>
-                        <MaterialIcons name="verified-user" size={40} color="#614D9B" />
+                        <MaterialIcons name="verified-user" size={40} color="#3E4949" />
                     </View>
-                    <Text style={{fontSize: 32, fontWeight: "bold", marginTop: 20}}>Verify Your Account</Text>
+                    <Text style={{fontSize: 32, fontWeight: "500", marginTop: 20}}>Verify Your Account</Text>
                 </View>
 
                 <View style={styles.textContainer}>
                     <Text style={styles.TextStyle}>
                         We sent a 6-digit code to{'\n'}
-                        <Text style={{fontWeight: "600", color: "#1F2937"}}>{email}</Text>
+                        <Text style={{fontWeight: "500", color: "#1F2937"}}>{email}</Text>
                     </Text>
                 </View>
 
@@ -115,7 +115,7 @@ export default function VerificationScreen({ navigation, route }: any) {
                                 ref={ref => inputRefs.current[index] = ref}
                                 style={[
                                     styles.codeInput,
-                                    { borderColor: digit ? '#614D9B' : '#E5E7EB' }
+                                    { borderColor: digit ? '#097F8C' : '#BDC9C8' }
                                 ]}
                                 maxLength={1}
                                 keyboardType="number-pad"
@@ -140,7 +140,7 @@ export default function VerificationScreen({ navigation, route }: any) {
                         >
                             <Text style={[
                                 styles.resendText,
-                                { color: canResend ? '#614D9B' : '#9CA3AF' }
+                                { color: canResend ? '#097F8C' : '#9CA3AF' }
                             ]}>
                                 {canResend ? 'Resend Code' : `Resend in ${formatTime(timer)}`}
                             </Text>
@@ -156,33 +156,38 @@ export default function VerificationScreen({ navigation, route }: any) {
                         onPress={handleVerify}
                         disabled={code.join('').length !== 6}
                     >
-                        <Text style={{color:"white", fontSize: 18, fontWeight: "600"}}>
+                        <Text style={{color:"white", fontSize: 18, fontWeight: "500"}}>
                             Verify Account
                         </Text>
                     </TouchableOpacity>
 
 
-                    <TouchableOpacity
-                        style={{alignItems: "center", marginTop: 16}}
-                        onPress={() => navigation?.goBack()}
-                    >
+            <View style={[styles.resendContainer,{marginBottom: 0, marginTop:30}]}>
+
                         <Text style={{fontSize: 13, color: '#6B7280'}}>
                             Wrong email?{' '}
-                            <Text style={{color: '#614D9B', fontWeight: "600"}}>
-                                Change
-                            </Text>
                         </Text>
-                    </TouchableOpacity>
+                            <TouchableOpacity
+                                style={{}}
+                                onPress={() => navigation?.goBack()}
+                            >
+                                    <Text style={{color: '#097F8C', fontWeight: "500"}}>
+                                        Change
+                                    </Text>
+                            </TouchableOpacity>
+            </View>
+
+
                 </View>
 
 
                 <View style={{alignItems:"center", marginTop: 30}}>
                     <View style={{flexDirection:"row", alignItems: "center", justifyContent: "center", gap: 80}}>
                         <View style={styles.iconCircle}>
-                            <MaterialIcons name="security" size={24} color="#614D9B" />
+                            <MaterialIcons name="security" size={24} color="#3E4949" />
                         </View>
                         <View style={styles.iconCircle}>
-                            <MaterialIcons name="timer" size={24} color="#614D9B" />
+                            <MaterialIcons name="timer" size={24} color="#3E4949" />
                         </View>
                     </View>
                     <View style={{alignItems: "center", flexDirection:"row", gap: 35, marginTop: 8}}>
@@ -204,20 +209,18 @@ const styles = StyleSheet.create({
     titleContainer: {
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: 40,
+        paddingTop: 30,
         paddingBottom: 20,
     },
     verificationIcon: {
         width: 80,
         height: 80,
-        borderRadius: 40,
+        borderRadius: 9999,
         backgroundColor: 'white',
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
     },
     TextStyle:{
         fontSize: 16,
@@ -230,17 +233,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 20,
-        paddingBottom: 24,
+        paddingBottom: 10,
     },
     card: {
-        backgroundColor: '#FFFFFF',
-        width: '90%',
-        borderRadius: 24,
+
+        width: '100%',
         padding: 24,
-        shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 5,
         alignSelf: 'center',
     },
     codeContainer: {
@@ -248,16 +246,19 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         gap: 12,
         marginVertical: 10,
+
+
     },
     codeInput: {
         width:"15%",
         height: 60,
-        borderRadius: 16,
-        borderWidth: 2,
+        borderRadius: 14,
+        borderWidth: 1,
         backgroundColor: '#F9FAFB',
         fontSize: 24,
-        fontWeight: '600',
-        color: '#1F2937',
+        fontWeight: '500',
+        color: 'black',
+
     },
     resendContainer: {
         flexDirection: 'row',
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
     },
     resendText: {
         fontSize: 14,
-        fontWeight: "600",
+        fontWeight: "500",
     },
     SignInButton: {
         width: '100%',
@@ -278,7 +279,7 @@ const styles = StyleSheet.create({
         gap: 8,
         justifyContent: "center",
         paddingVertical: 16,
-        borderRadius: 9999,
+        borderRadius: 14,
         backgroundColor: "#097F8C",
         marginTop: 8,
     },
@@ -290,9 +291,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 5,
-        shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
     }
 });
