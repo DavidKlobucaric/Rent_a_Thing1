@@ -1,5 +1,6 @@
 
 import axios from "axios";
+import { saveAuthData } from "@/src/storage/storageTokens";
 //BASE_URL -> u cmd-u upišeš ipconfig i pod IPv4 Address prepises brojke
 //                      "http://xxx.xxx.xxx.xxx:8080"   -> umjesto x-eva idu brojke
 const BASE_URL = "http://192.168.178.100:8080";
@@ -49,7 +50,7 @@ export const verifyCode = async (email, code) => {
     try {
         const response = await api.post("auth/verify", {
             email,
-            code
+            verificationCode: code
         });
         return {
             success: true,
@@ -75,11 +76,15 @@ export const loginUser = async (email, password) => {
             email,
             password
         });
+        const { token, userId, username, email: userEmail } = response.data;
+
+        await saveAuthData(token, { userId, username, email: userEmail });
 
         return {
             success: true,
-            token: response.data.token
-        };
+            token,
+            user: { userId, username, email: userEmail },
+        }
     } catch (error) {
         const message =
             error.response?.data?.message || "Login nije uspio. Molim Vas provjerite Email i/ili Password te pokušajte ponovno!";
@@ -93,9 +98,7 @@ export const loginUser = async (email, password) => {
 
 export const resendCode = async (email) => {
     try{
-        const response = await api.post('auth/resend?email=${email}', {
-            email
-        })
+        const response = await api.post('auth/resend?email=${email}')
         return {
             success: true,
             message: response.data.message || "Verifikacijski kod je poslan."
@@ -111,6 +114,3 @@ export const resendCode = async (email) => {
     }
 }
 
-//Radi na mobu
-
-//moras dodat jos da app zna da je user ulogiran.
