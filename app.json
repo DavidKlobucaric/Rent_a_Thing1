@@ -12,6 +12,10 @@
       "supportsTablet": true
     },
     "android": {
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -19,7 +23,11 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.Rent_a_Thing",
+      "config": {
+        "usesCleartextTraffic": true
+      }
     },
     "web": {
       "output": "static",
@@ -39,10 +47,17 @@
           }
         }
       ]
+
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0aa80d5e-296f-44eb-b2a8-d8e945a6c0b8"
+      }
     }
   }
 }
