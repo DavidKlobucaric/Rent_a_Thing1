@@ -126,7 +126,7 @@ export default function SignInScreen() {
 
 
                 <View style={{alignItems:"center", paddingTop: 30}}>
-                    <View style={[styles.centerContainer,{paddingTop:0, gap: 50}]}>
+                    <View style={[styles.centerContainer,{paddingTop:0, gap: 60}]}>
                         <View style={styles.iconCircle}>
                             <MaterialIcons name="shield" size={25} color="#3E4949" />
                         </View>
@@ -135,8 +135,8 @@ export default function SignInScreen() {
                         </View>
                     </View>
                     <View style={[styles.centerContainer, {gap:30,paddingTop:0}]}>
-                        <Text style={{fontSize:10}}>Secure & Private</Text>
-                        <Text style={{fontSize:10}}>Community Trust</Text>
+                        <Text style={{fontSize:11}}>Secure & Private</Text>
+                        <Text style={{fontSize:11}}>Community Trust</Text>
                     </View>
                 </View>
 

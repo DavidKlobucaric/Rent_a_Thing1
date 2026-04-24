@@ -190,9 +190,9 @@ export default function VerificationScreen({ navigation, route }: any) {
                             <MaterialIcons name="timer" size={24} color="#3E4949" />
                         </View>
                     </View>
-                    <View style={{alignItems: "center", flexDirection:"row", gap: 35, marginTop: 8}}>
-                        <Text style={{fontSize: 10, color: '#6B7280'}}>End-to-End Encrypted</Text>
-                        <Text style={{fontSize: 10, color: '#6B7280'}}>Code Expires in 10min</Text>
+                    <View style={{alignItems: "center", flexDirection:"row", gap: 30}}>
+                        <Text style={{fontSize: 11,}}>End-to-End Encrypted</Text>
+                        <Text style={{fontSize: 11,}}>Code Expires in 10min</Text>
                     </View>
                 </View>
 

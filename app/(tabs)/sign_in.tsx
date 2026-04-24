@@ -147,7 +147,7 @@ export default function SignInScreen({navigation}:any) {
             </View>
 
                 <View style={{alignItems:"center"}}>
-                        <View style={[styles.centerContainer,{ paddingTop:20, gap:50}]}>
+                        <View style={[styles.centerContainer,{ paddingTop:20, gap:60}]}>
                             <View style={styles.iconCircle}>
                                 <MaterialIcons name="shield" size={25} color="#3E4949" />
 
