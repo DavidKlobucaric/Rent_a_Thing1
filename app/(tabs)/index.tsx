@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
 
     sectionTitle: {
         marginTop: 24,
-        marginLeft:12,
+        marginLeft:20,
         marginBottom: 12,
         fontSize: 16,
         fontWeight: '700',
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
         backgroundColor: '#fff',
-        marginHorizontal: 16,
+        marginHorizontal: 20,
         marginVertical: 8,
         padding: 15,
         borderRadius: 15,
