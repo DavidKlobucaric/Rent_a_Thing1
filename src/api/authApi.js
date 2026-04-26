@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import { saveAuthData } from "@/src/storage/storageTokens";
 //BASE_URL -> u cmd-u upišeš ipconfig i pod IPv4 Address prepises brojke
@@ -25,13 +24,12 @@ export const registerUser = async (username, email, password) => {
             email,
             password
         });
-        return {
+        return { //Sve na engleski prepravit.
             success: true,
             data: response.data,
             message: response.data.message || "Verifikacijski kod poslan na Mail"
         };
     } catch (error) {
-
         const message =
             error.response?.data?.message ||
             "Registracija korisnika nije uspjela.";
@@ -54,16 +52,14 @@ export const verifyCode = async (email, code) => {
         });
         return {
             success: true,
-            token: response.data.token, //Spring bi trebao vratiti token tu ako uspije verifikacija.
+            message: response.data,
         };
     } catch (error) {
-        const message =
-            error.response?.data?.message ||
-            "Verifikacija nije uspjela. Molim Vas pokušajte ponovno!";
+
         return {
             success: false,
-            message
-        }
+            message: error.response?.data?.message || error.response?.data || "Verifikacija nije uspjela.",
+        };
     }
 };
 
@@ -98,7 +94,7 @@ export const loginUser = async (email, password) => {
 
 export const resendCode = async (email) => {
     try{
-        const response = await api.post('auth/resend?email=${email}')
+        const response = await api.post(`auth/resend?email=${encodeURIComponent(email)}`)
         return {
             success: true,
             message: response.data.message || "Verifikacijski kod je poslan."

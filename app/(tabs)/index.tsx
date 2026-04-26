@@ -1,91 +1,13 @@
-import {Image} from 'expo-image';
-import React, {useState} from 'react';
+import { Image } from 'expo-image';
+import React, { useState, useEffect } from 'react';
 import {
-    StyleSheet,
-    Text,
-    View,
-    TextInput,
-    ScrollView,
-    TouchableOpacity,
-    FlatList
+    StyleSheet, Text, View, TextInput,
+    ScrollView, TouchableOpacity, FlatList, ActivityIndicator,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {Fontisto, Ionicons} from '@expo/vector-icons';
-
-
-
-const ALL_ITEMS = [
-    {
-        id: 1,
-        name: 'Hammer',
-        category: 'tools',
-        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
-        price: 12
-    },
-    {
-        id: 2,
-        name: 'Screwdriver set',
-        category: 'tools',
-        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
-        price: 13
-    },
-    {
-        id: 3,
-        name: 'Power drill',
-        category: 'tools',
-        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
-        price: 11
-    },
-    {
-        id: 4,
-        name: 'Tent',
-        category: 'camping',
-        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
-        price: 12
-    },
-    {
-        id: 5,
-        name: 'Sleeping bag',
-        category: 'camping',
-        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
-        price: 14
-    },
-    {
-        id: 6,
-        name: 'Laptop',
-        category: 'tech',
-        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
-        price: 17
-    },
-    {
-        id: 7,
-        name: 'Camera',
-        category: 'tech',
-        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
-        price: 16
-    },
-    {
-        id: 8,
-        name: 'Chess set',
-        category: 'games',
-        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
-        price: 13
-    },
-    {
-        id: 9,
-        name: 'Football',
-        category: 'sports',
-        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
-        price: 12
-    },
-    {
-        id: 10,
-        name: 'T-shirt',
-        category: 'clothes',
-        image: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
-        price: 18
-    },
-];
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Fontisto, Ionicons } from '@expo/vector-icons';
+import { searchListings, getRecommendedListings } from '@/src/api/itemsApi';
+import { useAuth } from '@/src/context/authContext';
 
 type Category = {
     id: string;
@@ -95,77 +17,96 @@ type Category = {
 };
 
 const CATEGORIES: Category[] = [
-    {
-        id: 'tools',
-        label: 'TOOLS',
-        activeIcon: 'construct',
-        inactiveIcon: 'construct-outline',
-    },
-    {
-        id: 'camping',
-        label: 'CAMPING',
-        activeIcon: 'bonfire',
-        inactiveIcon: 'bonfire-outline',
-    },
-    {
-        id: 'tech',
-        label: 'TECH',
-        activeIcon: 'laptop',
-        inactiveIcon: 'laptop-outline',
-    },
-    {
-        id: 'games',
-        label: 'GAMES',
-        activeIcon: 'game-controller',
-        inactiveIcon: 'game-controller-outline',
-    },
-    {
-        id: 'sports',
-        label: 'SPORTS',
-        activeIcon: 'football',
-        inactiveIcon: 'football-outline',
-    },
-    {
-        id: 'clothes',
-        label: 'CLOTHES',
-        activeIcon: 'shirt',
-        inactiveIcon: 'shirt-outline',
-    },
+    { id: 'tools',   label: 'TOOLS',   activeIcon: 'construct',       inactiveIcon: 'construct-outline' },
+    { id: 'camping', label: 'CAMPING', activeIcon: 'bonfire',         inactiveIcon: 'bonfire-outline' },
+    { id: 'tech',    label: 'TECH',    activeIcon: 'laptop',          inactiveIcon: 'laptop-outline' },
+    { id: 'games',   label: 'GAMES',   activeIcon: 'game-controller', inactiveIcon: 'game-controller-outline' },
+    { id: 'sports',  label: 'SPORTS',  activeIcon: 'football',        inactiveIcon: 'football-outline' },
+    { id: 'clothes', label: 'CLOTHES', activeIcon: 'shirt',           inactiveIcon: 'shirt-outline' },
 ];
 
-const NEARBY_ITEMS = [
-    {id: 1, name: 'Bosch Power Drill', distance: '0.8 km away', price: 12},
-    {id: 2, name: 'Epson Projector', distance: '1.2 km away', price: 30},
-    {id: 3, name: 'Karcher K5 Washer', distance: '2.5 km away', price: 18},
-];
+const PLACEHOLDER_IMAGE = 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png';
 
+type Listing = {
+    listingId: number;
+    price: number;
+    location: string;
+    isAvailable: boolean;
+    name: string;
+    category: string;
+    description: string;
+    imageUrls: string;
+    userName: string;
+};
 
 export default function HomeScreen() {
-    const [searchText, setSearchText] = useState('');
+    const { token } = useAuth();
+
+    const [searchText, setSearchText]         = useState('');
     const [activeCategory, setActiveCategory] = useState('tools');
-    const [favorites, setFavorites] = useState<number[]>([]);
+    const [favorites, setFavorites]           = useState<number[]>([]);
+
+    const [searchResults, setSearchResults]   = useState<Listing[]>([]);
+    const [searchLoading, setSearchLoading]   = useState(false);
+    const [searchError, setSearchError]       = useState('');
+
+    const [recommended, setRecommended]       = useState<Listing[]>([]);
+    const [recLoading, setRecLoading]         = useState(true);
+
+    // Reload recommended whenever the token changes (e.g. after login)
+    useEffect(() => {
+        (async () => {
+            setRecLoading(true);
+            const result = await getRecommendedListings();
+            if (result.success) {
+                setRecommended(Array.isArray(result.data) ? result.data : []);
+            }
+            setRecLoading(false);
+        })();
+    }, [token]); // ← re-runs when user logs in or out
+
+    // Search whenever text or category changes (debounced 400ms)
+    useEffect(() => {
+        const query = searchText.trim() || activeCategory;
+        const timeout = setTimeout(async () => {
+            setSearchLoading(true);
+            setSearchError('');
+            const result = await searchListings(query);
+            if (result.success) {
+                const data = Array.isArray(result.data) ? result.data : [];
+                const filtered = searchText.trim()
+                    ? data
+                    : data.filter(
+                        (item: Listing) =>
+                            item.category?.toLowerCase() === activeCategory.toLowerCase()
+                    );
+                setSearchResults(filtered);
+            } else {
+                setSearchError(result.message);
+                setSearchResults([]);
+            }
+            setSearchLoading(false);
+        }, 400);
+        return () => clearTimeout(timeout);
+    }, [searchText, activeCategory]);
 
     const toggleFavorite = (id: number) => {
-        setFavorites(prev =>
-            prev.includes(id)
-                ? prev.filter(f => f !== id)
-                : [...prev, id]
-        );
+        setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
     };
 
-    const filteredData = ALL_ITEMS.filter(item =>
-        item.category === activeCategory &&
-        item.name.toLowerCase().includes(searchText.toLowerCase())
-    );
+    const getFirstImage = (imageUrls: string) => {
+        if (!imageUrls) return PLACEHOLDER_IMAGE;
+        const first = imageUrls.split(',')[0].trim();
+        return first || PLACEHOLDER_IMAGE;
+    };
 
-     return (
-
+    return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
             <ScrollView showsVerticalScrollIndicator={false}>
-                {/*-------------------------------- SEARCH BAR --------------------------------*/}
 
+                {/* SEARCH BAR */}
                 <View style={styles.searchBar}>
-                    <Fontisto name="search" style={styles.searchIcon}/>
+                    <Fontisto name="search" style={styles.searchIcon} />
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Search..."
@@ -180,13 +121,12 @@ export default function HomeScreen() {
                     )}
                 </View>
 
-                {/*-------------------------------- CATEGORY TABS --------------------------------*/}
-
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.tabsContainer}
-                            nestedScrollEnabled={true}
-
-
+                {/* CATEGORY TABS */}
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.tabsContainer}
+                    nestedScrollEnabled={true}
                 >
                     {CATEGORIES.map((cat) => {
                         const isActive = activeCategory === cat.id;
@@ -194,26 +134,16 @@ export default function HomeScreen() {
                             <TouchableOpacity
                                 key={cat.id}
                                 style={styles.tab}
-                                onPress={() => {
-                                    setActiveCategory(cat.id);
-                                    setSearchText('');
-                                }}
+                                onPress={() => { setActiveCategory(cat.id); setSearchText(''); }}
                             >
-                                <View style={[
-                                    styles.iconCircle,
-                                    isActive && styles.iconCircleActive
-                                ]}>
+                                <View style={[styles.iconCircle, isActive && styles.iconCircleActive]}>
                                     <Ionicons
                                         name={isActive ? cat.activeIcon : cat.inactiveIcon}
                                         size={24}
                                         color={isActive ? '#fff' : '#6B7280'}
                                     />
                                 </View>
-
-                                <Text style={[
-                                    styles.tabLabel,
-                                    isActive && styles.tabLabelActive
-                                ]}>
+                                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                                     {cat.label}
                                 </Text>
                             </TouchableOpacity>
@@ -221,79 +151,85 @@ export default function HomeScreen() {
                     })}
                 </ScrollView>
 
-                {/*-------------------------------- SEARCH RESULTS --------------------------------*/}
-
+                {/* SEARCH RESULTS */}
                 <View style={styles.listContainer}>
-                    {filteredData.length === 0 ? (
+                    {searchLoading ? (
+                        <ActivityIndicator color="#097F8C" style={{ marginVertical: 16 }} />
+                    ) : searchError ? (
+                        <Text style={styles.emptyText}>{searchError}</Text>
+                    ) : searchResults.length === 0 ? (
                         <Text style={styles.emptyText}>
-                            {`Nema rezultata za "${searchText}"`}
+                            {searchText
+                                ? `Nema rezultata za "${searchText}"`
+                                : `Nema predmeta u kategoriji "${activeCategory}"`}
                         </Text>
                     ) : (
-
                         <FlatList
-                            data={filteredData}
-                            keyExtractor={(item) => item.id.toString()}
-                            scrollEnabled={true}
+                            data={searchResults}
+                            keyExtractor={(item) => item.listingId.toString()}
+                            scrollEnabled={false}
                             horizontal={true}
-                            renderItem={({item}) => (
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={{ paddingHorizontal: 10 }}
+                            renderItem={({ item }) => (
                                 <View style={styles.itemCard}>
-                                    <Image source={{uri: item.image}} style={styles.itemImage}></Image>
-                                    <Text style={styles.itemName}>{item.name}</Text>
-                                    <View style={{flexDirection: "row"}}>
+                                    <Image
+                                        source={{ uri: getFirstImage(item.imageUrls) }}
+                                        style={styles.itemImage}
+                                    />
+                                    <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                                    <Text style={styles.locationText} numberOfLines={1}>📍 {item.location}</Text>
+                                    <View style={{ flexDirection: 'row' }}>
                                         <Text style={styles.price}>${item.price}</Text>
                                         <Text style={styles.perDay}>/day</Text>
                                     </View>
-
                                 </View>
                             )}
                         />
-
                     )}
-
                 </View>
 
-                {/* -------------------------------- NEARBY SECTION -------------------------------- */}
+                {/* RECOMMENDED */}
+                <Text style={styles.sectionTitle}>Recommended for You</Text>
 
-                <Text style={styles.sectionTitle}>Nearby You</Text>
-
-                {NEARBY_ITEMS.map((item) => (
-                    <View key={item.id} style={styles.card}>
-
-                        <Image
-                            source={{uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png'}}
-                            style={styles.thumbnail}
-                        />
-
-                        <View style={styles.cardContent}>
-                            <Text style={styles.itemTitle}>{item.name}</Text>
-                            <Text style={styles.distanceText}>{item.distance}</Text>
-
-                            <View style={{flexDirection: 'row'}}>
-                                <Text style={styles.price}>${item.price}</Text>
-                                <Text style={styles.perDay}>/day</Text>
+                {recLoading ? (
+                    <ActivityIndicator color="#097F8C" style={{ marginVertical: 16 }} />
+                ) : recommended.length === 0 ? (
+                    <Text style={[styles.emptyText, { marginHorizontal: 20 }]}>
+                        Nema preporuka za sad.
+                    </Text>
+                ) : (
+                    recommended.map((item) => (
+                        <View key={item.listingId} style={styles.card}>
+                            <Image
+                                source={{ uri: getFirstImage(item.imageUrls) }}
+                                style={styles.thumbnail}
+                            />
+                            <View style={styles.cardContent}>
+                                <Text style={styles.itemTitle} numberOfLines={1}>{item.name}</Text>
+                                <Text style={styles.distanceText} numberOfLines={1}>📍 {item.location}</Text>
+                                <View style={{ flexDirection: 'row' }}>
+                                    <Text style={styles.price}>${item.price}</Text>
+                                    <Text style={styles.perDay}>/day</Text>
+                                </View>
+                            </View>
+                            <View style={styles.actions}>
+                                <TouchableOpacity onPress={() => toggleFavorite(item.listingId)}>
+                                    <Ionicons
+                                        name={favorites.includes(item.listingId) ? 'heart' : 'heart-outline'}
+                                        size={24}
+                                        color={favorites.includes(item.listingId) ? '#e74c3c' : '#ccc'}
+                                    />
+                                </TouchableOpacity>
                             </View>
                         </View>
-
-                        <View style={styles.actions}>
-                            <TouchableOpacity onPress={() => toggleFavorite(item.id)}>
-                                <Ionicons
-                                    name={favorites.includes(item.id) ? 'heart' : 'heart-outline'}
-                                    size={24}
-                                    color={favorites.includes(item.id) ? '#e74c3c' : '#ccc'}
-                                />
-                            </TouchableOpacity>
-
-
-                        </View>
-
-                    </View>
-                ))}
+                    ))
+                )}
 
             </ScrollView>
         </SafeAreaView>
-);
+    );
 }
-
 
 const styles = StyleSheet.create({
     container: {
@@ -329,6 +265,8 @@ const styles = StyleSheet.create({
     clearBtn: {
         color: '#999',
     },
+
+    locationText: { fontSize: 12, color: '#888', paddingTop: 2 },
 
     tabsContainer: {
         paddingHorizontal: 10,

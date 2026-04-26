@@ -1,24 +1,25 @@
 import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet,
-    Image,
-    Modal,
-    ScrollView,
+    View, Text, TextInput, TouchableOpacity,
+    StyleSheet, Image, Modal, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import React, { useState } from "react";
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import React, { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import { uploadImages, createThing, createListing } from '@/src/api/itemsApi';
 
 export default function AddScreen() {
-
     const categories = ['Tools', 'Camping', 'Tech', 'Games', 'Sports', 'Clothes'];
+
+    const [title, setTitle]                     = useState('');
     const [selectedCategory, setSelectedCategory] = useState('Tools');
-    const [modalVisible, setModalVisible] = useState(false);
-    const [images, setImages] = useState<string[]>([]);
+    const [description, setDescription]         = useState('');
+    const [dailyRate, setDailyRate]             = useState('');
+    const [securityDeposit, setSecurityDeposit] = useState('');
+    const [location, setLocation]               = useState('');
+    const [images, setImages]                   = useState<string[]>([]);
+    const [modalVisible, setModalVisible]       = useState(false);
+    const [publishing, setPublishing]           = useState(false);
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -26,13 +27,77 @@ export default function AddScreen() {
             quality: 0.8,
         });
         if (!result.canceled) {
-            const uris = result.assets.map(a => a.uri);
-            setImages(prev => [...prev, ...uris]);
+            setImages(prev => [...prev, ...result.assets.map(a => a.uri)]);
         }
     };
 
     const removeImage = (index: number) => {
         setImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handlePublish = async () => {
+
+        if (!title.trim()) {
+            Alert.alert('Missing info', 'Please enter an item title.');
+            return;
+        }
+        if (!dailyRate || isNaN(Number(dailyRate))) {
+            Alert.alert('Missing info', 'Please enter a valid daily rate.');
+            return;
+        }
+        if (!location.trim()) {
+            Alert.alert('Missing info', 'Please enter a location.');
+            return;
+        }
+
+        setPublishing(true);
+        try {
+            let imageUrlsCsv = '';
+            if (images.length > 0) {
+                const uploadResult = await uploadImages(images);
+                if (!uploadResult.success) {
+                    Alert.alert('Upload failed', uploadResult.message);
+                    return;
+                }
+                imageUrlsCsv = uploadResult.urls.join(',');
+            }
+
+            const thingPayload = {
+                name: title.trim(),
+                category: selectedCategory.toLowerCase(),
+                description: description.trim(),
+                imageUrls: imageUrlsCsv,
+            };
+            const thingResult = await createThing(thingPayload);
+
+            if (!thingResult.success) {
+                Alert.alert('Error', thingResult.message);
+                return;
+            }
+
+            const listingPayload = {
+                thingId: thingResult.data.thingId,
+                price: Number(dailyRate),
+                securityDeposit: securityDeposit ? Number(securityDeposit) : 0,
+                location: location.trim(),
+            };
+            const listingResult = await createListing(listingPayload);
+
+            if (!listingResult.success) {
+                Alert.alert('Error', listingResult.message);
+                return;
+            }
+
+            Alert.alert('Uspješno! 🎉', 'Vaš predmet je objavljen i vidljiv zajednici.');
+            setTitle(''); setDescription(''); setDailyRate('');
+            setSecurityDeposit(''); setLocation(''); setImages([]);
+            setSelectedCategory('Tools');
+
+        } catch (e: any) {
+            Alert.alert('Error', 'Something went wrong: ' + e?.message);
+        } finally {
+            setPublishing(false);
+        }
     };
 
     return (
@@ -41,9 +106,7 @@ export default function AddScreen() {
                 showsVerticalScrollIndicator={false}
                 nestedScrollEnabled={true}
                 contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 20 }}
-
             >
-
                 <View style={{ paddingTop: 10 }}>
                     <Text style={styles.titleText}>List your thing</Text>
                     <Text style={styles.bodyText}>Share your items with the community and start earning.</Text>
@@ -55,16 +118,20 @@ export default function AddScreen() {
                     <Text style={styles.sectionTitle}>Basic info</Text>
                 </View>
 
-
                 <View style={{ paddingTop: 20 }}>
                     <Text style={styles.smallText}>ITEM TITLE</Text>
-                    <TextInput style={styles.input} placeholder="e.g. Bosch Drill" placeholderTextColor="#9CA3AF" />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="e.g. Bosch Drill"
+                        placeholderTextColor="#9CA3AF"
+                        value={title}
+                        onChangeText={setTitle}
+                    />
                     <View style={styles.hint}>
                         <MaterialIcons name="lightbulb-outline" size={14} color="#097F8C" />
                         <Text style={styles.hintText}>Titles with brands often get 20% more clicks.</Text>
                     </View>
                 </View>
-
 
                 <View style={{ paddingTop: 20 }}>
                     <Text style={styles.smallText}>CATEGORY</Text>
@@ -79,10 +146,7 @@ export default function AddScreen() {
                                     <TouchableOpacity
                                         key={cat}
                                         style={styles.modalItem}
-                                        onPress={() => {
-                                            setSelectedCategory(cat);
-                                            setModalVisible(false);
-                                        }}
+                                        onPress={() => { setSelectedCategory(cat); setModalVisible(false); }}
                                     >
                                         <Text style={styles.modalItemText}>{cat}</Text>
                                     </TouchableOpacity>
@@ -91,7 +155,6 @@ export default function AddScreen() {
                         </TouchableOpacity>
                     </Modal>
                 </View>
-
 
                 <View style={{ paddingTop: 20 }}>
                     <Text style={styles.smallText}>DESCRIPTION</Text>
@@ -102,6 +165,8 @@ export default function AddScreen() {
                         placeholder="Describe your item..."
                         placeholderTextColor="#9CA3AF"
                         textAlignVertical="top"
+                        value={description}
+                        onChangeText={setDescription}
                     />
                 </View>
 
@@ -136,15 +201,13 @@ export default function AddScreen() {
                     <Text style={styles.hintText}>High-quality daylight photos perform best.</Text>
                 </View>
 
-
                 {/* PRICING */}
                 <View style={styles.sectionHeader}>
                     <MaterialIcons name="monetization-on" size={24} color="#097F8C" />
                     <Text style={styles.sectionTitle}>Pricing</Text>
                 </View>
 
-                <View style={{ flexDirection: 'row', gap: 30, paddingTop: 20, }}>
-
+                <View style={{ flexDirection: 'row', gap: 30, paddingTop: 20 }}>
                     <View style={{ flex: 1 }}>
                         <Text style={styles.smallText}>Daily Rate</Text>
                         <View style={styles.priceInputContainer}>
@@ -154,10 +217,11 @@ export default function AddScreen() {
                                 placeholder="0"
                                 placeholderTextColor="#9CA3AF"
                                 keyboardType="number-pad"
+                                value={dailyRate}
+                                onChangeText={setDailyRate}
                             />
                         </View>
                     </View>
-
                     <View style={{ flex: 1 }}>
                         <Text style={styles.smallText}>Security Deposit</Text>
                         <View style={styles.priceInputContainer}>
@@ -167,17 +231,17 @@ export default function AddScreen() {
                                 placeholder="0"
                                 placeholderTextColor="#9CA3AF"
                                 keyboardType="number-pad"
+                                value={securityDeposit}
+                                onChangeText={setSecurityDeposit}
                             />
                         </View>
                     </View>
-
                 </View>
 
                 <View style={styles.hint}>
                     <MaterialIcons name="lightbulb-outline" size={14} color="#097F8C" />
                     <Text style={styles.hintText}>Deposit is returned after the item is safely returned.</Text>
                 </View>
-
 
                 {/* LOCATION */}
                 <View style={styles.sectionHeader}>
@@ -186,23 +250,37 @@ export default function AddScreen() {
                 </View>
 
                 <View style={{ paddingTop: 10 }}>
-                    <TextInput style={styles.input} placeholder="e.g. Zagreb" placeholderTextColor="#9CA3AF" />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="e.g. Zagreb"
+                        placeholderTextColor="#9CA3AF"
+                        value={location}
+                        onChangeText={setLocation}
+                    />
                     <View style={styles.hint}>
                         <MaterialIcons name="lock" size={14} color="#097F8C" />
-                        <Text style={styles.hintText}>Your exact address is only shared after a booking is confirmed. </Text>
+                        <Text style={styles.hintText}>Your exact address is only shared after a booking is confirmed.</Text>
                     </View>
                 </View>
 
-
-                <TouchableOpacity style={styles.buttonPublish}>
-                    <Text style={{color:"white", fontWeight:"500",fontSize:15}}> Publish Listing</Text>
-                    <MaterialIcons name="rocket-launch" size={15} color="white" />
+                <TouchableOpacity
+                    style={[styles.buttonPublish, publishing && { opacity: 0.7 }]}
+                    onPress={handlePublish}
+                    disabled={publishing}
+                >
+                    {publishing
+                        ? <ActivityIndicator color="white" />
+                        : <>
+                            <Text style={{ color: 'white', fontWeight: '500', fontSize: 15 }}>Publish Listing</Text>
+                            <MaterialIcons name="rocket-launch" size={15} color="white" />
+                        </>
+                    }
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.buttonPublish,{backgroundColor:"white",borderColor: '#BDC9C8',marginTop:20}]}>
-                    <Text style={{color:"#097F8C", fontWeight:"500",fontSize:15}}> Save as draft</Text>
-
+                <TouchableOpacity style={[styles.buttonPublish, { backgroundColor: 'white', borderColor: '#BDC9C8', marginTop: 20 }]}>
+                    <Text style={{ color: '#097F8C', fontWeight: '500', fontSize: 15 }}>Save as draft</Text>
                 </TouchableOpacity>
+
             </ScrollView>
         </SafeAreaView>
     );

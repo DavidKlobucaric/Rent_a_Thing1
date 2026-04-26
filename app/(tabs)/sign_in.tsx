@@ -11,6 +11,8 @@ import {
     TouchableOpacity,
     StyleSheet,
     Image,
+    Alert,
+    ActivityIndicator,
 } from 'react-native';
 import { useRouter } from "expo-router";
 
@@ -23,30 +25,41 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import {registerUser} from "@/src/api/authApi";
 
-export default function SignInScreen({navigation}:any) {
+export default function SignUpScreen(/*{navigation}:any*/) {
     const [agreed, setAgreed] = useState(false);
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
+
     const handleSignUp = async () => {
         if (!agreed) {
             alert("Please agree with the terms and conditions.");
             return;
         }
-        console.log("Sending request...");
+        if(!username.trim() || !email.trim() || !password.trim()){
+            Alert.alert("Missing info", "Please fill in all fields")
+        }
 
-        const register = await registerUser(username, email, password);
+        setLoading(true);
+        const result = await registerUser(username.trim(), email.trim(), password);
+        setLoading(false);
 
-        console.log("RESPONSE:", register);
-        if (register.success) {
-            alert("User registered successfully!");
-            navigation.navigate("index");
+        //const register = await registerUser(username, email, password);
+
+        console.log("RESPONSE:", result);
+        if (result.success) {
+            router.push({
+                pathname: '/(tabs)/verification',
+                params: {email: email.trim()}
+            })
+
         }
         else{
-            alert(register.message);
+            Alert.alert("Registration failed", result.message);
         }
-    }
+    };
 
     return (
 
@@ -82,7 +95,9 @@ export default function SignInScreen({navigation}:any) {
                         placeholder={"Joe@example.com"}
                         placeholderTextColor={"#9CA3AF"}
                         value={email}
-                        onChangeText={setEmail}>
+                        onChangeText={setEmail}
+                        autoCapitalize="none"
+                        keyboardType="email-address">
                     </TextInput>
 
                     <Text style={styles.SignInText}>PASSWORD</Text>
@@ -113,8 +128,15 @@ export default function SignInScreen({navigation}:any) {
 
 
 
-                <TouchableOpacity style={styles.SignInButton} onPress={handleSignUp}>
-                    <Text style={[styles.MediumText,{color:"white", fontWeight: "600"}]}> Sign Up</Text>
+                <TouchableOpacity
+                    style={styles.SignInButton}
+                    onPress={handleSignUp}
+                    disabled={loading}
+                >
+                    {loading
+                        ? <ActivityIndicator color="white" />
+                        : <Text style={[styles.MediumText,{color:"white", fontWeight: "600"}]}> Sign Up</Text>
+                    }
                 </TouchableOpacity>
 
 
@@ -140,7 +162,7 @@ export default function SignInScreen({navigation}:any) {
 
             <View style={[styles.centerContainer,{ paddingTop:5, marginTop: 30,}]}>
                 <Text style={styles.MediumText}> Already have an account?</Text>
-                <TouchableOpacity onPress={() => router.push('/log_in')}>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/log_in')}>
                     <Text style={[styles.MediumText,{color:"#097F8C", fontWeight:"600"}]}> Log In</Text>
                 </TouchableOpacity>
 

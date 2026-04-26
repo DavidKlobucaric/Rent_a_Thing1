@@ -9,17 +9,24 @@ import {
     Animated,
     Keyboard,
     Platform,
+    Alert,
+    ActivityIndicator,
 } from 'react-native';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { verifyCode, resendCode } from "@/src/api/authApi";
 
 
-export default function VerificationScreen({ navigation, route }: any) {
+export default function VerificationScreen(/*{ navigation, route }: any*/) {
     const [code, setCode] = useState(['', '', '', '', '', '']);
     const [timer, setTimer] = useState(60);
     const [canResend, setCanResend] = useState(false);
+    const [verifying, setVerifying] = useState(false);
+    const [resending, setResending] = useState(false);
     const inputRefs = useRef<(TextInput | null)[]>([]);
-    const { email = 'user@example.com' } = route?.params || {};
+    const { email = 'user@example.com' } = useLocalSearchParams<{email: string}>(); //sad koristi iz sing-ina
 
+    const router = useRouter();
 
     useEffect(() => {
         if (timer > 0) {
@@ -61,23 +68,40 @@ export default function VerificationScreen({ navigation, route }: any) {
         inputRefs.current[lastIndex]?.focus();
     };
 
-    const handleVerify = () => {
+    const handleVerify = async () => {
         const verificationCode = code.join('');
-        if (verificationCode.length === 6) {
+        if (verificationCode.length !== 6) return;
 
-            console.log('Verifying code:', verificationCode);
+        setVerifying(true);
+        const result = await verifyCode(email, verificationCode);
+        setVerifying(false);
 
+        if(result.success) {
+            Alert.alert("Account verified", "Your account has been verified. Please log in.",
+                [{ text: "Log in", onPress: () => router.replace('/(tabs)/log_in')}]
+                );
+        } else{
+            Alert.alert("Verification failed", result.message);
+            setCode(['','','','','',''])
+            inputRefs.current[0]?.focus();
         }
     };
 
-    const handleResend = () => {
-        if (canResend) {
+    const handleResend = async () => {
+        if (!canResend || resending) return
+
+        setResending(true);
+        const result = await resendCode(email);
+        setResending(false);
+
+        if(result.success){
             setTimer(60);
             setCanResend(false);
             setCode(['', '', '', '', '', '']);
-
-            console.log('Resending code to:', email);
             inputRefs.current[0]?.focus();
+            Alert.alert('Code sent', 'A new verification code has been sent to your email.')
+        } else{
+            Alert.alert('Error', result.message);
         }
     };
 
@@ -86,6 +110,8 @@ export default function VerificationScreen({ navigation, route }: any) {
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
+
+    const codeComplete = code.join('').length === 6;
 
     return (
         <SafeAreaView style={styles.MainPage}>
@@ -112,7 +138,7 @@ export default function VerificationScreen({ navigation, route }: any) {
                         {code.map((digit, index) => (
                             <TextInput
                                 key={index}
-                                ref={ref => inputRefs.current[index] = ref}
+                                ref={(ref: TextInput | null) => {inputRefs.current[index] = ref}}
                                 style={[
                                     styles.codeInput,
                                     { borderColor: digit ? '#097F8C' : '#BDC9C8' }
@@ -122,7 +148,7 @@ export default function VerificationScreen({ navigation, route }: any) {
                                 value={digit}
                                 onChangeText={(text) => handleChange(text, index)}
                                 onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
-                                onPaste={({ nativeEvent }: any) => handlePaste(nativeEvent.text)}
+                                //
                                 textAlign="center"
                                 autoFocus={index === 0}
                             />
@@ -136,14 +162,17 @@ export default function VerificationScreen({ navigation, route }: any) {
                         </Text>
                         <TouchableOpacity
                             onPress={handleResend}
-                            disabled={!canResend}
+                            disabled={!canResend || resending}
                         >
-                            <Text style={[
-                                styles.resendText,
-                                { color: canResend ? '#097F8C' : '#9CA3AF' }
-                            ]}>
-                                {canResend ? 'Resend Code' : `Resend in ${formatTime(timer)}`}
-                            </Text>
+                            {resending
+                                ? <ActivityIndicator color="#097F8C" size="small" />
+                                : <Text style={[
+                                    styles.resendText,
+                                    { color: canResend ? '#097F8C' : '#9CA3AF' }
+                                ]}>
+                                    {canResend ? 'Resend Code' : `Resend in ${formatTime(timer)}`}
+                                </Text>
+                            }
                         </TouchableOpacity>
                     </View>
 
@@ -151,14 +180,17 @@ export default function VerificationScreen({ navigation, route }: any) {
                     <TouchableOpacity
                         style={[
                             styles.SignInButton,
-                            { opacity: code.join('').length === 6 ? 1 : 0.6 }
+                            { opacity: codeComplete && !verifying ? 1 : 0.6 }
                         ]}
                         onPress={handleVerify}
-                        disabled={code.join('').length !== 6}
+                        disabled={!codeComplete || verifying}
                     >
-                        <Text style={{color:"white", fontSize: 18, fontWeight: "500"}}>
+                    {verifying
+                        ? <ActivityIndicator color="white" />
+                        : <Text style={{color:"white", fontSize: 18, fontWeight: "500"}}>
                             Verify Account
                         </Text>
+                    }
                     </TouchableOpacity>
 
 
@@ -168,8 +200,8 @@ export default function VerificationScreen({ navigation, route }: any) {
                             Wrong email?{' '}
                         </Text>
                             <TouchableOpacity
-                                style={{}}
-                                onPress={() => navigation?.goBack()}
+
+                                onPress={() => router.back()}
                             >
                                     <Text style={{color: '#097F8C', fontWeight: "500"}}>
                                         Change

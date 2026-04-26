@@ -10,8 +10,8 @@ import {
     TouchableOpacity,
     StyleSheet,
     Image,
-
-
+    Alert,
+    ActivityIndicator,
 } from 'react-native';
 
 import{
@@ -20,12 +20,35 @@ import{
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
+import { loginUser } from "@/src/api/authApi";
+import { useAuth } from "@/src/context/authContext";
 
-export default function SignInScreen() {
+export default function LogInScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const { refreshAuth } = useAuth();
+
+    const handleLogIn = async () => {
+        if(!email.trim() || !password.trim()) {
+            Alert.alert('Missing info', 'Please enter your email and password.');
+            return;
+        }
+            setLoading(true);
+            const result = await loginUser(email.trim(), password);
+            setLoading(false);
+
+            if (result.success) {
+                //sinkanje tokena s authContext
+                await refreshAuth();
+                router.replace('/(tabs)');
+            } else {
+                Alert.alert('Login failed', result.message);
+            }
+
+    };
 
     return (
         <SafeAreaView style={styles.MainPage}>
@@ -89,9 +112,14 @@ export default function SignInScreen() {
                          </View>
 
                     <TouchableOpacity
-                        style={styles.SignInButton}
+                        style={[styles.SignInButton, loading && {opacity: 0.7}]}
+                        onPress={handleLogIn}
+                        disabled={loading}
                     >
-                        <Text style={[styles.MediumText,{color:"white", fontWeight: "600"}]}>Log In</Text>
+                        {loading
+                            ? <ActivityIndicator color="white" />
+                            : <Text style={[styles.MediumText,{color:"white", fontWeight: "600"}]}>Log In</Text>
+                        }
                     </TouchableOpacity>
 
                     <View style={[styles.centerContainer,{paddingTop:0,}]}>
@@ -118,7 +146,7 @@ export default function SignInScreen() {
 
                 <View style={[styles.centerContainer,{paddingTop:25, gap:0}]}>
                     <Text style={styles.MediumText}> Don{"'"}t have an account?</Text>
-                    <TouchableOpacity onPress={() => router.push('/sign_in')}>
+                    <TouchableOpacity onPress={() => router.push('/(tabs)/sign_in')}>
                         <Text style={[styles.MediumText,{color:"#097F8C",fontWeight: "600"}]}> Sign Up</Text>
                     </TouchableOpacity>
 
