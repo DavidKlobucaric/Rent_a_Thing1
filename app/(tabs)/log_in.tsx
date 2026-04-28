@@ -206,6 +206,7 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         paddingTop: 15,
         paddingBottom: 10,
+
     },
     textContainer: {
         alignItems: 'center',
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         backgroundColor: "white",
         borderWidth: 0.5,
-        borderColor: "#E5E7EB",
+        borderColor: "#BDC9C8",
     },
     SignInButton: {
         width: '100%',

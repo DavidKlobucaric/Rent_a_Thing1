@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         backgroundColor: "white",
         borderWidth: 0.5,
-        borderColor: "#E5E7EB",
+        borderColor: "#BDC9C8",
     },
     SignInButton: {
         width: '100%',
@@ -270,6 +270,7 @@ const styles = StyleSheet.create({
         borderRadius:  14,
         backgroundColor: "#097F8C",
         marginTop: 20,
+
 
     },
     SignInTextField:{

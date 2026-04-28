@@ -36,7 +36,6 @@ export default function AddScreen() {
     };
 
     const handlePublish = async () => {
-
         if (!title.trim()) {
             Alert.alert('Missing info', 'Please enter an item title.');
             return;
@@ -105,47 +104,51 @@ export default function AddScreen() {
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 nestedScrollEnabled={true}
-                contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 20 }}
+                contentContainerStyle={styles.scrollContent}
             >
-                <View style={{ paddingTop: 10 }}>
+                {/* Header */}
+                <View style={styles.header}>
                     <Text style={styles.titleText}>List your thing</Text>
                     <Text style={styles.bodyText}>Share your items with the community and start earning.</Text>
                 </View>
 
                 {/* BASIC INFO */}
-                <View style={styles.sectionHeader}>
-                    <MaterialIcons name="info" size={24} color="#097F8C" />
-                    <Text style={styles.sectionTitle}>Basic info</Text>
-                </View>
-
-                <View style={{ paddingTop: 20 }}>
-                    <Text style={styles.smallText}>ITEM TITLE</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g. Bosch Drill"
-                        placeholderTextColor="#9CA3AF"
-                        value={title}
-                        onChangeText={setTitle}
-                    />
-                    <View style={styles.hint}>
-                        <MaterialIcons name="lightbulb-outline" size={14} color="#097F8C" />
-                        <Text style={styles.hintText}>Titles with brands often get 20% more clicks.</Text>
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <MaterialIcons name="info" size={24} color="#097F8C" />
+                        <Text style={styles.sectionTitle}>Basic info</Text>
                     </View>
-                </View>
 
-                <View style={{ paddingTop: 20 }}>
-                    <Text style={styles.smallText}>CATEGORY</Text>
-                    <TouchableOpacity style={styles.dropdownButton} onPress={() => setModalVisible(true)}>
-                        <Text style={styles.dropdownText}>{selectedCategory}</Text>
-                        <MaterialIcons name="keyboard-arrow-down" size={24} color="#6B7280" />
-                    </TouchableOpacity>
+                    <View style={styles.fieldGroup}>
+                        <Text style={styles.labelText}>ITEM TITLE</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="e.g. Bosch Drill"
+                            placeholderTextColor="#9CA3AF"
+                            value={title}
+                            onChangeText={setTitle}
+                        />
+                        <View style={styles.hint}>
+                            <MaterialIcons name="lightbulb-outline" size={14} color="#097F8C" />
+                            <Text style={styles.hintText}>Titles with brands often get 20% more clicks.</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.fieldGroup}>
+                        <Text style={styles.labelText}>CATEGORY</Text>
+                        <TouchableOpacity style={styles.dropdownButton} onPress={() => setModalVisible(true)}>
+                            <Text style={styles.dropdownText}>{selectedCategory}</Text>
+                            <MaterialIcons name="keyboard-arrow-down" size={24} color="#6B7280" />
+                        </TouchableOpacity>
+                    </View>
+
                     <Modal visible={modalVisible} transparent animationType="fade">
                         <TouchableOpacity style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
                             <View style={styles.modalContent}>
-                                {categories.map((cat) => (
+                                {categories.map((cat, index) => (
                                     <TouchableOpacity
                                         key={cat}
-                                        style={styles.modalItem}
+                                        style={[styles.modalItem, index === categories.length - 1 && styles.modalItemLast]}
                                         onPress={() => { setSelectedCategory(cat); setModalVisible(false); }}
                                     >
                                         <Text style={styles.modalItemText}>{cat}</Text>
@@ -154,132 +157,150 @@ export default function AddScreen() {
                             </View>
                         </TouchableOpacity>
                     </Modal>
-                </View>
 
-                <View style={{ paddingTop: 20 }}>
-                    <Text style={styles.smallText}>DESCRIPTION</Text>
-                    <TextInput
-                        style={styles.descriptionInput}
-                        multiline
-                        numberOfLines={4}
-                        placeholder="Describe your item..."
-                        placeholderTextColor="#9CA3AF"
-                        textAlignVertical="top"
-                        value={description}
-                        onChangeText={setDescription}
-                    />
+                    <View style={styles.fieldGroup}>
+                        <Text style={styles.labelText}>DESCRIPTION</Text>
+                        <TextInput
+                            style={styles.descriptionInput}
+                            multiline
+                            numberOfLines={4}
+                            placeholder="Describe your item..."
+                            placeholderTextColor="#9CA3AF"
+                            textAlignVertical="top"
+                            value={description}
+                            onChangeText={setDescription}
+                        />
+                    </View>
                 </View>
 
                 {/* PHOTOS */}
-                <View style={styles.sectionHeader}>
-                    <MaterialIcons name="photo-camera" size={24} color="#097F8C" />
-                    <Text style={styles.sectionTitle}>Photos</Text>
-                </View>
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <MaterialIcons name="photo-camera" size={24} color="#097F8C" />
+                        <Text style={styles.sectionTitle}>Photos</Text>
+                    </View>
 
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    nestedScrollEnabled={true}
-                    style={{ marginTop: 10, marginHorizontal: -20 }}
-                    contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}
-                >
-                    {images.map((uri, i) => (
-                        <View key={i} style={{ position: 'relative' }}>
-                            <Image source={{ uri }} style={styles.imageThumb} />
-                            <TouchableOpacity style={styles.removeButton} onPress={() => removeImage(i)}>
-                                <MaterialIcons name="close" size={14} color="white" />
-                            </TouchableOpacity>
-                        </View>
-                    ))}
-                    <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
-                        <MaterialIcons name="add-a-photo" size={28} color="#097F8C" />
-                        <Text style={styles.addImageText}>Add Photo</Text>
-                    </TouchableOpacity>
-                </ScrollView>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        nestedScrollEnabled={true}
+                        style={styles.imageScroll}
+                        contentContainerStyle={styles.imageScrollContent}
+                    >
+                        <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
+                            <MaterialIcons name="add-a-photo" size={42} color="#097F8C" />
+                            <Text style={styles.addImageText}>Add Photo</Text>
+                        </TouchableOpacity>
 
-                <View style={styles.hint}>
-                    <Text style={styles.hintText}>High-quality daylight photos perform best.</Text>
+                        {images.length === 0 && (
+                            <View style={styles.placeholderImage}>
+                                <MaterialIcons name="image" size={32} color="#9CA3AF" />
+                                <Text style={styles.placeholderText}>Preview</Text>
+                            </View>
+                        )}
+                        {images.map((uri, i) => (
+                            <View key={i} style={styles.imageWrapper}>
+                                <Image source={{ uri }} style={styles.imageThumb} />
+                                <TouchableOpacity style={styles.removeButton} onPress={() => removeImage(i)}>
+                                    <MaterialIcons name="close" size={14} color="white" />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+
+                    </ScrollView>
+
+                    <View style={styles.hint}>
+                        <MaterialIcons name="star-outline" size={14} color="#097F8C" />
+                        <Text style={styles.hintText}>High-quality daylight photos perform best.</Text>
+                    </View>
                 </View>
 
                 {/* PRICING */}
-                <View style={styles.sectionHeader}>
-                    <MaterialIcons name="monetization-on" size={24} color="#097F8C" />
-                    <Text style={styles.sectionTitle}>Pricing</Text>
-                </View>
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <MaterialIcons name="monetization-on" size={24} color="#097F8C" />
+                        <Text style={styles.sectionTitle}>Pricing</Text>
+                    </View>
 
-                <View style={{ flexDirection: 'row', gap: 30, paddingTop: 20 }}>
-                    <View style={{ flex: 1 }}>
-                        <Text style={styles.smallText}>Daily Rate</Text>
-                        <View style={styles.priceInputContainer}>
-                            <Text style={styles.currencySymbol}>$</Text>
-                            <TextInput
-                                style={styles.priceInput}
-                                placeholder="0"
-                                placeholderTextColor="#9CA3AF"
-                                keyboardType="number-pad"
-                                value={dailyRate}
-                                onChangeText={setDailyRate}
-                            />
+                    <View style={styles.pricingRow}>
+                        <View style={styles.pricingField}>
+                            <Text style={styles.labelText}>DAILY RATE</Text>
+                            <View style={styles.priceInputContainer}>
+                                <Text style={styles.currencySymbol}>$</Text>
+                                <TextInput
+                                    style={styles.priceInput}
+                                    placeholder="0"
+                                    placeholderTextColor="#9CA3AF"
+                                    keyboardType="number-pad"
+                                    value={dailyRate}
+                                    onChangeText={setDailyRate}
+                                />
+                            </View>
+                        </View>
+                        <View style={styles.pricingField}>
+                            <Text style={styles.labelText}>SECURITY DEPOSIT</Text>
+                            <View style={styles.priceInputContainer}>
+                                <Text style={styles.currencySymbol}>$</Text>
+                                <TextInput
+                                    style={styles.priceInput}
+                                    placeholder="0"
+                                    placeholderTextColor="#9CA3AF"
+                                    keyboardType="number-pad"
+                                    value={securityDeposit}
+                                    onChangeText={setSecurityDeposit}
+                                />
+                            </View>
                         </View>
                     </View>
-                    <View style={{ flex: 1 }}>
-                        <Text style={styles.smallText}>Security Deposit</Text>
-                        <View style={styles.priceInputContainer}>
-                            <Text style={styles.currencySymbol}>$</Text>
-                            <TextInput
-                                style={styles.priceInput}
-                                placeholder="0"
-                                placeholderTextColor="#9CA3AF"
-                                keyboardType="number-pad"
-                                value={securityDeposit}
-                                onChangeText={setSecurityDeposit}
-                            />
-                        </View>
-                    </View>
-                </View>
 
-                <View style={styles.hint}>
-                    <MaterialIcons name="lightbulb-outline" size={14} color="#097F8C" />
-                    <Text style={styles.hintText}>Deposit is returned after the item is safely returned.</Text>
+                    <View style={styles.hint}>
+                        <MaterialIcons name="lightbulb-outline" size={14} color="#097F8C" />
+                        <Text style={styles.hintText}>Deposit is returned after the item is safely returned.</Text>
+                    </View>
                 </View>
 
                 {/* LOCATION */}
-                <View style={styles.sectionHeader}>
-                    <MaterialIcons name="location-pin" size={24} color="#097F8C" />
-                    <Text style={styles.sectionTitle}>Location</Text>
-                </View>
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <MaterialIcons name="location-pin" size={24} color="#097F8C" />
+                        <Text style={styles.sectionTitle}>Location</Text>
+                    </View>
 
-                <View style={{ paddingTop: 10 }}>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g. Zagreb"
-                        placeholderTextColor="#9CA3AF"
-                        value={location}
-                        onChangeText={setLocation}
-                    />
-                    <View style={styles.hint}>
-                        <MaterialIcons name="lock" size={14} color="#097F8C" />
-                        <Text style={styles.hintText}>Your exact address is only shared after a booking is confirmed.</Text>
+                    <View style={styles.fieldGroup}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="e.g. Zagreb"
+                            placeholderTextColor="#9CA3AF"
+                            value={location}
+                            onChangeText={setLocation}
+                        />
+                        <View style={styles.hint}>
+                            <MaterialIcons name="lock-outline" size={14} color="#097F8C" />
+                            <Text style={styles.hintText}>Your exact address is only shared after a booking is confirmed.</Text>
+                        </View>
                     </View>
                 </View>
 
-                <TouchableOpacity
-                    style={[styles.buttonPublish, publishing && { opacity: 0.7 }]}
-                    onPress={handlePublish}
-                    disabled={publishing}
-                >
-                    {publishing
-                        ? <ActivityIndicator color="white" />
-                        : <>
-                            <Text style={{ color: 'white', fontWeight: '500', fontSize: 15 }}>Publish Listing</Text>
-                            <MaterialIcons name="rocket-launch" size={15} color="white" />
-                        </>
-                    }
-                </TouchableOpacity>
+                {/* ACTIONS */}
+                <View style={styles.actions}>
+                    <TouchableOpacity
+                        style={[styles.publishButton, publishing && { opacity: 0.7 }]}
+                        onPress={handlePublish}
+                        disabled={publishing}
+                    >
+                        {publishing
+                            ? <ActivityIndicator color="white" />
+                            : <>
+                                <Text style={styles.publishButtonText}>Publish Listing</Text>
+                                <MaterialIcons name="rocket-launch" size={15} color="white" />
+                            </>
+                        }
+                    </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.buttonPublish, { backgroundColor: 'white', borderColor: '#BDC9C8', marginTop: 20 }]}>
-                    <Text style={{ color: '#097F8C', fontWeight: '500', fontSize: 15 }}>Save as draft</Text>
-                </TouchableOpacity>
+                    <TouchableOpacity style={[styles.publishButton, styles.draftButton]}>
+                        <Text style={[styles.publishButtonText, { color: '#097F8C' }]}>Save as draft</Text>
+                    </TouchableOpacity>
+                </View>
 
             </ScrollView>
         </SafeAreaView>
@@ -291,73 +312,94 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F8F9FA',
     },
+    scrollContent: {
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        paddingBottom: 32,
+    },
+
+
+    header: {
+        paddingTop: 8,
+        paddingBottom: 8,
+        alignItems: 'center',
+    },
     titleText: {
-        fontSize: 26,
-        fontWeight: '600',
+        fontSize: 32,
+        fontWeight: '500',
+        letterSpacing: -0.5,
+        textAlign: 'center',
+        color: '#1F2937',
     },
     bodyText: {
-        fontSize: 16,
+        fontSize: 15,
+        fontWeight: '400',
         paddingTop: 6,
-        color: '#6B7280',
+        color: '#3E4949',
+        textAlign: 'center',
+        lineHeight: 22,
+    },
+
+
+    section: {
+        paddingTop: 24,
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingTop: 20,
         gap: 8,
+        paddingBottom: 12,
     },
     sectionTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '600',
+        color: '#1F2937',
     },
-    smallText: {
-        fontSize: 15,
+
+
+    fieldGroup: {
+        paddingTop: 4,
+        paddingBottom: 8,
+    },
+    labelText: {
+        fontSize: 12,
+        fontWeight: '600',
         color: '#374151',
-        fontWeight: '500',
+        paddingBottom: 8,
+        letterSpacing: 0.3,
     },
-    hint: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingTop: 8,
-        gap: 5,
-    },
-    hintText: {
-        fontStyle: 'italic',
-        fontSize: 13,
-        color: '#6B7280',
-    },
+
+
     input: {
         width: '100%',
-        marginTop: 8,
+        paddingVertical: 12,
         paddingHorizontal: 16,
-        paddingVertical: 14,
         borderRadius: 14,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#FFFFFF',
         borderWidth: 0.5,
         borderColor: '#BDC9C8',
-        fontSize: 16,
-        color: 'black',
+        fontSize: 14,
+        color: '#1F2937',
     },
     descriptionInput: {
         width: '100%',
-        marginTop: 8,
+        paddingVertical: 12,
         paddingHorizontal: 16,
-        paddingTop: 14,
         borderRadius: 14,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#FFFFFF',
         borderWidth: 0.5,
         borderColor: '#BDC9C8',
-        fontSize: 16,
-        color: 'black',
+        fontSize: 14,
+        color: '#1F2937',
         height: 120,
+        textAlignVertical: 'top',
     },
     dropdownButton: {
         width: '100%',
-        marginTop: 8,
+        paddingVertical: 12,
         paddingHorizontal: 16,
-        paddingVertical: 14,
         borderRadius: 14,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#FFFFFF',
         borderWidth: 0.5,
         borderColor: '#BDC9C8',
         flexDirection: 'row',
@@ -365,9 +407,25 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     dropdownText: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#1F2937',
     },
+
+
+    hint: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingTop: 10,
+        gap: 6,
+    },
+    hintText: {
+        fontStyle: 'italic',
+        fontSize: 13,
+        color: '#6B7280',
+        flex: 1,
+    },
+
+
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.3)',
@@ -382,77 +440,138 @@ const styles = StyleSheet.create({
     },
     modalItem: {
         padding: 16,
-        borderBottomWidth: 0.5,
+        borderBottomWidth: 1,
         borderBottomColor: '#E5E7EB',
     },
+    modalItemLast: {
+        borderBottomWidth: 0,
+    },
     modalItemText: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#1F2937',
     },
+
+
+    imageScroll: {
+        marginTop: 4,
+    },
+    imageScrollContent: {
+        gap: 12,
+        paddingRight: 20,
+    },
+
+    placeholderImage: {
+        width: 150,
+        height: 150,
+        borderRadius: 14,
+        backgroundColor: '#F3F4F6',
+        borderWidth: 0.5,
+        borderColor: '#E5E7EB',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    placeholderText: {
+        color: '#9CA3AF',
+        fontSize: 12,
+        fontWeight: '400',
+        marginTop: 6,
+        textAlign: 'center',
+    },
+
+    imageWrapper: {
+        position: 'relative',
+    },
     imageThumb: {
-        width: 100,
-        height: 100,
-        borderRadius: 12,
+        width: 150,
+        height: 150,
+        borderRadius: 16,
+        backgroundColor: '#F3F4F6',
     },
     removeButton: {
         position: 'absolute',
-        top: 5,
-        right: 5,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        borderRadius: 99,
-        padding: 3,
+        top: 6,
+        right: 6,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        borderRadius: 9999,
+        padding: 4,
     },
     addImageButton: {
-        width: 100,
-        height: 100,
-        borderRadius: 12,
+        width: 150,
+        height: 150,
+        borderRadius: 16,
         borderWidth: 1.5,
         borderColor: '#097F8C',
         borderStyle: 'dashed',
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#F0FAFA',
+        gap:4
+
     },
     addImageText: {
         color: '#097F8C',
-        fontSize: 12,
-        marginTop: 4,
+        fontSize: 13,
+        fontWeight: '500',
+
+        textAlign: 'center',
+    },
+
+
+    pricingRow: {
+        flexDirection: 'row',
+        gap: 16,
+        paddingTop: 4,
+    },
+    pricingField: {
+        flex: 1,
     },
     priceInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 8,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#FFFFFF',
         borderWidth: 0.5,
         borderColor: '#BDC9C8',
         borderRadius: 14,
-        paddingHorizontal: 14,
+        paddingHorizontal: 16,
     },
     currencySymbol: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#6B7280',
         marginRight: 4,
     },
     priceInput: {
         flex: 1,
-        paddingVertical: 14,
-        fontSize: 16,
-        color: 'black',
+        paddingVertical: 12,
+        fontSize: 14,
+        color: '#1F2937',
     },
 
-    buttonPublish:{
+
+    actions: {
+        paddingTop: 24,
+        gap: 12,
+    },
+    publishButton: {
         width: '100%',
-        flexDirection:"row",
-        alignItems: "center",
+        flexDirection: 'row',
+        alignItems: 'center',
         gap: 8,
-        justifyContent: "center",
-        paddingVertical: 13,
+        justifyContent: 'center',
+        paddingVertical: 14,
         paddingHorizontal: 20,
-        borderRadius:  14,
-        backgroundColor: "#097F8C",
-        marginTop: 30,
+        borderRadius: 14,
+        backgroundColor: '#097F8C',
         borderWidth: 0.5,
         borderColor: '#097F8C',
+    },
+    draftButton: {
+        backgroundColor: '#FFFFFF',
+        borderColor: '#BDC9C8',
+    },
+    publishButtonText: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#FFFFFF',
+    },
 
-    }
 });
