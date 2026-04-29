@@ -27,12 +27,12 @@ export const registerUser = async (username, email, password) => {
         return { //Sve na engleski prepravit.
             success: true,
             data: response.data,
-            message: response.data.message || "Verifikacijski kod poslan na Mail"
+            message: response.data.message || "Verification code sent to your email."
         };
     } catch (error) {
         const message =
             error.response?.data?.message ||
-            "Registracija korisnika nije uspjela.";
+            "Registration failed. Please try again.";
         return{
             success: false,
             message
@@ -58,7 +58,7 @@ export const verifyCode = async (email, code) => {
 
         return {
             success: false,
-            message: error.response?.data?.message || error.response?.data || "Verifikacija nije uspjela.",
+            message: error.response?.data?.message || error.response?.data || "Verification failed.",
         };
     }
 };
@@ -83,7 +83,7 @@ export const loginUser = async (email, password) => {
         }
     } catch (error) {
         const message =
-            error.response?.data?.message || "Login nije uspio. Molim Vas provjerite Email i/ili Password te pokušajte ponovno!";
+            error.response?.data?.message || "Login failed. Please check your email and password and try again.!";
 
         return {
             success: false,
@@ -97,11 +97,11 @@ export const resendCode = async (email) => {
         const response = await api.post(`auth/resend?email=${encodeURIComponent(email)}`)
         return {
             success: true,
-            message: response.data.message || "Verifikacijski kod je poslan."
+            message: response.data.message || "Verification code sent."
         };
     } catch (error) {
         const message =
-            error.response?.data?.message || "Nešto je pošlo po krivu, molim Vas pokušajte ponovno.";
+            error.response?.data?.message || "Something went wrong. Please try again.";
 
         return {
             success: false,
