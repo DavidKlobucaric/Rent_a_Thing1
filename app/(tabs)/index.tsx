@@ -160,8 +160,8 @@ export default function HomeScreen() {
                     ) : searchResults.length === 0 ? (
                         <Text style={styles.emptyText}>
                             {searchText
-                                ? `Nema rezultata za "${searchText}"`
-                                : `Nema predmeta u kategoriji "${activeCategory}"`}
+                                ? `No results for: "${searchText}"`
+                                : `No items in category:  "${activeCategory}"`}
                         </Text>
                     ) : (
                         <FlatList
@@ -196,7 +196,7 @@ export default function HomeScreen() {
                     <ActivityIndicator color="#097F8C" style={{ marginVertical: 16 }} />
                 ) : recommended.length === 0 ? (
                     <Text style={[styles.emptyText, { marginHorizontal: 20 }]}>
-                        Nema preporuka za sad.
+                        No recommendations for now.
                     </Text>
                 ) : (
                     recommended.map((item) => (
