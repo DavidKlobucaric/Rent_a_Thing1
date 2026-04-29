@@ -87,7 +87,7 @@ export default function AddScreen() {
                 return;
             }
 
-            Alert.alert('Uspješno! 🎉', 'Vaš predmet je objavljen i vidljiv zajednici.');
+            Alert.alert('Item added successfully.');
             setTitle(''); setDescription(''); setDailyRate('');
             setSecurityDeposit(''); setLocation(''); setImages([]);
             setSelectedCategory('Tools');
