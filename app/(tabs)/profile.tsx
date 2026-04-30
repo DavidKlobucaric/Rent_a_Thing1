@@ -10,6 +10,8 @@ import {
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/src/context/authContext'; // adjust path if needed
+import { useRouter } from 'expo-router';
 
 const userData = {
     name: 'Alex Neighbor',
@@ -57,6 +59,14 @@ const MenuItem = ({ iconName, title, subtitle, onPress, isLogout = false }: Menu
 
 const ProfileScreen = () => {
     const [activeTab, setActiveTab] = useState<'myRentals' | 'savedItems'>('myRentals');
+    const { logout } = useAuth();
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        await logout();
+        router.replace('/');
+
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -149,7 +159,7 @@ const ProfileScreen = () => {
                         iconName="log-out-outline"
                         title="Logout"
                         subtitle="Sign out of your account"
-                        onPress={() => console.log('Logout')}
+                        onPress={handleLogout}
                         isLogout
                     />
                 </View>
