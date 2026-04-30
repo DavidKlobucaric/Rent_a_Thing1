@@ -1,98 +1,325 @@
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    TouchableOpacity,
+    StatusBar,
+} from 'react-native';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const userData = {
+    name: 'Alex Neighbor',
+    rating: 4.7,
+    rentals: 12,
+    reviews: 48,
+    responseRate: 94,
+    profileImage: 'https://i.pravatar.cc/300',
+};
 
-export default function HomeScreen() {
-    return (
-        <ParallaxScrollView
-            headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-            headerImage={
-                <Image
-                    source={require('@/assets/images/partial-react-logo.png')}
-                    style={styles.reactLogo}
+type MenuItemProps = {
+    iconName: React.ComponentProps<typeof Ionicons>['name'];
+    title: string;
+    subtitle: string;
+    onPress: () => void;
+    isLogout?: boolean;
+};
+
+const MenuItem = ({ iconName, title, subtitle, onPress, isLogout = false }: MenuItemProps) => (
+    <TouchableOpacity
+        style={[styles.menuItem, isLogout && styles.logoutItem]}
+        onPress={onPress}
+        activeOpacity={0.7}
+    >
+        <View style={styles.menuLeft}>
+            <View style={[styles.iconBox, isLogout && styles.logoutIconBox]}>
+                <Ionicons
+                    name={iconName}
+                    size={20}
+                    color={isLogout ? '#EF4444' : '#097F8C'}
                 />
-            }>
-            <ThemedView style={styles.titleContainer}>
-                <ThemedText type="title">Welcome!</ThemedText>
-                <HelloWave />
-            </ThemedView>
-            <ThemedView style={styles.stepContainer}>
-                <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-                <ThemedText>
-                    Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-                    Press{' '}
-                    <ThemedText type="defaultSemiBold">
-                        {Platform.select({
-                            ios: 'cmd + d',
-                            android: 'cmd + m',
-                            web: 'F12',
-                        })}
-                    </ThemedText>{' '}
-                    to open developer tools.
-                </ThemedText>
-            </ThemedView>
-            <ThemedView style={styles.stepContainer}>
-                <Link href="/modal">
-                    <Link.Trigger>
-                        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-                    </Link.Trigger>
-                    <Link.Preview />
-                    <Link.Menu>
-                        <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-                        <Link.MenuAction
-                            title="Share"
-                            icon="square.and.arrow.up"
-                            onPress={() => alert('Share pressed')}
-                        />
-                        <Link.Menu title="More" icon="ellipsis">
-                            <Link.MenuAction
-                                title="Delete"
-                                icon="trash"
-                                destructive
-                                onPress={() => alert('Delete pressed')}
-                            />
-                        </Link.Menu>
-                    </Link.Menu>
-                </Link>
+            </View>
+            <View>
+                <Text style={[styles.menuTitle, isLogout && styles.logoutTitle]}>
+                    {title}
+                </Text>
+                <Text style={styles.menuSubtitle}>{subtitle}</Text>
+            </View>
+        </View>
+        {!isLogout && (
+            <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+        )}
+    </TouchableOpacity>
+);
 
-                <ThemedText>
-                    {`Tap the Explore tab to learn more about what's included in this starter app.`}
-                </ThemedText>
-            </ThemedView>
-            <ThemedView style={styles.stepContainer}>
-                <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-                <ThemedText>
-                    {`When you're ready, run `}
-                    <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-                    <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-                    <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-                    <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-                </ThemedText>
-            </ThemedView>
-        </ParallaxScrollView>
+const ProfileScreen = () => {
+    const [activeTab, setActiveTab] = useState<'myRentals' | 'savedItems'>('myRentals');
+
+    return (
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+            <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+
+
+
+                {/* -------- PROFILE SECTION -------- */}
+                <View style={styles.profileSection}>
+                    <Image
+                        source={{ uri: userData.profileImage }}
+                        style={styles.profileImage}
+                    />
+                    <Text style={styles.userName}>{userData.name}</Text>
+
+                    <View style={styles.userStatus}>
+                        <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                        <Text style={styles.verifiedText}>Verified Member</Text>
+                        <Text style={styles.separator}>•</Text>
+                        <Ionicons name="star" size={16} color="#F59E0B" />
+                        <Text style={styles.ratingText}>{userData.rating} Rating</Text>
+                    </View>
+                </View>
+
+                {/* -------- STATS -------- */}
+                <View style={styles.statsContainer}>
+                    <View style={styles.statBox}>
+                        <Text style={styles.statValue}>{userData.rentals}</Text>
+                        <Text style={styles.statLabel}>RENTALS</Text>
+                    </View>
+                    <View style={styles.statBox}>
+                        <Text style={styles.statValue}>{userData.reviews}</Text>
+                        <Text style={styles.statLabel}>REVIEWS</Text>
+                    </View>
+                    <View style={styles.statBox}>
+                        <Text style={styles.statValue}>{userData.responseRate}%</Text>
+                        <Text style={styles.statLabel}>RESPONSE</Text>
+                    </View>
+                </View>
+
+                {/* -------- TABS -------- */}
+                <View style={styles.tabsContainer}>
+                    <TouchableOpacity
+                        style={[styles.tab, activeTab === 'myRentals' && styles.activeTab]}
+                        onPress={() => setActiveTab('myRentals')}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'myRentals' && styles.activeTabText]}>
+                            My Rentals
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.tab, activeTab === 'savedItems' && styles.activeTab]}
+                        onPress={() => setActiveTab('savedItems')}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'savedItems' && styles.activeTabText]}>
+                            Saved Items
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* -------- MENU -------- */}
+                <View style={styles.menuContainer}>
+                    <MenuItem
+                        iconName="time-outline"
+                        title="Rentals History"
+                        subtitle="View all past transactions"
+                        onPress={() => console.log('Rentals History')}
+                    />
+                    <MenuItem
+                        iconName="heart-outline"
+                        title="Saved Items"
+                        subtitle="Things you want to rent later"
+                        onPress={() => console.log('Saved Items')}
+                    />
+                    <MenuItem
+                        iconName="settings-outline"
+                        title="Settings"
+                        subtitle="Privacy, Notifications & Account"
+                        onPress={() => console.log('Settings')}
+                    />
+                    <MenuItem
+                        iconName="help-circle-outline"
+                        title="Support"
+                        subtitle="FAQs and direct help center"
+                        onPress={() => console.log('Support')}
+                    />
+                    <MenuItem
+                        iconName="log-out-outline"
+                        title="Logout"
+                        subtitle="Sign out of your account"
+                        onPress={() => console.log('Logout')}
+                        isLogout
+                    />
+                </View>
+
+                <View style={{ height: 100 }} />
+            </ScrollView>
+        </SafeAreaView>
     );
-}
+};
 
 const styles = StyleSheet.create({
-    titleContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
+    container: {
+        flex: 1,
+        backgroundColor: '#F8F9FA',
     },
-    stepContainer: {
-        gap: 8,
+
+    appNameContainer: {
+        alignItems: 'center',
+        paddingVertical: 12,
+    },
+    appName: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#097F8C',
+    },
+
+    profileSection: {
+        alignItems: 'center',
+        paddingVertical: 20,
+    },
+    profileImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        marginBottom: 12,
+        backgroundColor: '#E5E7EB',
+    },
+    userName: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#1E293B',
         marginBottom: 8,
     },
-    reactLogo: {
-        height: 178,
-        width: 290,
-        bottom: 0,
-        left: 0,
-        position: 'absolute',
+    userStatus: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    verifiedText: {
+        fontSize: 14,
+        color: '#64748B',
+    },
+    separator: {
+        fontSize: 14,
+        color: '#94A3B8',
+        marginHorizontal: 4,
+    },
+    ratingText: {
+        fontSize: 14,
+        color: '#64748B',
+    },
+
+    statsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingHorizontal: 16,
+        marginBottom: 20,
+    },
+    statBox: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 20,
+        marginHorizontal: 6,
+        borderRadius: 12,
+        alignItems: 'center',
+        borderWidth: 0.5,
+        borderColor: '#BDC9C8',
+    },
+    statValue: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#097F8C',
+        marginBottom: 4,
+    },
+    statLabel: {
+        fontSize: 12,
+        color: '#64748B',
+        fontWeight: '600',
+    },
+
+    tabsContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: 16,
+        marginBottom: 20,
+        gap: 8,
+    },
+    tab: {
+        flex: 1,
+        paddingVertical: 12,
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        borderWidth: 0.5,
+        borderColor: '#BDC9C8',
+    },
+    activeTab: {
+        backgroundColor: '#097F8C',
+        borderColor: '#097F8C',
+    },
+    tabText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#64748B',
+    },
+    activeTabText: {
+        color: '#FFFFFF',
+    },
+
+    menuContainer: {
+        paddingHorizontal: 16,
+        marginBottom: 20,
+        gap: 10,
+    },
+    menuItem: {
+        backgroundColor: '#FFFFFF',
+        padding: 16,
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderWidth: 0.5,
+        borderColor: '#BDC9C8',
+    },
+    logoutItem: {
+        borderColor: '#FEE2E2',
+        backgroundColor: '#FFFBFB',
+    },
+    menuLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    iconBox: {
+        width: 40,
+        height: 40,
+        borderRadius: 9999,
+        backgroundColor: '#F0FDFA',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+        borderWidth: 0.5,
+        borderColor: '#BDC9C8',
+    },
+    logoutIconBox: {
+        backgroundColor: '#FEF2F2',
+        borderColor: '#FEE2E2',
+    },
+    menuTitle: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#1E293B',
+        marginBottom: 2,
+    },
+    logoutTitle: {
+        color: '#EF4444',
+    },
+    menuSubtitle: {
+        fontSize: 13,
+        color: '#94A3B8',
     },
 });
+
+export default ProfileScreen;
