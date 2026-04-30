@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getAuthToken, getStoredUser, clearAuth } from '@/src/storage/storageTokens';
 
-const BASE_URL = "http://192.168.100.8:8080";
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const BASE_URL = API_BASE_URL;
 
 type User = {
     userId: number;
