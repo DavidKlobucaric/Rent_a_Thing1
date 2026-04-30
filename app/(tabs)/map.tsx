@@ -1,16 +1,12 @@
+//mapa za IOS
+// for ios
 import React, { useState, useRef } from 'react';
 import {
     StyleSheet, View, Text, TextInput, TouchableOpacity,
     ActivityIndicator, Keyboard, ScrollView,
 } from 'react-native';
-
-
-
-
-import Mapbox, { MapView, Camera, PointAnnotation } from '@rnmapbox/maps';
+import MapView, { Marker, Region } from 'react-native-maps';
 import { Fontisto, Ionicons } from "@expo/vector-icons";
-
-Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '');
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -20,13 +16,19 @@ interface Coordinate {
 }
 
 export default function MapScreen() {
-
-    const cameraRef = useRef<Camera>(null);
+    const mapRef = useRef<MapView>(null);
     const [searchText, setSearchText] = useState('');
     const [loading, setLoading] = useState(false);
     const [markerCoordinate, setMarkerCoordinate] = useState<Coordinate | null>(null);
     const [markerTitle, setMarkerTitle] = useState('');
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+    const [region, setRegion] = useState<Region>({
+        latitude: 45.8150,
+        longitude: 15.9819,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+    });
 
     const performSearch = async () => {
         if (!searchText.trim()) return;
@@ -36,7 +38,7 @@ export default function MapScreen() {
         try {
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchText)}&limit=1`,
-                { headers: { 'User-Agent': 'MyReactNativeApp/1.0 (your@email.com)' } }
+                { headers: { 'User-Agent': 'RentAThingApp/1.0' } }
             );
             const data = await response.json();
 
@@ -46,12 +48,15 @@ export default function MapScreen() {
                 const latitude = parseFloat(lat);
                 const longitude = parseFloat(lon);
 
-                cameraRef.current?.setCamera({
-                    centerCoordinate: [longitude, latitude],
-                    zoomLevel: 13,
-                    animationDuration: 1000,
-                });
+                const newRegion: Region = {
+                    latitude,
+                    longitude,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
+                };
 
+                mapRef.current?.animateToRegion(newRegion, 1000);
+                setRegion(newRegion);
                 setMarkerCoordinate({ latitude, longitude });
                 setMarkerTitle(shortName);
                 setSearchText(shortName);
@@ -79,37 +84,24 @@ export default function MapScreen() {
     return (
         <View style={styles.container}>
 
-            {/* MAPA */}
             <MapView
+                ref={mapRef}
                 style={styles.map}
+                initialRegion={region}
                 scrollEnabled={true}
                 zoomEnabled={true}
                 rotateEnabled={true}
                 pitchEnabled={true}
-                logoEnabled={false}
-                attributionEnabled={false}
-                scaleBarEnabled={false}
             >
-                <Camera
-                    ref={cameraRef}
-                    centerCoordinate={[15.9819, 45.8150]}
-                    zoomLevel={12}
-                />
-
                 {markerCoordinate && (
-                    <PointAnnotation
-                        id="searched-location"
-                        coordinate={[markerCoordinate.longitude, markerCoordinate.latitude]}
+                    <Marker
+                        coordinate={markerCoordinate}
                         title={markerTitle}
-                    >
-                        <View style={styles.marker}>
-                            <View style={styles.markerDot} />
-                        </View>
-                    </PointAnnotation>
+                        pinColor="#097F8C"
+                    />
                 )}
             </MapView>
 
-            {/* SEARCH BAR */}
             <View style={styles.searchContainer}>
                 <View style={styles.inputWrapper}>
                     <TouchableOpacity
@@ -147,7 +139,6 @@ export default function MapScreen() {
                 </View>
             </View>
 
-            {/* KATEGORIJE */}
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -188,130 +179,34 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-
-    container: {
-        flex: 1,
-        backgroundColor: '#F8F9FA',
-    },
-
-    map: {
-        flex: 1,
-    },
-
-    marker: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        backgroundColor: 'rgba(9,127,140,0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-
-    markerDot: {
-        width: 14,
-        height: 14,
-        borderRadius: 7,
-        backgroundColor: '#097F8C',
-        borderWidth: 2,
-        borderColor: '#fff',
-    },
-
+    container: { flex: 1, backgroundColor: '#F8F9FA' },
+    map: { flex: 1 },
     searchContainer: {
-        position: 'absolute',
-        top: 50,
-        width: '95%',
-        alignSelf: 'center',
-        flexDirection: 'row',
-        alignItems: 'center',
-        zIndex: 10,
+        position: 'absolute', top: 50, width: '95%',
+        alignSelf: 'center', flexDirection: 'row', alignItems: 'center', zIndex: 10,
     },
-
     inputWrapper: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 15,
-        paddingVertical: 5,
-        backgroundColor: '#fff',
-        borderWidth: 0.5,
-        borderColor: '#BDC9C8',
-        borderRadius: 12,
+        flex: 1, flexDirection: 'row', alignItems: 'center',
+        paddingHorizontal: 15, paddingVertical: 5, backgroundColor: '#fff',
+        borderWidth: 0.5, borderColor: '#BDC9C8', borderRadius: 12,
     },
-
-    searchIcon: {
-        fontSize: 16,
-        color: '#888',
-        marginRight: 8,
-        alignSelf: 'center',
-    },
-
-    input: {
-        flex: 1,
-        height: 45,
-        fontSize: 16,
-        color: '#333',
-    },
-
-    clearButton: {
-        padding: 8,
-    },
-
-    clearButtonText: {
-        color: '#999',
-        fontSize: 18,
-        fontWeight: '600',
-    },
-
-    button: {
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-
-    buttonDisabled: {
-        opacity: 0.7,
-    },
-
-    categoryContainer: {
-        position: 'absolute',
-        top: 115,
-        left: 0,
-        right: 0,
-        zIndex: 10,
-    },
-
-    categoryContent: {
-        paddingHorizontal: 10,
-        gap: 8,
-        alignItems: 'center',
-    },
-
+    searchIcon: { fontSize: 16, color: '#888', marginRight: 8, alignSelf: 'center' },
+    input: { flex: 1, height: 45, fontSize: 16, color: '#333' },
+    clearButton: { padding: 8 },
+    clearButtonText: { color: '#999', fontSize: 18, fontWeight: '600' },
+    button: { justifyContent: 'center', alignItems: 'center' },
+    buttonDisabled: { opacity: 0.7 },
+    categoryContainer: { position: 'absolute', top: 115, left: 0, right: 0, zIndex: 10 },
+    categoryContent: { paddingHorizontal: 10, gap: 8, alignItems: 'center' },
     CategoryButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 7,
-        paddingHorizontal: 16,
-        borderRadius: 9999,
-        backgroundColor: 'white',
-        borderWidth: 0.5,
-        borderColor: '#E5E7EB',
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+        paddingVertical: 7, paddingHorizontal: 16, borderRadius: 9999,
+        backgroundColor: 'white', borderWidth: 0.5, borderColor: '#E5E7EB',
     },
-
-    categoryText: {
-        fontSize: 13,
-        color: '#333',
-        fontWeight: '500',
-        marginLeft: 5,
-    },
-
-    CategoryButtonActive: {
-        backgroundColor: '#097F8C',
-        borderColor: '#097F8C',
-    },
-
-    categoryTextActive: {
-        color: '#fff',
-        fontWeight: '600',
-    },
-
+    categoryText: { fontSize: 13, color: '#333', fontWeight: '500', marginLeft: 5 },
+    CategoryButtonActive: { backgroundColor: '#097F8C', borderColor: '#097F8C' },
+    categoryTextActive: { color: '#fff', fontWeight: '600' },
 });
+
+////
+
