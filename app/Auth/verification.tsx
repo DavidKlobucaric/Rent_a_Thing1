@@ -8,6 +8,7 @@ import {
     StyleSheet,
     Alert,
     ActivityIndicator,
+    TouchableWithoutFeedback, Keyboard,
 } from 'react-native';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -77,7 +78,7 @@ export default function VerificationScreen(/*{ navigation, route }: any*/) {
 
         if(result.success) {
             Alert.alert("Account verified", "Your account has been verified. Please log in.",
-                [{ text: "Log in", onPress: () => router.replace('/(tabs)/log_in')}]
+                [{ text: "Log in", onPress: () => router.replace('/Auth/log_in')}]
                 );
         } else{
             Alert.alert("Verification failed", result.message);
@@ -113,10 +114,9 @@ export default function VerificationScreen(/*{ navigation, route }: any*/) {
     const codeComplete = code.join('').length === 6;
 
     return (
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+
         <SafeAreaView style={styles.MainPage}>
-
-
-
                 <View style={styles.titleContainer}>
                     <View style={styles.verificationIcon}>
                         <MaterialIcons name="verified-user" size={40} color="#3E4949" />
@@ -229,6 +229,7 @@ export default function VerificationScreen(/*{ navigation, route }: any*/) {
 
 
         </SafeAreaView>
+        </TouchableWithoutFeedback>
     );
 }
 

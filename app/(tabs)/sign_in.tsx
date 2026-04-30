@@ -51,7 +51,7 @@ export default function SignUpScreen(/*{navigation}:any*/) {
         console.log("RESPONSE:", result);
         if (result.success) {
             router.push({
-                pathname: '/(tabs)/verification',
+                pathname: '/Auth/verification',
                 params: {email: email.trim()}
             })
 
@@ -162,7 +162,7 @@ export default function SignUpScreen(/*{navigation}:any*/) {
 
             <View style={[styles.centerContainer,{ paddingTop:5, marginTop: 30,}]}>
                 <Text style={styles.MediumText}> Already have an account?</Text>
-                <TouchableOpacity onPress={() => router.push('/log_in')}>
+                <TouchableOpacity onPress={() => router.push('/Auth/log_in')}>
                     <Text style={[styles.MediumText,{color:"#097F8C", fontWeight:"600"}]}> Log In</Text>
                 </TouchableOpacity>
 
