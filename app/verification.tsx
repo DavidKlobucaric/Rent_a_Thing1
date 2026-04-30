@@ -6,9 +6,6 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    Animated,
-    Keyboard,
-    Platform,
     Alert,
     ActivityIndicator,
 } from 'react-native';
@@ -56,7 +53,7 @@ export default function VerificationScreen(/*{ navigation, route }: any*/) {
         }
     };
 
-    const handlePaste = (text: string) => {
+  /*  const handlePaste = (text: string) => {
         const digits = text.replace(/[^0-9]/g, '').slice(0, 6);
         const newCode = [...code];
         for (let i = 0; i < digits.length; i++) {
@@ -67,6 +64,8 @@ export default function VerificationScreen(/*{ navigation, route }: any*/) {
         const lastIndex = Math.min(digits.length - 1, 5);
         inputRefs.current[lastIndex]?.focus();
     };
+
+   */
 
     const handleVerify = async () => {
         const verificationCode = code.join('');
@@ -273,12 +272,13 @@ const styles = StyleSheet.create({
         padding: 24,
         alignSelf: 'center',
     },
+
     codeContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         gap: 12,
         marginVertical: 10,
-
+        padding:5
 
     },
     codeInput: {

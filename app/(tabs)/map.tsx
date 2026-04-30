@@ -188,13 +188,16 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
+
     container: {
         flex: 1,
         backgroundColor: '#F8F9FA',
     },
+
     map: {
         flex: 1,
     },
+
     marker: {
         width: 30,
         height: 30,
@@ -203,6 +206,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+
     markerDot: {
         width: 14,
         height: 14,
@@ -211,6 +215,7 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: '#fff',
     },
+
     searchContainer: {
         position: 'absolute',
         top: 50,
@@ -220,6 +225,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         zIndex: 10,
     },
+
     inputWrapper: {
         flex: 1,
         flexDirection: 'row',
@@ -231,33 +237,40 @@ const styles = StyleSheet.create({
         borderColor: '#BDC9C8',
         borderRadius: 12,
     },
+
     searchIcon: {
         fontSize: 16,
         color: '#888',
         marginRight: 8,
         alignSelf: 'center',
     },
+
     input: {
         flex: 1,
         height: 45,
         fontSize: 16,
         color: '#333',
     },
+
     clearButton: {
         padding: 8,
     },
+
     clearButtonText: {
         color: '#999',
         fontSize: 18,
         fontWeight: '600',
     },
+
     button: {
         justifyContent: 'center',
         alignItems: 'center',
     },
+
     buttonDisabled: {
         opacity: 0.7,
     },
+
     categoryContainer: {
         position: 'absolute',
         top: 115,
@@ -265,11 +278,13 @@ const styles = StyleSheet.create({
         right: 0,
         zIndex: 10,
     },
+
     categoryContent: {
         paddingHorizontal: 10,
         gap: 8,
         alignItems: 'center',
     },
+
     CategoryButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -281,18 +296,22 @@ const styles = StyleSheet.create({
         borderWidth: 0.5,
         borderColor: '#E5E7EB',
     },
+
     categoryText: {
         fontSize: 13,
         color: '#333',
         fontWeight: '500',
         marginLeft: 5,
     },
+
     CategoryButtonActive: {
         backgroundColor: '#097F8C',
         borderColor: '#097F8C',
     },
+
     categoryTextActive: {
         color: '#fff',
         fontWeight: '600',
     },
+
 });

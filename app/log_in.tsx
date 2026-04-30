@@ -43,7 +43,7 @@ export default function LogInScreen() {
             if (result.success) {
                 //sinkanje tokena s authContext
                 await refreshAuth();
-                router.replace('/(tabs)');
+                router.replace('/home');
             } else {
                 Alert.alert('Login failed', result.message);
             }
@@ -146,7 +146,7 @@ export default function LogInScreen() {
 
                 <View style={[styles.centerContainer,{paddingTop:25, gap:0}]}>
                     <Text style={styles.MediumText}> Don{"'"}t have an account?</Text>
-                    <TouchableOpacity onPress={() => router.push('/(tabs)/sign_in')}>
+                    <TouchableOpacity onPress={() => router.push('/sign_in')}>
                         <Text style={[styles.MediumText,{color:"#097F8C",fontWeight: "600"}]}> Sign Up</Text>
                     </TouchableOpacity>
 
@@ -174,6 +174,7 @@ export default function LogInScreen() {
 }
 
 const styles = StyleSheet.create({
+
     titleContainer: {
         alignItems: 'center',
         justifyContent: 'center',
@@ -181,6 +182,7 @@ const styles = StyleSheet.create({
         paddingTop: 0,
         paddingBottom: 10,
     },
+
     TextStyle:{
         fontSize: 15,
         fontWeight: "normal",
@@ -188,12 +190,14 @@ const styles = StyleSheet.create({
         lineHeight: 25,
         color: "#3E4949"
     },
+
     TextTitle:{
         fontWeight: "500",
         fontSize: 32,
         letterSpacing: -0.5,
         paddingTop:15
     },
+
     card: {
         width: '100%',
         borderRadius: 14,
@@ -201,6 +205,7 @@ const styles = StyleSheet.create({
         paddingTop:0,
         alignSelf: 'center',
     },
+
     SignInText:{
         fontSize: 12,
         fontWeight: "600",
@@ -208,17 +213,20 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
 
     },
+
     textContainer: {
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 20,
         paddingBottom: 10,
     },
+
     textContainers:{
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 30,
     },
+
     MainPage: {
         flex: 1,
         backgroundColor: '#F8F9FA',
@@ -231,6 +239,7 @@ const styles = StyleSheet.create({
     MediumText:{
         fontSize:15,
     },
+
     SmallText:{
         fontSize:13,
     },
@@ -242,6 +251,7 @@ const styles = StyleSheet.create({
         paddingTop:20,
         gap:10,
     },
+
     button:{
         width: '100%',
         flexDirection:"row",
@@ -255,6 +265,7 @@ const styles = StyleSheet.create({
         borderWidth: 0.5,
         borderColor: "#BDC9C8",
     },
+
     SignInButton: {
         width: '100%',
         flexDirection:"row",
@@ -267,6 +278,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#097F8C",
         marginTop: 20,
     },
+
     SignInTextField:{
         width: '100%',
         paddingVertical: 10,
@@ -277,10 +289,12 @@ const styles = StyleSheet.create({
         borderColor: "#BDC9C8",
         fontSize: 14,
     },
+
     googleIcon: {
         width: 22,
         height: 22,
     },
+
     line: {
         flex: 1,
         height: 1,
@@ -288,6 +302,7 @@ const styles = StyleSheet.create({
         marginVertical: 30,
         marginBottom: 30,
     },
+
     iconCircle: {
         width: 56,
         height: 56,

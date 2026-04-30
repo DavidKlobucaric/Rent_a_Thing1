@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getAuthToken, getStoredUser, clearAuth } from '@/src/storage/storageTokens';
 
-const BASE_URL = "http://192.168.178.100:8080";
+const BASE_URL = "http://192.168.100.8:8080";
 
 type User = {
     userId: number;

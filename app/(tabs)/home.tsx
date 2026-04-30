@@ -251,22 +251,29 @@ const styles = StyleSheet.create({
         borderColor: "#BDC9C8",
         borderRadius: 12,
     },
+
     searchIcon: {
         fontSize: 16,
         color: '#888',
         marginRight: 8,
     },
+
     searchInput: {
         flex: 1,
         height: 45,
         fontSize: 16,
         color: '#333',
     },
+
     clearBtn: {
         color: '#999',
     },
 
-    locationText: { fontSize: 12, color: '#888', paddingTop: 2 },
+    locationText: {
+        fontSize: 12,
+        color: '#888',
+        paddingTop: 2
+    },
 
     tabsContainer: {
         paddingHorizontal: 10,
@@ -274,12 +281,14 @@ const styles = StyleSheet.create({
         paddingRight: 30,
 
     },
+
     tab: {
         alignItems: 'center',
         marginHorizontal: 4,
         minWidth: 56,
         paddingHorizontal: 4,
     },
+
     iconCircle: {
         width: 52,
         height: 52,
@@ -292,15 +301,18 @@ const styles = StyleSheet.create({
 
 
     },
+
     iconCircleActive: {
         backgroundColor: '#097F8C',
     },
+
     tabLabel: {
         fontSize: 11,
         paddingTop:2,
         color: '#999',
         textAlign: 'center',
     },
+
     tabLabelActive: {
         color: '#097F8C',
     },
@@ -309,6 +321,7 @@ const styles = StyleSheet.create({
         marginTop: 8,
 
     },
+
     itemCard: {
         backgroundColor: 'white',
         padding: 12,
@@ -326,6 +339,7 @@ const styles = StyleSheet.create({
         paddingTop: 10,
 
     },
+
     emptyText: {
         textAlign: 'center',
         color: '#bbb',
@@ -349,30 +363,36 @@ const styles = StyleSheet.create({
         alignItems: 'center',
 
     },
+
     thumbnail: {
         width: 60,
         height: 60,
         borderRadius: 10,
     },
+
     cardContent: {
         flex: 1,
         paddingHorizontal: 20,
         gap:2
     },
+
     itemTitle: {
         fontWeight: '600',
 
 
     },
+
     distanceText: {
         fontSize: 12,
         color: '#888',
 
     },
+
     price: {
         fontWeight: '600',
         color: '#097F8C',
     },
+
     perDay: {
         color: '#999',
         marginLeft: 5,
@@ -383,8 +403,6 @@ const styles = StyleSheet.create({
         gap: 20,
     },
 
-
-
     itemImage: {
         width: 160,
         height: 160,
@@ -392,4 +410,5 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
 
     },
+
 });

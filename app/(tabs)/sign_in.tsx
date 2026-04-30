@@ -162,7 +162,7 @@ export default function SignUpScreen(/*{navigation}:any*/) {
 
             <View style={[styles.centerContainer,{ paddingTop:5, marginTop: 30,}]}>
                 <Text style={styles.MediumText}> Already have an account?</Text>
-                <TouchableOpacity onPress={() => router.push('/(tabs)/log_in')}>
+                <TouchableOpacity onPress={() => router.push('/log_in')}>
                     <Text style={[styles.MediumText,{color:"#097F8C", fontWeight:"600"}]}> Log In</Text>
                 </TouchableOpacity>
 
@@ -195,6 +195,7 @@ export default function SignUpScreen(/*{navigation}:any*/) {
 
 
 const styles = StyleSheet.create({
+
     titleContainer: {
         alignItems: 'center',
         justifyContent: 'center',
@@ -202,6 +203,7 @@ const styles = StyleSheet.create({
         paddingTop: 0,
         paddingBottom: 10,
     },
+
     TextStyle:{
         fontSize: 15,
         fontWeight: "normal",
@@ -210,12 +212,14 @@ const styles = StyleSheet.create({
         color: "#3E4949",
 
     },
+
     TitleText:{
         fontSize: 32,
         fontWeight: "500",
         letterSpacing: -0.5,
         paddingTop:15
     },
+
     card: {
 
         width: '100%',
@@ -225,27 +229,32 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
 
     },
+
     SignInText:{
         fontSize: 12,
         fontWeight: "600",
         paddingTop: 15,
         paddingBottom: 10,
     },
+
     textContainer: {
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 20,
         paddingBottom: 10,
     },
+
     textContainers:{
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 30,
     },
+
     MainPage: {
         flex: 1,
         backgroundColor: '#F8F9FA',
     },
+
     button:{
         width: '100%',
         flexDirection:"row",
@@ -259,6 +268,7 @@ const styles = StyleSheet.create({
         borderWidth: 0.5,
         borderColor: "#BDC9C8",
     },
+
     SignInButton: {
         width: '100%',
         flexDirection:"row",
@@ -271,8 +281,8 @@ const styles = StyleSheet.create({
         backgroundColor: "#097F8C",
         marginTop: 20,
 
-
     },
+
     SignInTextField:{
         width: '100%',
         paddingVertical: 10,
@@ -300,6 +310,7 @@ const styles = StyleSheet.create({
     MediumText:{
         fontSize:15,
     },
+
     SmallText:{
         fontSize:11,
     },
@@ -310,10 +321,12 @@ const styles = StyleSheet.create({
         flex: 1,
         lineHeight: 18,
     },
+
     googleIcon: {
         width: 22,
         height: 22,
     },
+
     line: {
         flex: 1,
         height: 1,
@@ -325,6 +338,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
+
     iconCircle: {
         width: 56,
         height: 56,
