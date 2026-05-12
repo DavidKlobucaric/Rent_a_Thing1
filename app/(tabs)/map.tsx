@@ -1,16 +1,15 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import {
     StyleSheet, View, Text, TextInput, TouchableOpacity,
     ActivityIndicator, Keyboard, ScrollView,
 } from 'react-native';
 
-
-
-
 import Mapbox, { MapView, Camera, PointAnnotation } from '@rnmapbox/maps';
 import { Fontisto, Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
 
-Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '');
+Mapbox.setAccessToken("process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? ''");
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -19,16 +18,39 @@ interface Coordinate {
     longitude: number;
 }
 
-export default function MapScreen() {
+const CATEGORIES = [
+    { name: 'Tools', icon: 'hammer-outline' as IoniconName, iconActive: 'hammer' as IoniconName },
+    { name: 'Camping', icon: 'bonfire-outline' as IoniconName, iconActive: 'bonfire' as IoniconName },
+    { name: 'Tech', icon: 'laptop-outline' as IoniconName, iconActive: 'laptop' as IoniconName },
+    { name: 'Sports', icon: 'football-outline' as IoniconName, iconActive: 'football' as IoniconName },
+    { name: 'Games', icon: 'game-controller-outline' as IoniconName, iconActive: 'game-controller' as IoniconName },
+];
 
+const ZAGREB: [number, number] = [15.9819, 45.8150];
+
+export default function MapScreen() {
     const cameraRef = useRef<Camera>(null);
+
     const [searchText, setSearchText] = useState('');
     const [loading, setLoading] = useState(false);
     const [markerCoordinate, setMarkerCoordinate] = useState<Coordinate | null>(null);
     const [markerTitle, setMarkerTitle] = useState('');
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-    const performSearch = async () => {
+    const scheme = useColorScheme() ?? 'light';
+    const colors = Colors[scheme];
+    const styles = useMemo(() => makeStyles(colors), [colors]);
+
+    const flyTo = useCallback((longitude: number, latitude: number, zoom = 13) => {
+        cameraRef.current?.setCamera({
+            centerCoordinate: [longitude, latitude],
+            zoomLevel: zoom,
+            animationMode: 'flyTo',
+            animationDuration: 1200,
+        });
+    }, []);
+
+    const performSearch = useCallback(async () => {
         if (!searchText.trim()) return;
         Keyboard.dismiss();
         setLoading(true);
@@ -36,7 +58,7 @@ export default function MapScreen() {
         try {
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchText)}&limit=1`,
-                { headers: { 'User-Agent': 'MyReactNativeApp/1.0 (your@email.com)' } }
+                { headers: { 'User-Agent': 'RentApp/1.0' } }
             );
             const data = await response.json();
 
@@ -46,12 +68,7 @@ export default function MapScreen() {
                 const latitude = parseFloat(lat);
                 const longitude = parseFloat(lon);
 
-                cameraRef.current?.setCamera({
-                    centerCoordinate: [longitude, latitude],
-                    zoomLevel: 13,
-                    animationDuration: 1000,
-                });
-
+                flyTo(longitude, latitude);
                 setMarkerCoordinate({ latitude, longitude });
                 setMarkerTitle(shortName);
                 setSearchText(shortName);
@@ -59,41 +76,43 @@ export default function MapScreen() {
                 alert('Lokacija nije pronađena. Pokušaj s drugim pojmom.');
             }
         } catch (error) {
-            console.error("Greška:", error);
+            console.error('Search error:', error);
             alert('Došlo je do greške pri pretrazi.');
         } finally {
             setLoading(false);
         }
-    };
+    }, [searchText, flyTo]);
 
-    const clearSearch = () => {
+    const clearSearch = useCallback(() => {
         setSearchText('');
         setMarkerCoordinate(null);
         setMarkerTitle('');
-    };
+        flyTo(ZAGREB[0], ZAGREB[1], 12);
+    }, [flyTo]);
 
-    const handleCategorySelect = (categoryName: string) => {
-        setActiveCategory(prev => prev === categoryName ? null : categoryName);
-    };
+    const handleCategorySelect = useCallback((name: string) => {
+        setActiveCategory(prev => prev === name ? null : name);
+    }, []);
 
     return (
         <View style={styles.container}>
 
-            {/* MAPA */}
             <MapView
                 style={styles.map}
-                scrollEnabled={true}
-                zoomEnabled={true}
-                rotateEnabled={true}
-                pitchEnabled={true}
+                styleURL={Mapbox.StyleURL.Street}
+                scrollEnabled
+                zoomEnabled
+                rotateEnabled
+                pitchEnabled
                 logoEnabled={false}
                 attributionEnabled={false}
                 scaleBarEnabled={false}
             >
                 <Camera
                     ref={cameraRef}
-                    centerCoordinate={[15.9819, 45.8150]}
+                    centerCoordinate={ZAGREB}
                     zoomLevel={12}
+                    animationMode="none"
                 />
 
                 {markerCoordinate && (
@@ -117,17 +136,16 @@ export default function MapScreen() {
                         onPress={performSearch}
                         disabled={loading}
                     >
-                        {loading ? (
-                            <ActivityIndicator color="#888" size="small" />
-                        ) : (
-                            <Fontisto name="search" style={styles.searchIcon} />
-                        )}
+                        {loading
+                            ? <ActivityIndicator color={colors.textMuted} size="small" />
+                            : <Fontisto name="search" style={[styles.searchIcon, { color: colors.textMuted }]} />
+                        }
                     </TouchableOpacity>
 
                     <TextInput
                         style={styles.input}
                         placeholder="Pretraži (npr. Zagreb, Rijeka...)"
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={colors.placeholder}
                         value={searchText}
                         onChangeText={setSearchText}
                         onSubmitEditing={performSearch}
@@ -141,7 +159,7 @@ export default function MapScreen() {
                             onPress={clearSearch}
                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         >
-                            <Text style={styles.clearButtonText}>✕</Text>
+                            <Text style={[styles.clearButtonText, { color: colors.textMuted }]}>✕</Text>
                         </TouchableOpacity>
                     )}
                 </View>
@@ -154,26 +172,18 @@ export default function MapScreen() {
                 style={styles.categoryContainer}
                 contentContainerStyle={styles.categoryContent}
             >
-                {(
-                    [
-                        { name: 'Tools', icon: 'hammer-outline', iconActive: 'hammer' },
-                        { name: 'Camping', icon: 'bonfire-outline', iconActive: 'bonfire' },
-                        { name: 'Tech', icon: 'laptop-outline', iconActive: 'laptop' },
-                        { name: 'Sports', icon: 'football-outline', iconActive: 'football' },
-                        { name: 'Games', icon: 'game-controller-outline', iconActive: 'game-controller' },
-                    ] as { name: string; icon: IoniconName; iconActive: IoniconName }[]
-                ).map((category) => {
+                {CATEGORIES.map((category) => {
                     const isActive = activeCategory === category.name;
                     return (
                         <TouchableOpacity
                             key={category.name}
-                            style={[styles.CategoryButton, isActive && styles.CategoryButtonActive]}
+                            style={[styles.categoryButton, isActive && styles.categoryButtonActive]}
                             onPress={() => handleCategorySelect(category.name)}
                         >
                             <Ionicons
                                 name={isActive ? category.iconActive : category.icon}
                                 size={20}
-                                color={isActive ? '#fff' : '#6B7280'}
+                                color={isActive ? colors.activeTabText : colors.textSecondary}
                             />
                             <Text style={[styles.categoryText, isActive && styles.categoryTextActive]}>
                                 {category.name}
@@ -187,131 +197,114 @@ export default function MapScreen() {
     );
 }
 
-const styles = StyleSheet.create({
-
+const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: colors.background,
     },
-
     map: {
         flex: 1,
     },
-
     marker: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        backgroundColor: 'rgba(9,127,140,0.2)',
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: colors.primary + '30',
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 2,
+        borderColor: colors.background,
     },
-
     markerDot: {
         width: 14,
         height: 14,
         borderRadius: 7,
-        backgroundColor: '#097F8C',
+        backgroundColor: colors.primary,
         borderWidth: 2,
-        borderColor: '#fff',
+        borderColor: colors.background,
     },
-
     searchContainer: {
         position: 'absolute',
-        top: 50,
+        top: 55,
         width: '95%',
         alignSelf: 'center',
-        flexDirection: 'row',
-        alignItems: 'center',
         zIndex: 10,
+        paddingHorizontal: 4,
     },
-
     inputWrapper: {
-        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 15,
-        paddingVertical: 5,
-        backgroundColor: '#fff',
-        borderWidth: 0.5,
-        borderColor: '#BDC9C8',
-        borderRadius: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 14,
     },
-
     searchIcon: {
-        fontSize: 16,
-        color: '#888',
+        fontSize: 18,
         marginRight: 8,
         alignSelf: 'center',
     },
-
     input: {
         flex: 1,
-        height: 45,
-        fontSize: 16,
-        color: '#333',
+        height: 42,
+        fontSize: 15,
+        color: colors.text,
+        fontWeight: '400',
     },
-
     clearButton: {
-        padding: 8,
+        padding: 6,
+        marginLeft: 4,
     },
-
     clearButtonText: {
-        color: '#999',
         fontSize: 18,
         fontWeight: '600',
     },
-
     button: {
         justifyContent: 'center',
         alignItems: 'center',
+        paddingRight: 4,
     },
-
     buttonDisabled: {
-        opacity: 0.7,
+        opacity: 0.6,
     },
-
     categoryContainer: {
         position: 'absolute',
-        top: 115,
+        top: 120,
         left: 0,
         right: 0,
         zIndex: 10,
     },
-
     categoryContent: {
-        paddingHorizontal: 10,
-        gap: 8,
+        paddingHorizontal: 12,
+        gap: 10,
         alignItems: 'center',
     },
-
-    CategoryButton: {
+    categoryButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 7,
-        paddingHorizontal: 16,
-        borderRadius: 9999,
-        backgroundColor: 'white',
-        borderWidth: 0.5,
-        borderColor: '#E5E7EB',
+        paddingVertical: 9,
+        paddingHorizontal: 18,
+        borderRadius: 14,
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.border,
+        gap: 6,
     },
-
+    categoryButtonActive: {
+        backgroundColor: colors.primary,
+        borderColor: colors.primary,
+    },
     categoryText: {
         fontSize: 13,
-        color: '#333',
         fontWeight: '500',
-        marginLeft: 5,
+        color: colors.textSecondary,
+        letterSpacing: 0.3,
     },
-
-    CategoryButtonActive: {
-        backgroundColor: '#097F8C',
-        borderColor: '#097F8C',
-    },
-
     categoryTextActive: {
-        color: '#fff',
-        fontWeight: '600',
+        color: colors.activeTabText,
+        fontWeight: '700',
     },
-
 });

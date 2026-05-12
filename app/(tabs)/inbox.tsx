@@ -5,7 +5,9 @@ import {
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Fontisto } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
 
 type Conversation = {
     id: number;
@@ -74,6 +76,9 @@ const MOCK_CONVERSATIONS: Conversation[] = [
 export default function Inbox() {
     const [activeCategory, setActiveCategory] = useState<string>('All');
     const [searchText, setSearchText] = useState('');
+    const scheme = useColorScheme() ?? 'light';
+    const colors = Colors[scheme];
+    const styles = useMemo(() => makeStyles(colors), [colors]);
 
     const handleCategorySelect = (categoryName: string) => {
         setActiveCategory(categoryName);
@@ -101,7 +106,7 @@ export default function Inbox() {
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Search conversations..."
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={colors.placeholder}
                         value={searchText}
                         onChangeText={setSearchText}
                     />
@@ -187,10 +192,10 @@ export default function Inbox() {
     );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: colors.background,
     },
 
     scrollContent: {
@@ -205,15 +210,15 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         paddingHorizontal: 15,
         paddingVertical: 5,
-        backgroundColor: '#fff',
+        backgroundColor: colors.surface,
         borderWidth: 0.5,
-        borderColor: '#BDC9C8',
+        borderColor: colors.border,
         borderRadius: 12,
     },
 
     searchIcon: {
         fontSize: 16,
-        color: '#888',
+        color: colors.textMuted,
         marginRight: 8,
         alignSelf: 'center',
     },
@@ -222,11 +227,11 @@ const styles = StyleSheet.create({
         flex: 1,
         height: 45,
         fontSize: 16,
-        color: '#333',
+        color: colors.text,
     },
 
     clearBtn: {
-        color: '#999',
+        color: colors.textMuted,
         fontSize: 16,
         paddingHorizontal: 4,
     },
@@ -245,24 +250,24 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 20,
         borderRadius: 9999,
-        backgroundColor: 'white',
+        backgroundColor: colors.surface,
         borderWidth: 0.5,
-        borderColor: '#E5E7EB',
+        borderColor: colors.border,
     },
 
     CategoryButtonActive: {
-        backgroundColor: '#097F8C',
-        borderColor: '#097F8C',
+        backgroundColor: colors.primary,
+        borderColor: colors.primary,
     },
 
     categoryText: {
         fontSize: 14,
-        color: '#333',
+        color: colors.text,
         fontWeight: '500',
     },
 
     categoryTextActive: {
-        color: '#fff',
+        color: colors.activeTabText,
         fontWeight: '600',
     },
 
@@ -275,14 +280,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 14,
         paddingHorizontal: 16,
-        backgroundColor: '#fff',
-        borderRadius: 16,
+        backgroundColor: colors.card,
+        borderRadius: 14,
         borderWidth: 0.5,
-        borderColor: '#E5E7EB',
+        borderColor: colors.border,
     },
 
     conversationItemRead: {
-        backgroundColor: '#F3F4F6',
+        backgroundColor: colors.surface,
+        opacity: 0.4,
     },
 
     avatarWrapper: {
@@ -293,8 +299,8 @@ const styles = StyleSheet.create({
     avatar: {
         width: 50,
         height: 50,
-        borderRadius: 25,
-        backgroundColor: '#E5E7EB',
+        borderRadius: 9999,
+        backgroundColor: colors.border,
     },
 
     onlineDot: {
@@ -303,10 +309,10 @@ const styles = StyleSheet.create({
         right: 1,
         width: 12,
         height: 12,
-        borderRadius: 6,
-        backgroundColor: '#22C55E',
+        borderRadius: 14,
+        backgroundColor: colors.success,
         borderWidth: 2,
-        borderColor: '#fff',
+        borderColor: colors.background,
     },
 
     convContent: {
@@ -323,36 +329,37 @@ const styles = StyleSheet.create({
     convName: {
         fontSize: 15,
         fontWeight: '500',
-        color: '#1F2937',
+        color: colors.text,
         flex: 1,
         marginRight: 8,
     },
 
     convNameUnread: {
         fontWeight: '700',
+        color: colors.text,
     },
 
     timeAgo: {
         fontSize: 12,
-        color: '#9CA3AF',
+        color: colors.textMuted,
     },
 
     itemName: {
         fontSize: 11,
         fontWeight: '600',
-        color: '#097F8C',
+        color: colors.primary,
         letterSpacing: 0.4,
     },
 
     lastMessage: {
         fontSize: 13,
-        color: '#6B7280',
+        color: colors.textSecondary,
         marginTop: 1,
     },
 
     emptyText: {
         textAlign: 'center',
-        color: '#bbb',
+        color: colors.textMuted,
         paddingVertical: 32,
         fontSize: 14,
     },

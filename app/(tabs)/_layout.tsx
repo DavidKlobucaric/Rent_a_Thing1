@@ -13,7 +13,7 @@ export default function TabLayout() {
     return (
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+                tabBarActiveTintColor: Colors[colorScheme ?? 'light'].primary,
                 headerShown: false,
                 tabBarButton: HapticTab,
             }}>
@@ -53,6 +53,7 @@ export default function TabLayout() {
                     tabBarIcon: ({ color }) => <MaterialIcons name="account-circle" size={28} color={color} />,
                 }}
             />
+
 
 
         </Tabs>

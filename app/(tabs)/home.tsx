@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     StyleSheet, Text, View, TextInput,
     ScrollView, TouchableOpacity, FlatList, ActivityIndicator,
@@ -8,6 +8,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Fontisto, Ionicons } from '@expo/vector-icons';
 import { searchListings, getRecommendedListings } from '@/src/api/itemsApi';
 import { useAuth } from '@/src/context/authContext';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
 
 type Category = {
     id: string;
@@ -41,6 +43,9 @@ type Listing = {
 
 export default function HomeScreen() {
     const { token } = useAuth();
+    const scheme = useColorScheme() ?? 'light';
+    const colors = Colors[scheme];
+    const styles = useMemo(() => makeStyles(colors), [colors]);
 
     const [searchText, setSearchText]         = useState('');
     const [activeCategory, setActiveCategory] = useState('tools');
@@ -53,7 +58,6 @@ export default function HomeScreen() {
     const [recommended, setRecommended]       = useState<Listing[]>([]);
     const [recLoading, setRecLoading]         = useState(true);
 
-    // Reload recommended whenever the token changes (e.g. after login)
     useEffect(() => {
         (async () => {
             setRecLoading(true);
@@ -63,9 +67,8 @@ export default function HomeScreen() {
             }
             setRecLoading(false);
         })();
-    }, [token]); // ← re-runs when user logs in or out
+    }, [token]);
 
-    // Search whenever text or category changes (debounced 400ms)
     useEffect(() => {
         const query = searchText.trim() || activeCategory;
         const timeout = setTimeout(async () => {
@@ -106,17 +109,17 @@ export default function HomeScreen() {
 
                 {/* SEARCH BAR */}
                 <View style={styles.searchBar}>
-                    <Fontisto name="search" style={styles.searchIcon} />
+                    <Fontisto name="search" style={[styles.searchIcon, { color: colors.textMuted }]} />
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Search..."
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={colors.placeholder}
                         value={searchText}
                         onChangeText={setSearchText}
                     />
                     {searchText.length > 0 && (
                         <TouchableOpacity onPress={() => setSearchText('')}>
-                            <Text style={styles.clearBtn}>✕</Text>
+                            <Text style={[styles.clearBtn, { color: colors.textMuted }]}>✕</Text>
                         </TouchableOpacity>
                     )}
                 </View>
@@ -140,7 +143,7 @@ export default function HomeScreen() {
                                     <Ionicons
                                         name={isActive ? cat.activeIcon : cat.inactiveIcon}
                                         size={24}
-                                        color={isActive ? '#fff' : '#6B7280'}
+                                        color={isActive ? colors.activeTabText : colors.iconColor}
                                     />
                                 </View>
                                 <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
@@ -154,14 +157,14 @@ export default function HomeScreen() {
                 {/* SEARCH RESULTS */}
                 <View style={styles.listContainer}>
                     {searchLoading ? (
-                        <ActivityIndicator color="#097F8C" style={{ marginVertical: 16 }} />
+                        <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />
                     ) : searchError ? (
                         <Text style={styles.emptyText}>{searchError}</Text>
                     ) : searchResults.length === 0 ? (
                         <Text style={styles.emptyText}>
                             {searchText
                                 ? `No results for: "${searchText}"`
-                                : `No items in category:  "${activeCategory}"`}
+                                : `No items in category: "${activeCategory}"`}
                         </Text>
                     ) : (
                         <FlatList
@@ -193,7 +196,7 @@ export default function HomeScreen() {
                 <Text style={styles.sectionTitle}>Recommended for You</Text>
 
                 {recLoading ? (
-                    <ActivityIndicator color="#097F8C" style={{ marginVertical: 16 }} />
+                    <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />
                 ) : recommended.length === 0 ? (
                     <Text style={[styles.emptyText, { marginHorizontal: 20 }]}>
                         No recommendations for now.
@@ -218,7 +221,7 @@ export default function HomeScreen() {
                                     <Ionicons
                                         name={favorites.includes(item.listingId) ? 'heart' : 'heart-outline'}
                                         size={24}
-                                        color={favorites.includes(item.listingId) ? '#e74c3c' : '#ccc'}
+                                        color={favorites.includes(item.listingId) ? colors.danger : colors.border}
                                     />
                                 </TouchableOpacity>
                             </View>
@@ -231,184 +234,192 @@ export default function HomeScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
-
+        backgroundColor: colors.background,
     },
 
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginHorizontal: 10,
-        marginTop: 10,
-        marginBottom: 10,
-        paddingHorizontal: 15,
-        paddingVertical: 5,
-        backgroundColor: '#ffff',
-        borderWidth: 0.5,
-        borderColor: "#BDC9C8",
-        borderRadius: 12,
+        marginHorizontal: 12,
+        marginTop: 12,
+        marginBottom: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 6,
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 14,
     },
 
     searchIcon: {
-        fontSize: 16,
-        color: '#888',
-        marginRight: 8,
+        fontSize: 18,
+        marginRight: 10,
     },
 
     searchInput: {
         flex: 1,
-        height: 45,
-        fontSize: 16,
-        color: '#333',
+        height: 44,
+        fontSize: 15,
+        color: colors.text,
     },
 
     clearBtn: {
-        color: '#999',
+        fontSize: 20,
+        fontWeight: '600',
+        padding: 4,
     },
 
     locationText: {
         fontSize: 12,
-        color: '#888',
-        paddingTop: 2
+        color: colors.textMuted,
+        paddingTop: 2,
     },
 
     tabsContainer: {
-        paddingHorizontal: 10,
-        paddingVertical: 8,
-        paddingRight: 30,
-
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        gap: 8,
     },
 
     tab: {
         alignItems: 'center',
-        marginHorizontal: 4,
-        minWidth: 56,
-        paddingHorizontal: 4,
+        minWidth: 60,
+        paddingHorizontal: 6,
     },
 
     iconCircle: {
         width: 52,
         height: 52,
-        borderRadius: 9999,
-        backgroundColor: 'white',
-        borderWidth: 0.5,
-        borderColor: "#BDC9C8",
+        borderRadius: 20,
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.borderLight,
         justifyContent: 'center',
         alignItems: 'center',
-
-
     },
 
     iconCircleActive: {
-        backgroundColor: '#097F8C',
+        backgroundColor: colors.primary,
+        borderColor: colors.primary,
     },
 
     tabLabel: {
         fontSize: 11,
-        paddingTop:2,
-        color: '#999',
+        paddingTop: 6,
+        color: colors.textMuted,
         textAlign: 'center',
+        fontWeight: '500',
+        letterSpacing: 0.3,
     },
 
     tabLabelActive: {
-        color: '#097F8C',
+        color: colors.primary,
+        fontWeight: '700',
     },
 
     listContainer: {
-        marginTop: 8,
-
+        marginTop: 4,
+        marginBottom: 8,
     },
 
     itemCard: {
-        backgroundColor: 'white',
+        backgroundColor: colors.card,
         padding: 12,
-        borderRadius: 12,
+        borderRadius: 14,
         marginTop: 8,
         marginBottom: 8,
         marginRight: 12,
-        marginLeft: 0,
-
+        marginLeft: 10,
+        borderWidth: 1,
+        borderColor: colors.border,
+        width: 180,
     },
 
     itemName: {
-        fontWeight:"600",
-        fontSize: 16,
+        fontWeight: '600',
+        fontSize: 15,
         paddingTop: 10,
-
+        color: colors.text,
     },
 
     emptyText: {
         textAlign: 'center',
-        color: '#bbb',
+        color: colors.textMuted,
+        paddingVertical: 24,
+        fontSize: 14,
+        marginHorizontal: 20,
     },
 
     sectionTitle: {
-        marginTop: 24,
-        marginLeft:20,
-        marginBottom: 12,
-        fontSize: 16,
+        marginTop: 28,
+        marginLeft: 20,
+        marginBottom: 14,
+        fontSize: 17,
         fontWeight: '700',
+        color: colors.text,
+        letterSpacing: -0.3,
     },
 
     card: {
         flexDirection: 'row',
-        backgroundColor: '#fff',
+        backgroundColor: colors.card,
         marginHorizontal: 20,
         marginVertical: 8,
-        padding: 15,
-        borderRadius: 15,
+        padding: 16,
+        borderRadius: 16,
         alignItems: 'center',
-
+        borderWidth: 1,
+        borderColor: colors.border,
     },
 
     thumbnail: {
-        width: 60,
-        height: 60,
-        borderRadius: 10,
+        width: 64,
+        height: 64,
+        borderRadius: 12,
+        backgroundColor: colors.border,
     },
 
     cardContent: {
         flex: 1,
-        paddingHorizontal: 20,
-        gap:2
+        paddingHorizontal: 16,
+        gap: 4,
     },
 
     itemTitle: {
         fontWeight: '600',
-
-
+        fontSize: 15,
+        color: colors.text,
     },
 
     distanceText: {
         fontSize: 12,
-        color: '#888',
-
+        color: colors.textMuted,
     },
 
     price: {
-        fontWeight: '600',
-        color: '#097F8C',
+        fontWeight: '700',
+        color: colors.primary,
+        fontSize: 15,
     },
 
     perDay: {
-        color: '#999',
-        marginLeft: 5,
+        color: colors.textMuted,
+        marginLeft: 4,
+        fontSize: 13,
     },
 
     actions: {
         alignItems: 'flex-end',
-        gap: 20,
+        gap: 4,
     },
 
     itemImage: {
         width: 160,
         height: 160,
-        borderRadius: 10,
-        backgroundColor: 'white',
-
+        borderRadius: 12,
+        backgroundColor: colors.border,
     },
-
 });
