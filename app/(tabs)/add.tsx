@@ -318,7 +318,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         backgroundColor: colors.background,
     },
     scrollContent: {
-        paddingHorizontal: 20,
+        paddingHorizontal: 16,
         paddingTop: 8,
         paddingBottom: 32,
         gap: 0,

@@ -112,14 +112,14 @@ export default function SignUpScreen() {
                             source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }}
                             style={styles.googleIcon}
                         />
-                        <Text style={[styles.MediumText, { fontWeight: "400" }]}>Sign up with Google</Text>
+                        <Text style={[styles.MediumText, { fontWeight: "400", color:colors.primarySecondary }]}>Sign up with Google</Text>
                     </TouchableOpacity>
                 </View>
             </View>
 
             <View style={[styles.centerContainer, { padding: 5, marginTop: 25 }]}>
                 <Text style={styles.MediumText}>Already have an account?</Text>
-                <TouchableOpacity onPress={() => router.push('/log_in')}>
+                <TouchableOpacity onPress={() => router.push('/log-in')}>
                     <Text style={[styles.MediumText, { color: colors.primary, fontWeight: "600",marginLeft:6 }]}>
                         Log In
                     </Text>

@@ -20,9 +20,11 @@ export default function RootLayout() {
                     <Stack.Screen name="(tabs)" options={{ headerShown: false,  animation: 'fade', animationDuration:1050 }} />
                     <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
                     <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade', animationDuration:550}} />
-                    <Stack.Screen name="sign_in" options={{ headerShown: false, animation: 'fade', animationDuration:550 }} />
-                    <Stack.Screen name="log_in" options={{ headerShown: false, animation: 'fade', animationDuration:550 }} />
+                    <Stack.Screen name="sign-in" options={{ headerShown: false, animation: 'fade', animationDuration:550 }} />
+                    <Stack.Screen name="log-in" options={{ headerShown: false, animation: 'fade', animationDuration:550 }} />
                     <Stack.Screen name="verification" options={{ headerShown: false, animation: 'fade', animationDuration:550 }} />
+                    <Stack.Screen name="saved-items" options={{title: 'Saved Items',animation: 'fade', animationDuration:550 }} />
+                    <Stack.Screen name="settings" options={{title: 'Settings',animation: 'fade', animationDuration:550 }}/>
                 </Stack>
                 <StatusBar style="auto" />
             </ThemeProvider>

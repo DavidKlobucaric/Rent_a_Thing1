@@ -109,7 +109,7 @@ export default function HomeScreen() {
 
                 {/* SEARCH BAR */}
                 <View style={styles.searchBar}>
-                    <Fontisto name="search" style={[styles.searchIcon, { color: colors.textMuted }]} />
+                    <Fontisto name="search" style={[styles.searchIcon, { color: colors.primarySecondary }]} />
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Search..."
@@ -317,7 +317,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
 
     tabLabelActive: {
         color: colors.primary,
-        fontWeight: '700',
+        fontWeight: '600',
     },
 
     listContainer: {
@@ -358,7 +358,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         marginLeft: 20,
         marginBottom: 14,
         fontSize: 17,
-        fontWeight: '700',
+        fontWeight: '600',
         color: colors.text,
         letterSpacing: -0.3,
     },
@@ -400,7 +400,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     },
 
     price: {
-        fontWeight: '700',
+        fontWeight: '600',
         color: colors.primary,
         fontSize: 15,
     },

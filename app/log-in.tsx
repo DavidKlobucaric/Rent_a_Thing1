@@ -147,7 +147,7 @@ export default function LogInScreen() {
             {/* SIGN UP LINK */}
             <View style={styles.signUpContainer}>
                 <Text style={styles.mediumText}>Don{"'"}t have an account?</Text>
-                <TouchableOpacity  onPress={() => router.push('/sign_in')}>
+                <TouchableOpacity  onPress={() => router.push('/sign-in')}>
                     <Text style={[styles.mediumText, { color: colors.primary, fontWeight: "600" }]}>
                         Sign Up
                     </Text>
@@ -188,7 +188,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     },
 
     titleText: {
-        fontWeight: "700",
+        fontWeight: "600",
         fontSize: 32,
         letterSpacing: -0.5,
         color: colors.text,
@@ -220,8 +220,8 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
 
     labelText: {
         fontSize: 12,
-        fontWeight: "700",
-        color: colors.textSecondary,
+        fontWeight: "600",
+        color: colors.text,
         paddingTop: 16,
         paddingBottom: 8,
         letterSpacing: 0.4,
@@ -276,8 +276,8 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
 
     primaryButtonText: {
         fontSize: 16,
-        fontWeight: "700",
-        color: colors.primarySecondary,
+        fontWeight: "600",
+        color: colors.iconColorInverse,
     },
 
     dividerContainer: {

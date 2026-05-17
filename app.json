@@ -46,8 +46,14 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsVersion": "11.20.1"
 
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

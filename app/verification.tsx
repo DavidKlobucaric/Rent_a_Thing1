@@ -65,7 +65,7 @@ export default function VerificationScreen() {
 
         if(result.success) {
             Alert.alert("Account verified", "Your account has been verified. Please log in.",
-                [{ text: "Log in", onPress: () => router.replace('/log_in')}]
+                [{ text: "Log in", onPress: () => router.replace('/log-in')}]
             );
         } else{
             Alert.alert("Verification failed", result.message);

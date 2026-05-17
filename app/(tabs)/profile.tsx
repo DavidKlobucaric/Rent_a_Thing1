@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
     View,
     Text,
@@ -7,9 +7,11 @@ import {
     TouchableOpacity,
     StatusBar,
 } from 'react-native';
+
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+
 import { useAuth } from '@/src/context/authContext';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -31,11 +33,19 @@ type MenuItemProps = {
     onPress: () => void;
     isLogout?: boolean;
     colors: typeof Colors.light;
-    isDark: boolean;
 };
 
-const MenuItem = ({ iconName, title, subtitle, onPress, isLogout = false, colors, isDark }: MenuItemProps) => {
-    const styles = makeStyles(colors, isDark);
+const MenuItem = ({
+                      iconName,
+                      title,
+                      subtitle,
+                      onPress,
+                      isLogout = false,
+                      colors,
+                  }: MenuItemProps) => {
+
+    const styles = makeStyles(colors);
+
     return (
         <TouchableOpacity
             style={[styles.menuItem, isLogout && styles.logoutItem]}
@@ -50,198 +60,238 @@ const MenuItem = ({ iconName, title, subtitle, onPress, isLogout = false, colors
                         color={isLogout ? colors.danger : colors.iconColor}
                     />
                 </View>
+
                 <View>
-                    <Text style={[styles.menuTitle, isLogout && styles.logoutTitle]}>{title}</Text>
-                    <Text style={styles.menuSubtitle}>{subtitle}</Text>
+                    <Text style={[styles.menuTitle, isLogout && styles.logoutTitle]}>
+                        {title}
+                    </Text>
+
+                    <Text style={styles.menuSubtitle}>
+                        {subtitle}
+                    </Text>
                 </View>
             </View>
+
             {!isLogout && (
-                <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+                <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color={colors.textSecondary}
+                />
             )}
         </TouchableOpacity>
     );
 };
 
-export default function ProfileScreen () {
-    const [activeTab, setActiveTab] = useState<'myRentals' | 'savedItems'>('myRentals');
+export default function ProfileScreen() {
+
     const { logout } = useAuth();
     const router = useRouter();
+
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
+
     const isDark = scheme === 'dark';
-    const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
+
+    const styles = useMemo(
+        () => makeStyles(colors),
+        [colors]
+    );
 
     const handleLogout = async () => {
         await logout();
         router.replace('/');
-    }
+    };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <SafeAreaView
+            style={styles.container}
+            edges={['top', 'left', 'right']}
+        >
+
             <StatusBar
                 barStyle={isDark ? 'light-content' : 'dark-content'}
                 backgroundColor={colors.background}
             />
 
-
             <ScrollView showsVerticalScrollIndicator={false}>
-                {/* -------- PROFILE SECTION -------- */}
+
+                {/* PROFILE */}
                 <View style={styles.profileSection}>
+
                     <View style={styles.profileImageContainer}>
                         <Image
                             source={{ uri: userData.profileImage }}
                             style={styles.profileImage}
                         />
-
                     </View>
-                    <Text style={styles.userName}>{userData.name}</Text>
+
+                    <Text style={styles.userName}>
+                        {userData.name}
+                    </Text>
 
                     <View style={styles.userStatus}>
-                        <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                        <Text style={styles.verifiedText}>Verified Member</Text>
+                        <Ionicons
+                            name="checkmark-circle"
+                            size={16}
+                            color={colors.success}
+                        />
+
+                        <Text style={styles.verifiedText}>
+                            Verified Member
+                        </Text>
+
                         <Text style={styles.separator}>•</Text>
-                        <Ionicons name="star" size={16} color={colors.warning} />
-                        <Text style={styles.ratingText}>{userData.rating} Rating</Text>
+
+                        <Ionicons
+                            name="star"
+                            size={16}
+                            color={colors.warning}
+                        />
+
+                        <Text style={styles.ratingText}>
+                            {userData.rating} Rating
+                        </Text>
                     </View>
                 </View>
 
-                {/* -------- STATS -------- */}
+                {/* STATS */}
                 <View style={styles.statsContainer}>
+
                     <View style={styles.statBox}>
-                        <Text style={styles.statValue}>{userData.rentals}</Text>
-                        <Text style={styles.statLabel}>RENTALS</Text>
+                        <Text style={styles.statValue}>
+                            {userData.rentals}
+                        </Text>
+
+                        <Text style={styles.statLabel}>
+                            RENTALS
+                        </Text>
                     </View>
+
                     <View style={styles.statBox}>
-                        <Text style={styles.statValue}>{userData.reviews}</Text>
-                        <Text style={styles.statLabel}>REVIEWS</Text>
+                        <Text style={styles.statValue}>
+                            {userData.reviews}
+                        </Text>
+
+                        <Text style={styles.statLabel}>
+                            REVIEWS
+                        </Text>
                     </View>
+
                     <View style={styles.statBox}>
-                        <Text style={styles.statValue}>{userData.responseRate}%</Text>
-                        <Text style={styles.statLabel}>RESPONSE</Text>
+                        <Text style={styles.statValue}>
+                            {userData.responseRate}%
+                        </Text>
+
+                        <Text style={styles.statLabel}>
+                            RESPONSE
+                        </Text>
                     </View>
+
                 </View>
 
-
-
-
-                {/* -------- MENU -------- */}
+                {/* MENU */}
                 <View style={styles.menuContainer}>
+
                     <MenuItem
                         colors={colors}
-                        isDark={isDark}
                         iconName="time-outline"
                         title="Rentals History"
                         subtitle="View all past transactions"
                         onPress={() => {}}
                     />
+
                     <MenuItem
                         colors={colors}
-                        isDark={isDark}
                         iconName="heart-outline"
                         title="Saved Items"
                         subtitle="Things you want to rent later"
-                        onPress={() => {}}
+                        onPress={() => { router.push('/saved-items')}}
                     />
+
                     <MenuItem
                         colors={colors}
-                        isDark={isDark}
                         iconName="settings-outline"
                         title="Settings"
                         subtitle="Privacy, Notifications & Account"
-                        onPress={() => {}}
+                        onPress={() => { router.push('/settings')}}
                     />
+
                     <MenuItem
                         colors={colors}
-                        isDark={isDark}
                         iconName="help-circle-outline"
                         title="Support"
                         subtitle="FAQs and direct help center"
                         onPress={() => {}}
                     />
+
                     <MenuItem
                         colors={colors}
-                        isDark={isDark}
                         iconName="log-out-outline"
                         title="Logout"
                         subtitle="Sign out of your account"
                         onPress={handleLogout}
                         isLogout
                     />
-                </View>
 
+                </View>
 
             </ScrollView>
         </SafeAreaView>
     );
-};
+}
 
+const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
 
-const makeStyles = (colors: typeof Colors.light, isDark: boolean) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
-    },
-
-    appNameContainer: {
-        alignItems: 'center',
-        paddingVertical: 12,
-    },
-    appName: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: colors.primary,
     },
 
     profileSection: {
         alignItems: 'center',
         paddingVertical: 20,
     },
+
     profileImageContainer: {
         position: 'relative',
         marginBottom: 12,
     },
+
     profileImage: {
         width: 180,
         height: 180,
         borderRadius: 9999,
         backgroundColor: colors.border,
     },
-    verifiedBadge: {
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: colors.success,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 3,
-        borderColor: colors.background,
-    },
+
     userName: {
         fontSize: 24,
-        fontWeight: '700',
+        fontWeight: '600',
         color: colors.text,
         marginBottom: 8,
     },
+
     userStatus: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
     },
+
     verifiedText: {
         fontSize: 14,
         color: colors.textSecondary,
     },
+
     separator: {
         fontSize: 14,
         color: colors.textMuted,
         marginHorizontal: 4,
     },
+
     ratingText: {
         fontSize: 14,
-        color: colors.textSecondary,
+        color: colors.warning,
     },
 
     statsContainer: {
@@ -250,25 +300,28 @@ const makeStyles = (colors: typeof Colors.light, isDark: boolean) => StyleSheet.
         paddingHorizontal: 16,
         marginBottom: 20,
     },
+
     statBox: {
         flex: 1,
         backgroundColor: colors.surface,
         paddingVertical: 20,
         marginHorizontal: 6,
-        borderRadius: 12,
+        borderRadius: 14,
         alignItems: 'center',
         borderWidth: 1,
         borderColor: colors.border,
     },
+
     statValue: {
         fontSize: 24,
-        fontWeight: '700',
-        color: colors.primary,
+        fontWeight: '600',
+        color: colors.primarySecondary,
         marginBottom: 4,
     },
+
     statLabel: {
         fontSize: 12,
-        color: colors.text,
+        color: colors.primary,
         fontWeight: '600',
     },
 
@@ -277,25 +330,28 @@ const makeStyles = (colors: typeof Colors.light, isDark: boolean) => StyleSheet.
         marginBottom: 20,
         gap: 10,
     },
+
     menuItem: {
         backgroundColor: colors.card,
         padding: 16,
-        borderRadius: 12,
+        borderRadius: 14,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderWidth: 1,
-        borderColor: colors.border,
+
     },
+
     logoutItem: {
-        borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : '#FEE2E2',
-        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#FFFBFB',
+        borderColor: colors.logoutBorder,
+        backgroundColor: colors.logoutBg,
     },
+
     menuLeft: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
     },
+
     iconBox: {
         width: 40,
         height: 40,
@@ -307,22 +363,26 @@ const makeStyles = (colors: typeof Colors.light, isDark: boolean) => StyleSheet.
         borderWidth: 1,
         borderColor: colors.borderLight,
     },
+
     logoutIconBox: {
-        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2',
-        borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : '#FEE2E2',
+        backgroundColor: colors.logoutBg,
+        borderColor: colors.logoutBorder,
+
     },
+
     menuTitle: {
         fontSize: 15,
         fontWeight: '600',
         color: colors.text,
         marginBottom: 2,
     },
+
     logoutTitle: {
         color: colors.danger,
     },
+
     menuSubtitle: {
         fontSize: 13,
         color: colors.textMuted,
     },
 });
-

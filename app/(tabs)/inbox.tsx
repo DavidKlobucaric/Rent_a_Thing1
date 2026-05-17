@@ -199,7 +199,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     },
 
     scrollContent: {
-        paddingHorizontal: 20,
+        paddingHorizontal: 16,
         paddingVertical: 16,
     },
 
@@ -335,7 +335,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     },
 
     convNameUnread: {
-        fontWeight: '700',
+        fontWeight: '600',
         color: colors.text,
     },
 

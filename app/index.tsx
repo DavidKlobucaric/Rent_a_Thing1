@@ -12,7 +12,7 @@ export default function Index() {
     const router = useRouter();
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
-    const styles = useMemo(() => makeStyles(colors, scheme), [colors, scheme]);
+    const styles = useMemo(() => makeStyles(colors), [colors]);
 
     useFocusEffect(
         useCallback(() => {
@@ -42,7 +42,7 @@ export default function Index() {
                     <View style={styles.bottom}>
                         <TouchableOpacity
                             style={styles.btnPrimary}
-                            onPress={() => router.push('/sign_in')}
+                            onPress={() => router.push('/sign-in')}
                             activeOpacity={0.9}
                         >
                             <Text style={styles.btnPrimaryText}>Sign In</Text>
@@ -50,7 +50,7 @@ export default function Index() {
 
                         <TouchableOpacity
                             style={styles.btnSecondary}
-                            onPress={() => router.push('/log_in')}
+                            onPress={() => router.push('/log-in')}
                             activeOpacity={0.9}
                         >
                             <Text style={styles.btnSecondaryText}>Log In</Text>
@@ -64,7 +64,7 @@ export default function Index() {
     );
 }
 
-const makeStyles = (colors: typeof Colors.light, scheme: 'light' | 'dark') => StyleSheet.create({
+const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: 28,
@@ -87,7 +87,7 @@ const makeStyles = (colors: typeof Colors.light, scheme: 'light' | 'dark') => St
     titleText: {
         fontSize: 42,
         fontWeight: '800',
-        // ✅ Na gradientu uvijek bijelo za čitljivost, u dark modeu možeš koristiti colors.text
+
         color: '#FFFFFF',
         letterSpacing: 0.5,
         marginTop: 4,
@@ -96,12 +96,13 @@ const makeStyles = (colors: typeof Colors.light, scheme: 'light' | 'dark') => St
 
     subtitle: {
         fontSize: 17,
-        // ✅ Koristi theme varijablu s prilagođenom opacity za gradient
-        color: scheme === 'dark' ? colors.textMuted + 'CC' : 'rgba(255,255,255,0.8)',
+
+        color: colors.activeTabText,
         textAlign: 'center',
         lineHeight: 24,
         marginTop: 12,
         paddingHorizontal: 20,
+        opacity:0.8
     },
 
     bottom: {
@@ -109,30 +110,29 @@ const makeStyles = (colors: typeof Colors.light, scheme: 'light' | 'dark') => St
         gap: 12,
     },
 
-    // ✅ PRIMARY GUMB: koristi colors.surface
+
     btnPrimary: {
         width: '100%',
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 16,
         borderRadius: 14,
-        backgroundColor: colors.surface, // #FFFFFF (light) | #424242 (dark)
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 4,
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.border,
+
     },
 
-    // ✅ TEKST NA PRIMARY GUMBU: colors.primary (light) | colors.text (dark)
+
     btnPrimaryText: {
-        color: scheme === 'dark' ? colors.text : colors.primary,
-        fontWeight: '700',
+        color: colors.text,
+        fontWeight: '600',
         fontSize: 16,
         letterSpacing: 0.2,
+
     },
 
-    // ✅ SECONDARY GUMB: transparent pozadina, border iz teme
+
     btnSecondary: {
         width: '100%',
         alignItems: 'center',
@@ -140,25 +140,26 @@ const makeStyles = (colors: typeof Colors.light, scheme: 'light' | 'dark') => St
         paddingVertical: 16,
         borderRadius: 14,
         backgroundColor: 'transparent',
-        borderWidth: 1.5,
-        borderColor: scheme === 'dark' ? colors.border : colors.primary, // #424242 | #00646F
+        borderWidth: 1,
+        borderColor: colors.activeTabBg,
     },
 
-    // ✅ TEKST NA SECONDARY GUMBU: colors.text
+
     btnSecondaryText: {
-        color: colors.text,
+        color: colors.activeTabText,
         fontWeight: '600',
         fontSize: 16,
         letterSpacing: 0.2,
+
     },
 
-    // ✅ FOOTER: colors.textMuted iz teme
     footer: {
-        color: colors.textMuted,
+        color: colors.activeTabText,
         fontSize: 11,
         letterSpacing: 1.8,
         marginTop: 8,
         textAlign: 'center',
         fontWeight: '500',
+        opacity:0.8
     },
 });
