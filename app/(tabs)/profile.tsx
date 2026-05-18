@@ -193,13 +193,6 @@ export default function ProfileScreen() {
                 {/* MENU */}
                 <View style={styles.menuContainer}>
 
-                    <MenuItem
-                        colors={colors}
-                        iconName="time-outline"
-                        title="Rentals History"
-                        subtitle="View all past transactions"
-                        onPress={() => {}}
-                    />
 
                     <MenuItem
                         colors={colors}
