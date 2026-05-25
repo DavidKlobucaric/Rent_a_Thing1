@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { Image } from 'expo-image';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     StyleSheet, Text, View, FlatList, TouchableOpacity, Alert,
 } from 'react-native';
@@ -9,9 +9,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 
-// ─────────────────────────────────────────────────────
-// MOCK PODACI
-// ─────────────────────────────────────────────────────
 const MOCK_SAVED_ITEMS = [
     {
         listingId: 101,
@@ -42,7 +39,7 @@ const MOCK_SAVED_ITEMS = [
         price: 25,
         category: 'TECH',
         description: 'RGB backlit, Cherry MX switches, perfect for gaming',
-        imageUrls: 'https://i.extremetech.com/imagery/content-types/00hygCJbhhvWfYz79pKTe4x/hero-image.fit_lim.size_1600x900.v1678673392.jpg',
+        imageUrls: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400',
         userName: 'Alex Chen',
         isAvailable: false,
     },
@@ -53,7 +50,7 @@ const MOCK_SAVED_ITEMS = [
         price: 60,
         category: 'SPORTS',
         description: 'Full suspension, 21-speed, great for trails',
-        imageUrls: 'https://asset.scott-sports.com/Cro/CrossCountry_Bike_Discipline_Banner_MTB_2263079.jpg?signature=3c8b8e92f5dfac7af082ab68808cc46521e217a2b1757b49ae560c814136a0ac',
+        imageUrls: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400',
         userName: 'Emma Davis',
         isAvailable: true,
     },
@@ -100,21 +97,26 @@ export default function SavedItemsScreen({
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
+    const [localItems, setLocalItems] = useState(MOCK_SAVED_ITEMS);
+
     const savedItems = useMemo(() => {
-        if (favorites.length === 0) return MOCK_SAVED_ITEMS;
-        return MOCK_SAVED_ITEMS.filter(item => favorites.includes(item.listingId));
-    }, [favorites]);
+        if (favorites.length === 0) return localItems;
+        return localItems.filter(item => favorites.includes(item.listingId));
+    }, [favorites, localItems]);
 
     const handleRemove = (id: number) => {
         Alert.alert(
             'Remove from Saved',
-            'Are you sure you want to remove this item?',
+            'Are you sure you want to remove this item from your favorites?',
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
                     text: 'Remove',
                     style: 'destructive',
-                    onPress: () => onRemoveFavorite?.(id)
+                    onPress: () => {
+                        setLocalItems(prev => prev.filter(item => item.listingId !== id));
+                        onRemoveFavorite?.(id);
+                    }
                 }
             ]
         );
@@ -122,26 +124,25 @@ export default function SavedItemsScreen({
 
     const getFirstImage = (imageUrls: string) => {
         if (!imageUrls) return PLACEHOLDER_IMAGE;
-        const first = imageUrls.split(',')[0].trim();
-        return first || PLACEHOLDER_IMAGE;
+        return imageUrls.split(',')[0].trim();
     };
 
-    // ───────── EMPTY STATE ─────────
     if (savedItems.length === 0) {
         return (
             <SafeAreaView style={styles.container} edges={['left', 'right']}>
                 <View style={styles.emptyContainer}>
-                    <Ionicons name="heart-dislike-outline" size={80} color={colors.textMuted} />
-                    <Text style={[styles.emptyTitle, { color: colors.text }]}>No Saved Items</Text>
-                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                        Tap ♡ on any item to save it here
+                    <View style={styles.emptyIconCircle}>
+                        <Ionicons name="heart-outline" size={44} color={colors.textMuted} />
+                    </View>
+                    <Text style={styles.emptyTitle}>No Saved Items</Text>
+                    <Text style={styles.emptyText}>
+                        Tap the heart icon on any listing to save things you want to rent later.
                     </Text>
                 </View>
             </SafeAreaView>
         );
     }
 
-    // ───────── LISTA ─────────
     return (
         <SafeAreaView style={styles.container} edges={['left', 'right']}>
             <FlatList
@@ -150,15 +151,15 @@ export default function SavedItemsScreen({
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 ListHeaderComponent={
-                    <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-                        {savedItems.length} {savedItems.length === 1 ? 'item' : 'items'}
+                    <Text style={styles.headerSubtitle}>
+                        {savedItems.length} {savedItems.length === 1 ? 'saved item' : 'saved items'}
                     </Text>
                 }
                 renderItem={({ item }) => (
                     <TouchableOpacity
-                        style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+                        style={styles.card}
                         onPress={() => onSelectItem?.(item)}
-                        activeOpacity={0.7}
+                        activeOpacity={0.85}
                     >
                         {/* SLIKA */}
                         <View style={styles.imageContainer}>
@@ -178,29 +179,34 @@ export default function SavedItemsScreen({
                         {/* SADRŽAJ */}
                         <View style={styles.cardContent}>
                             <View style={styles.titleRow}>
-                                <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={1}>
+                                <Text style={styles.itemName} numberOfLines={1}>
                                     {item.name}
                                 </Text>
                                 <TouchableOpacity
                                     onPress={() => handleRemove(item.listingId)}
                                     style={styles.removeButton}
-                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                                 >
-                                    <Ionicons name="close-circle" size={22} color={colors.text} />
+                                    <Ionicons name="heart" size={22} color={colors.danger} />
                                 </TouchableOpacity>
                             </View>
 
-                            <Text style={[styles.locationText, { color: colors.textMuted }]} numberOfLines={1}>
-                                <Ionicons name="location-outline" size={14} color={colors.textMuted} /> {item.location}
-                            </Text>
+                            {/* LOKACIJA */}
+                            <View style={styles.locationRow}>
+                                <Ionicons name="location-outline" size={14} color={colors.textMuted} style={{ marginRight: 3 }} />
+                                <Text style={styles.locationText} numberOfLines={1}>
+                                    {item.location}
+                                </Text>
+                            </View>
 
+                            {/* FOOTER */}
                             <View style={styles.footer}>
                                 <View style={styles.priceContainer}>
-                                    <Text style={[styles.price, { color: colors.text }]}>${item.price}</Text>
-                                    <Text style={[styles.perDay, { color: colors.textMuted }]}>/day</Text>
+                                    <Text style={styles.price}>${item.price}</Text>
+                                    <Text style={styles.perDay}>/day</Text>
                                 </View>
-                                <View style={[styles.categoryBadge, { backgroundColor: colors.primary }]}>
-                                    <Text style={[styles.categoryText, { color: colors.iconColorInverse }]}>{item.category}</Text>
+                                <View style={styles.categoryBadge}>
+                                    <Text style={styles.categoryText}>{item.category}</Text>
                                 </View>
                             </View>
                         </View>
@@ -211,60 +217,70 @@ export default function SavedItemsScreen({
     );
 }
 
-
-const makeStyles = (colors: any) => StyleSheet.create({
+const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
     },
-
-
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 28,
+        paddingHorizontal: 32,
+    },
+    emptyIconCircle: {
+        width: 90,
+        height: 90,
+        borderRadius: 45,
+        backgroundColor: colors.textMuted + '15',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
     },
     emptyTitle: {
         fontSize: 20,
-        fontWeight: '600',
-        marginTop: 20,
-        textAlign: 'center',
+        fontWeight: '700',
+        color: colors.text,
+        marginBottom: 8,
     },
     emptyText: {
-        fontSize: 15,
+        fontSize: 14,
         textAlign: 'center',
-        marginTop: 10,
         color: colors.textMuted,
-        lineHeight: 22,
+        lineHeight: 20,
     },
-
-
     headerSubtitle: {
-        fontSize: 15,
+        fontSize: 14,
+        fontWeight: '600',
+        color: colors.textMuted,
         paddingHorizontal: 16,
-        paddingBottom: 14,
+        paddingBottom: 10,
         paddingTop: 14,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
-
-
     listContent: {
-        paddingHorizontal: 14,
-        paddingBottom: 14,
+        paddingHorizontal: 16,
+        paddingBottom: 24,
     },
-
-
     card: {
         flexDirection: 'row',
-        borderRadius: 14,
+        borderRadius: 16,
+        backgroundColor: colors.card,
         borderWidth: 1,
-        marginBottom: 12,
+        borderColor: colors.border,
+        marginBottom: 14,
         overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 6,
+        elevation: 1,
     },
     imageContainer: {
-        width: 110,
-        height: 110,
-        position: 'relative',
+        width: 115,
+        height: 115,
+        backgroundColor: colors.background,
     },
     itemImage: {
         width: '100%',
@@ -272,53 +288,55 @@ const makeStyles = (colors: any) => StyleSheet.create({
     },
     unavailableBadge: {
         position: 'absolute',
-        top: 8,
+        bottom: 8,
         left: 8,
-        backgroundColor: "#000000B3",
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
         paddingHorizontal: 8,
         paddingVertical: 4,
-        borderRadius: 5,
+        borderRadius: 6,
     },
     unavailableText: {
         color: '#fff',
-        fontSize: 10,
-        fontWeight: '600',
+        fontSize: 9,
+        fontWeight: '700',
         textTransform: 'uppercase',
+        letterSpacing: 0.3,
     },
-
-
     cardContent: {
         flex: 1,
-        padding: 12,
+        padding: 14,
         justifyContent: 'space-between',
     },
     titleRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'center',
     },
     itemName: {
         fontSize: 16,
         fontWeight: '600',
+        color: colors.text,
         flex: 1,
         marginRight: 8,
     },
     removeButton: {
-        padding: 2,
+        padding: 4,
+    },
+    locationRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
     },
     locationText: {
         fontSize: 13,
-        marginTop: 6,
-        flexDirection: 'row',
-        alignItems: 'center',
+        color: colors.textMuted,
+        flex: 1,
     },
-
-
     footer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: 8,
+        marginTop: 10,
     },
     priceContainer: {
         flexDirection: 'row',
@@ -326,20 +344,25 @@ const makeStyles = (colors: any) => StyleSheet.create({
     },
     price: {
         fontSize: 18,
-        fontWeight: '600',
+        fontWeight: '700',
+        color: colors.text,
     },
     perDay: {
-        fontSize: 12,
+        fontSize: 13,
+        color: colors.textMuted,
         marginLeft: 2,
     },
     categoryBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 18,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        backgroundColor: colors.primary + '15',
     },
     categoryText: {
         fontSize: 10,
-        fontWeight: '600',
+        fontWeight: '700',
+        color: colors.primary,
         textTransform: 'uppercase',
+        letterSpacing: 0.3,
     },
 });

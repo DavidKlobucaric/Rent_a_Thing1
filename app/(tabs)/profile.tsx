@@ -31,72 +31,43 @@ type MenuItemProps = {
     title: string;
     subtitle: string;
     onPress: () => void;
-    isLogout?: boolean;
     colors: typeof Colors.light;
+    showSeparator?: boolean;
 };
 
-const MenuItem = ({
-                      iconName,
-                      title,
-                      subtitle,
-                      onPress,
-                      isLogout = false,
-                      colors,
-                  }: MenuItemProps) => {
-
+const MenuItem = ({ iconName, title, subtitle, onPress, colors, showSeparator = true }: MenuItemProps) => {
     const styles = makeStyles(colors);
 
     return (
-        <TouchableOpacity
-            style={[styles.menuItem, isLogout && styles.logoutItem]}
-            onPress={onPress}
-            activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
             <View style={styles.menuLeft}>
-                <View style={[styles.iconBox]}>
-                    <Ionicons
-                        name={iconName}
-                        size={24}
-
-                        color={isLogout ? colors.danger : colors.primary}
-                    />
+                <View style={styles.iconBox}>
+                    <Ionicons name={iconName} size={20} color={colors.primary} />
                 </View>
-
                 <View style={{ flex: 1 }}>
-                    <Text style={[styles.menuTitle, isLogout && styles.logoutTitle]}>
-                        {title}
-                    </Text>
-                    <Text style={styles.menuSubtitle}>
-                        {subtitle}
-                    </Text>
+                    <Text style={styles.menuTitle}>{title}</Text>
+                    <Text style={styles.menuSubtitle} numberOfLines={1}>{subtitle}</Text>
                 </View>
             </View>
+            <View style={styles.menuRightSide}>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </View>
 
-            {!isLogout && (
-                <Ionicons
-                    name="chevron-forward"
-                    size={20}
-                    color={colors.textSecondary}
-                />
-            )}
+
+            {showSeparator && <View style={styles.menuSeparator} />}
         </TouchableOpacity>
     );
 };
 
 export default function ProfileScreen() {
-
     const { logout } = useAuth();
     const router = useRouter();
 
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
-
     const isDark = scheme === 'dark';
 
-    const styles = useMemo(
-        () => makeStyles(colors),
-        [colors]
-    );
+    const styles = useMemo(() => makeStyles(colors), [colors]);
 
     const handleLogout = async () => {
         await logout();
@@ -104,11 +75,7 @@ export default function ProfileScreen() {
     };
 
     return (
-        <SafeAreaView
-            style={styles.container}
-            edges={['top', 'left', 'right']}
-        >
-
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
             <StatusBar
                 barStyle={isDark ? 'light-content' : 'dark-content'}
                 backgroundColor={colors.background}
@@ -119,106 +86,84 @@ export default function ProfileScreen() {
                 contentContainerStyle={styles.scrollContent}
             >
 
-                {/* PROFILE */}
-                <View style={styles.profileSection}>
+                {/* 1. HERO HEADER  */}
+                <View style={styles.heroHeader}>
+                    <Image source={{ uri: userData.profileImage }} style={styles.bigProfileImage} />
 
-                    <View style={styles.profileImageContainer}>
-                        <Image
-                            source={{ uri: userData.profileImage }}
-                            style={styles.profileImage}
-                        />
-                    </View>
+                    <View style={styles.heroDetails}>
+                        <Text style={styles.userName} numberOfLines={2}>{userData.name}</Text>
 
-                    <Text style={styles.userName}>
-                        {userData.name}
-                    </Text>
+                        <View style={styles.ratingRow}>
+                            <Ionicons name="star" size={16} color={colors.rating} />
+                            <Text style={styles.ratingText}>{userData.rating}</Text>
+                            <Text style={styles.ratingCount}>({userData.reviews} reviews)</Text>
+                        </View>
 
-                    <View style={styles.userStatus}>
-                        <Ionicons
-                            name="checkmark-circle"
-                            size={16}
-                            color={colors.success}
-                        />
-                        <Text style={styles.verifiedText}>
-                            Verified Member
-                        </Text>
-                        <Text style={styles.separator}>•</Text>
-                        <Ionicons
-                            name="star"
-                            size={16}
-                            color={colors.rating}
-                        />
-                        <Text style={styles.ratingText}>
-                            {userData.rating} Rating
-                        </Text>
+                        <View style={styles.verifiedBadge}>
+                            <Ionicons name="checkmark-circle-outline" size={14} color={colors.success} />
+                            <Text style={styles.verifiedText}>Verified Member</Text>
+                        </View>
                     </View>
                 </View>
 
-                {/* STATS */}
-                <View style={styles.statsContainer}>
+                {/* 2. STATS ROW */}
+                <View style={styles.statsRowContainer}>
                     <View style={styles.statBox}>
-                        <Text style={styles.statLabel}>
-                            RENTALS
-                        </Text>
-                        <Text style={styles.statValue}>
-                            {userData.rentals}
-                        </Text>
+                        <Text style={styles.statValue}>{userData.rentals}</Text>
+                        <Text style={styles.statLabel}>Rentals</Text>
                     </View>
 
-                    <View style={styles.statBox}>
-                        <Text style={styles.statLabel}>
-                            REVIEWS
-                        </Text>
-                        <Text style={styles.statValue}>
-                            {userData.reviews}
-                        </Text>
-                    </View>
+                    <View style={styles.statDivider} />
 
                     <View style={styles.statBox}>
-                        <Text style={styles.statLabel}>
-                            RESPONSE
-                        </Text>
-                        <Text style={styles.statValue}>
-                            {userData.responseRate}%
-                        </Text>
+                        <Text style={styles.statValue}>{userData.responseRate}%</Text>
+                        <Text style={styles.statLabel}>Response</Text>
+                    </View>
+
+                    <View style={styles.statDivider} />
+
+                    <View style={styles.statBox}>
+                        <Text style={styles.statValue}>{userData.reviews}</Text>
+                        <Text style={styles.statLabel}>Reviews</Text>
                     </View>
                 </View>
 
-                {/* MENU */}
-                <View style={styles.menuContainer}>
-                    <MenuItem
-                        colors={colors}
-                        iconName="heart-outline"
-                        title="Saved Items"
-                        subtitle="Things you want to rent later"
-                        onPress={() => { router.push('/saved-items')}}
-                    />
+                {/* 3. POSTAVKE  */}
+                <View style={styles.menuSection}>
+                    <Text style={styles.sectionTitle}>Account Settings</Text>
+                    <View style={styles.menuGroup}>
+                        <MenuItem
+                            colors={colors}
+                            iconName="heart-outline"
+                            title="Saved Items"
+                            subtitle="Things you want to rent later"
+                            onPress={() => router.push('/saved-items')}
+                        />
 
-                    <MenuItem
-                        colors={colors}
-                        iconName="settings-outline"
-                        title="Settings"
-                        subtitle="Privacy, Notifications & Account"
-                        onPress={() => { router.push('/settings')}}
-                    />
+                        <MenuItem
+                            colors={colors}
+                            iconName="settings-outline"
+                            title="Settings"
+                            subtitle="Privacy, Notifications & Account"
+                            onPress={() => router.push('/settings')}
+                        />
 
-                    <MenuItem
-                        colors={colors}
-                        iconName="help-circle-outline"
-                        title="Support"
-                        subtitle="FAQs and direct help center"
-                        onPress={() => {router.push('/support')}}
-                    />
-
-                    <MenuItem
-                        colors={colors}
-                        iconName="log-out-outline"
-                        title="Logout"
-                        subtitle="Sign out of your account"
-                        onPress={handleLogout}
-                        isLogout
-                    />
+                        <MenuItem
+                            colors={colors}
+                            iconName="help-circle-outline"
+                            title="Support"
+                            subtitle="FAQs and direct help center"
+                            onPress={() => router.push('/support')}
+                            showSeparator={false}
+                        />
+                    </View>
                 </View>
+
+                {/* 4. SIGN OUT  */}
+                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
+                    <Ionicons name="log-out-outline" size={18} color={colors.danger} />
+                    <Text style={styles.logoutText}>Sign Out</Text>
+                </TouchableOpacity>
 
             </ScrollView>
         </SafeAreaView>
@@ -226,141 +171,182 @@ export default function ProfileScreen() {
 }
 
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-
     container: {
         flex: 1,
         backgroundColor: colors.background,
     },
-
     scrollContent: {
+        flexGrow: 1,
         paddingBottom: 40,
+        paddingHorizontal: 16,
     },
-
-    profileSection: {
-        alignItems: 'center',
-        paddingTop: 36,
-        paddingBottom: 28,
-    },
-
-    profileImageContainer: {
-        marginBottom: 18,
-    },
-
-    profileImage: {
-        width: 200,
-        height: 200,
-        borderRadius: 9999,
-        borderWidth: 1,
-        borderColor: colors.border,
-
-    },
-
-    userName: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: colors.text,
-        marginBottom: 8,
-        letterSpacing: -0.3,
-    },
-
-    userStatus: {
+    heroHeader: {
         flexDirection: 'row',
         alignItems: 'center',
+        paddingTop: 32,
+        paddingBottom: 32,
+        gap: 20,
+    },
+    bigProfileImage: {
+        width: 146,
+        height: 146,
+        borderRadius: 73,
+        borderWidth: 1.5,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+    },
+    heroDetails: {
+        flex: 1,
         gap: 6,
     },
-
-    verifiedText: {
-        fontSize: 13,
-        color: colors.textSecondary,
+    userName: {
+        fontSize: 28,
+        fontWeight: '900',
+        color: colors.text,
+        letterSpacing: -0.8,
+        lineHeight: 34,
     },
-
-    separator: {
-        fontSize: 14,
-        color: colors.textMuted,
-        paddingHorizontal: 2,
-    },
-
-    ratingText: {
-        fontSize: 13,
-        color: colors.textSecondary,
-    },
-
-    statsContainer: {
+    ratingRow: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
-        paddingHorizontal: 16,
-        marginBottom: 28,
+        alignItems: 'center',
+        gap: 5,
     },
-
+    ratingText: {
+        fontSize: 16,
+        fontWeight: '800',
+        color: colors.text,
+    },
+    ratingCount: {
+        fontSize: 13,
+        color: colors.textMuted,
+        fontWeight: '500',
+    },
+    verifiedBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.success + '15',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 10,
+        alignSelf: 'flex-start',
+        gap: 5,
+        marginTop: 2,
+    },
+    verifiedText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: colors.success,
+    },
+    statsRowContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.surface,
+        paddingVertical: 18,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: colors.border,
+        marginBottom: 40,
+    },
     statBox: {
         flex: 1,
-        backgroundColor: colors.surface,
-        paddingVertical: 16,
-        marginHorizontal: 5,
-        borderRadius: 14,
         alignItems: 'center',
+        justifyContent: 'center',
     },
-
     statValue: {
-        fontSize: 24,
-        fontWeight: '600',
+        fontSize: 22,
+        fontWeight: '800',
         color: colors.text,
-
+        letterSpacing: -0.3,
     },
-
     statLabel: {
         fontSize: 11,
         color: colors.textMuted,
         fontWeight: '600',
-        letterSpacing: 0.5,
+        marginTop: 2,
     },
-
-    menuContainer: {
-        paddingHorizontal: 16,
-        marginBottom: 20,
-        gap: 10,
+    statDivider: {
+        width: 1,
+        height: 24,
+        backgroundColor: colors.border,
     },
-
-    menuItem: {
+    menuSection: {
+        marginBottom: 40,
+    },
+    sectionTitle: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: colors.textMuted,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 12,
+        paddingLeft: 4,
+    },
+    menuGroup: {
         backgroundColor: colors.card,
-        padding: 16,
-        borderRadius: 14,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: colors.border,
+        overflow: 'hidden',
+    },
+    menuItem: {
+        paddingHorizontal: 16,
+        paddingVertical: 18,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        position: 'relative',
     },
-
-    logoutItem: {
-        borderColor: colors.logoutBorder,
-        backgroundColor: colors.logoutBg,
-    },
-
     menuLeft: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
-        marginRight: 8,
     },
-
     iconBox: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: colors.primary + '10',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 14,
     },
-
     menuTitle: {
         fontSize: 15,
         fontWeight: '600',
         color: colors.text,
         marginBottom: 2,
     },
-
-    logoutTitle: {
-        color: colors.danger,
-    },
-
     menuSubtitle: {
         fontSize: 13,
         color: colors.textMuted,
+    },
+    menuRightSide: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    menuSeparator: {
+        position: 'absolute',
+        bottom: 0,
+        left: 70,
+        right: 16,
+        height: 1,
+        backgroundColor: colors.border,
+    },
+    logoutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.logoutBg,
+        borderWidth: 1,
+        borderColor: colors.logoutBorder,
+        paddingVertical: 16,
+        borderRadius: 20,
+        gap: 8,
+        marginTop: 'auto',
+    },
+    logoutText: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: colors.danger,
     },
 });

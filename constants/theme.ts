@@ -26,7 +26,7 @@ export const Colors = {
     rating: '#EAB308',
     danger: '#EF4444',
     border: '#E6E6E6',
-    borderLight: '#BDC9C880',
+    borderLight: '#E6E6E6',
     placeholder: '#6E7979',
     iconCircleBg: '#E7E8E9',
     iconCircleBorder: '#E6E6E6',

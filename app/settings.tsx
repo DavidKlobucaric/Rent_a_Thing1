@@ -68,7 +68,7 @@ const SettingItem = ({
                     />
                 </View>
 
-                <View>
+                <View style={styles.textContainer}>
                     <Text style={[
                         styles.settingTitle,
                         { color: colors.text },
@@ -94,7 +94,7 @@ const SettingItem = ({
             ) : (
                 <Ionicons
                     name="chevron-forward"
-                    size={18}
+                    size={16} // Malo suptilnija strelica
                     color={colors.textSecondary}
                 />
             )}
@@ -166,7 +166,7 @@ export default function SettingsScreen() {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
                 {/* Notifications */}
-                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop:25 }]}>Notifications</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: 20 }]}>Notifications</Text>
                 <View style={styles.settingContainer}>
                     <SettingItem colors={colors} iconName="notifications" title="Push Notifications" description="Receive push notifications on your device" type="toggle" value={notifications.pushEnabled} onToggle={() => toggleNotification('pushEnabled')} />
                     <SettingItem colors={colors} iconName="mail" title="Email Notifications" description="Receive updates via email" type="toggle" value={notifications.emailEnabled} onToggle={() => toggleNotification('emailEnabled')} />
@@ -203,8 +203,8 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* Danger Zone */}
-                <Text style={[styles.sectionTitle, { color: colors.danger }]}>Danger Zone</Text>
-                <View style={styles.settingContainer}>
+                <Text style={[styles.sectionTitle, { color: colors.danger,}]}>Danger Zone</Text>
+                <View style={[styles.settingContainer,{borderColor:colors.borderLight}]}>
                     <SettingItem
                         colors={colors}
                         iconName="trash"
@@ -228,38 +228,37 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
-
-
     },
 
     scrollContent: {
-       paddingVertical:5
-
+        paddingVertical: 10,
+        paddingHorizontal: 16,
     },
 
     sectionTitle: {
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: '600',
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
-        paddingHorizontal: 16,
-        marginBottom: 10,
+        letterSpacing: 0.8,
+        paddingHorizontal: 4,
+        marginBottom: 8,
     },
 
     settingContainer: {
-        borderRadius: 14,
+        borderRadius: 12,
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: colors.border,
-        marginBottom: 24,
+        marginBottom: 20,
     },
 
     settingItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 14,
         backgroundColor: colors.card,
-        borderBottomWidth: 1,
+        borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: colors.border,
     },
 
@@ -274,46 +273,46 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         flex: 1,
     },
 
-
-
     iconBox: {
-        width: 40,
-        height: 40,
-        borderRadius: 9999,
+        width: 36,
+        height: 36,
+        borderRadius: 10,
         backgroundColor: colors.surface,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
-        borderWidth: 1,
-        borderColor: colors.borderLight,
+
     },
 
     destructiveIconBox: {
         backgroundColor: colors.logoutBg,
-        borderColor: colors.logoutBorder,
+    },
+
+    textContainer: {
+        flex: 1,
+        paddingRight: 8,
     },
 
     settingTitle: {
         fontSize: 15,
-        fontWeight: '600',
+        fontWeight: '500',
         marginBottom: 2,
-
     },
 
     settingDescription: {
         fontSize: 12,
         color: colors.textMuted,
+        lineHeight: 16,
     },
 
     switch: {
-        transform: [{ scaleX: 0.95 }, { scaleY: 0.95 }],
+        transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }],
     },
 
     versionText: {
         textAlign: 'center',
         fontSize: 12,
         marginTop: 10,
-        marginBottom: 20,
+        marginBottom: 30,
     },
-
 });

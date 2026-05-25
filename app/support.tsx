@@ -53,28 +53,39 @@ type FAQItemProps = {
     question: string;
     answer: string;
     colors: typeof Colors.light;
+    isLast?: boolean;
 };
 
-const FAQItem = ({ question, answer, colors }: FAQItemProps) => {
+const FAQItem = ({ question, answer, colors, isLast = false }: FAQItemProps) => {
     const [open, setOpen] = useState(false);
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
     return (
         <TouchableOpacity
-            style={styles.faqItem}
+            style={[
+                styles.faqItem,
+                !isLast && styles.faqItemBorder,
+                open && styles.faqItemOpen,
+            ]}
             activeOpacity={0.7}
             onPress={() => setOpen((v) => !v)}
         >
             <View style={styles.faqHeader}>
-                <Text style={styles.faqQuestion}>{question}</Text>
-                <Ionicons
-                    name={open ? 'chevron-up' : 'chevron-down'}
-                    size={18}
-                    color={colors.textSecondary}
-                />
+                <Text style={[styles.faqQuestion, open && styles.faqQuestionOpen]}>
+                    {question}
+                </Text>
+                <View style={[styles.faqIconBox, open && styles.faqIconBoxOpen]}>
+                    <Ionicons
+                        name={open ? 'remove' : 'add'}
+                        size={18}
+                        color={open ? colors.iconColorInverse : colors.primary}
+                    />
+                </View>
             </View>
             {open && (
-                <Text style={styles.faqAnswer}>{answer}</Text>
+                <View style={styles.faqAnswerContainer}>
+                    <Text style={styles.faqAnswer}>{answer}</Text>
+                </View>
             )}
         </TouchableOpacity>
     );
@@ -87,91 +98,106 @@ export default function SupportScreen() {
     const isDark = scheme === 'dark';
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
+    const contactOptions = [
+        {
+            icon: 'chatbubble-ellipses-outline' as const,
+            label: 'Live Chat',
+            detail: 'Replies in minutes',
+            onPress: () => router.push('/inbox'),
+        },
+        {
+            icon: 'mail-outline' as const,
+            label: 'Email Us',
+            detail: 'support@rentathing.com',
+            onPress: () => Linking.openURL('mailto:support@rentathing.com'),
+        },
+        {
+            icon: 'call-outline' as const,
+            label: 'Call Us',
+            detail: 'Mon–Fri, 9am–6pm',
+            onPress: () => Linking.openURL('tel:+1800000000'),
+        },
+    ];
+
     return (
-        <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        <SafeAreaView style={styles.container} edges={[ 'left', 'right']}>
             <StatusBar
                 barStyle={isDark ? 'light-content' : 'dark-content'}
                 backgroundColor={colors.background}
             />
 
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-
-                {/* HERO */}
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
+                {/* ─── HERO ─── */}
                 <View style={styles.heroBanner}>
+                    <View style={styles.heroIconBox}>
+                        <Ionicons name="help-circle" size={32} color={colors.iconColorInverse} />
+                    </View>
                     <Text style={styles.heroTitle}>How can we help?</Text>
                     <Text style={styles.heroSubtitle}>
-                        Browse FAQs or reach out to our team directly.
+                        Browse FAQs below or reach out to our support team directly.
                     </Text>
                 </View>
 
-                {/* CONTACT */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Contact Us</Text>
-                    <View style={styles.contactGrid}>
-
+                {/* ─── CONTACT OPTIONS ─── */}
+                <Text style={styles.sectionTitle}>Contact Us</Text>
+                <View style={styles.contactCard}>
+                    {contactOptions.map((option, index) => (
                         <TouchableOpacity
-                            style={styles.contactCard}
+                            key={option.label}
+                            style={[
+                                styles.contactRow,
+                                index < contactOptions.length - 1 && styles.contactRowBorder,
+                            ]}
                             activeOpacity={0.7}
-                            onPress={() => {}}
+                            onPress={option.onPress}
                         >
                             <View style={styles.contactIconBox}>
-                                <Ionicons name="chatbubble-ellipses-outline" size={28} color={colors.primary} />
+                                <Ionicons
+                                    name={option.icon}
+                                    size={22}
+                                    color={colors.primary}
+                                />
                             </View>
-                            <Text style={styles.contactLabel}>Live Chat</Text>
-                            <Text style={styles.contactDetail}>Replies in minutes</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.contactCard}
-                            activeOpacity={0.7}
-                            onPress={() => Linking.openURL('mailto:support@rentathing.com')}
-                        >
-                            <View style={styles.contactIconBox}>
-                                <Ionicons name="mail-outline" size={28} color={colors.primary} />
+                            <View style={styles.contactTextContainer}>
+                                <Text style={styles.contactLabel}>{option.label}</Text>
+                                <Text style={styles.contactDetail} numberOfLines={1}>
+                                    {option.detail}
+                                </Text>
                             </View>
-                            <Text style={styles.contactLabel}>Email Us</Text>
-                            <Text style={styles.contactDetail}>support@rentathing.com</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.contactCard}
-                            activeOpacity={0.7}
-                            onPress={() => Linking.openURL('tel:+1800000000')}
-                        >
-                            <View style={styles.contactIconBox}>
-                                <Ionicons name="call-outline" size={28} color={colors.primary} />
-                            </View>
-                            <Text style={styles.contactLabel}>Call Us</Text>
-                            <Text style={styles.contactDetail}>Mon–Fri, 9am–6pm</Text>
-                        </TouchableOpacity>
-
-                    </View>
-                </View>
-
-                {/* FAQ */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
-                    <View style={styles.faqContainer}>
-                        {faqs.map((faq) => (
-                            <FAQItem
-                                key={faq.id}
-                                question={faq.question}
-                                answer={faq.answer}
-                                colors={colors}
+                            <Ionicons
+                                name="chevron-forward"
+                                size={20}
+                                color={colors.textMuted}
                             />
-                        ))}
-                    </View>
+                        </TouchableOpacity>
+                    ))}
                 </View>
 
-                {/* FOOTER */}
+                {/* ─── FAQ ─── */}
+                <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+                <View style={styles.faqContainer}>
+                    {faqs.map((faq, index) => (
+                        <FAQItem
+                            key={faq.id}
+                            question={faq.question}
+                            answer={faq.answer}
+                            colors={colors}
+                            isLast={index === faqs.length - 1}
+                        />
+                    ))}
+                </View>
+
+                {/* ─── FOOTER ─── */}
                 <View style={styles.footerNote}>
-                    <Ionicons name="shield-checkmark-outline" size={16} color={colors.textMuted} />
+                    <Ionicons name="shield-checkmark" size={16} color={colors.success} />
                     <Text style={styles.footerNoteText}>
                         Your data is always kept private and secure.
                     </Text>
                 </View>
-
             </ScrollView>
         </SafeAreaView>
     );
@@ -185,89 +211,155 @@ const makeStyles = (colors: typeof Colors.light) =>
             backgroundColor: colors.background,
         },
 
-
-        heroBanner: {
-            paddingHorizontal: 24,
-            paddingVertical: 14,
+        scrollContent: {
+            paddingBottom: 40,
         },
 
 
-        heroTitle: {
-            fontSize: 22,
+        header: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+            backgroundColor: colors.background,
+        },
+
+        backButton: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+
+        headerTitle: {
+            fontSize: 17,
             fontWeight: '700',
             color: colors.text,
-            marginBottom: 6,
+        },
+
+
+        heroBanner: {
+            alignItems: 'center',
+            paddingHorizontal: 20,
+            paddingTop: 28,
+            paddingBottom: 24,
+        },
+
+        heroIconBox: {
+            width: 64,
+            height: 64,
+            borderRadius: 32,
+            backgroundColor: colors.primary,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 16,
+        },
+
+        heroTitle: {
+            fontSize: 24,
+            fontWeight: '700',
+            color: colors.text,
+            letterSpacing: -0.3,
+            marginBottom: 8,
+            textAlign: 'center',
         },
 
         heroSubtitle: {
-            fontSize: 16,
+            fontSize: 15,
             color: colors.textSecondary,
-            marginBottom: 8,
-            lineHeight: 20,
-        },
-
-        section: {
-            paddingHorizontal: 16,
-            marginBottom: 24,
+            lineHeight: 21,
+            textAlign: 'center',
+            maxWidth: 320,
         },
 
         sectionTitle: {
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: '700',
-            color: colors.primary,
+            color: colors.textMuted,
             letterSpacing: 0.6,
             textTransform: 'uppercase',
-            marginBottom: 12,
+            marginHorizontal: 20,
+            marginBottom: 10,
+            marginTop: 8,
         },
 
-        contactGrid: {
-            flexDirection: 'row',
-            gap: 10,
-        },
 
         contactCard: {
-            flex: 1,
+            marginHorizontal: 20,
+            marginBottom: 24,
             backgroundColor: colors.card,
-            borderRadius: 14,
+            borderRadius: 16,
             borderWidth: 1,
             borderColor: colors.border,
-            padding: 14,
+            overflow: 'hidden',
+        },
+
+        contactRow: {
+            flexDirection: 'row',
             alignItems: 'center',
-            gap: 6,
+            padding: 16,
+        },
+
+        contactRowBorder: {
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
         },
 
         contactIconBox: {
-            width: 44,
-            height: 44,
-            borderRadius: 9999,
+            width: 40,
+            height: 40,
+            borderRadius: 10,
+            backgroundColor: colors.primary + '15',
             justifyContent: 'center',
             alignItems: 'center',
-            marginBottom: 4,
+            marginRight: 14,
+
+
+        },
+
+        contactTextContainer: {
+            flex: 1,
+            gap: 2,
         },
 
         contactLabel: {
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: '600',
             color: colors.text,
-            textAlign: 'center',
         },
 
         contactDetail: {
-            fontSize: 11,
+            fontSize: 13,
             color: colors.textMuted,
-            textAlign: 'center',
         },
 
+
         faqContainer: {
-            gap: 10,
+            marginHorizontal: 20,
+            marginBottom: 24,
+            backgroundColor: colors.card,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: colors.border,
+            overflow: 'hidden',
         },
 
         faqItem: {
-            backgroundColor: colors.card,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: colors.border,
-            padding: 16,
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+        },
+
+        faqItemBorder: {
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+        },
+
+        faqItemOpen: {
+            backgroundColor: colors.primary + '08',
         },
 
         faqHeader: {
@@ -284,24 +376,52 @@ const makeStyles = (colors: typeof Colors.light) =>
             flex: 1,
         },
 
+        faqQuestionOpen: {
+            color: colors.primary,
+        },
+
+        faqIconBox: {
+            width: 28,
+            height: 28,
+            borderRadius: 14,
+            backgroundColor: colors.primary + '15',
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: colors.primary + '30',
+        },
+
+        faqIconBoxOpen: {
+            backgroundColor: colors.primary,
+            borderColor: colors.primary,
+        },
+
+        faqAnswerContainer: {
+            marginTop: 12,
+            paddingTop: 12,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+        },
+
         faqAnswer: {
             fontSize: 14,
             color: colors.textSecondary,
-            marginTop: 10,
-            lineHeight: 20,
+            lineHeight: 21,
         },
+
 
         footerNote: {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
             gap: 6,
-            paddingBottom: 32,
-            paddingHorizontal: 24,
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+            marginTop: 8,
         },
 
         footerNoteText: {
-            fontSize: 12,
+            fontSize: 13,
             color: colors.textMuted,
         },
     });
