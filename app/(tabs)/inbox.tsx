@@ -1,13 +1,14 @@
 import {
     View, Text, TextInput, TouchableOpacity,
-    StyleSheet, ScrollView, Image
+    StyleSheet, ScrollView, Image, Alert
 } from 'react-native';
-
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Fontisto } from "@expo/vector-icons";
-import React, { useState, useMemo } from "react";
+import { Fontisto, Ionicons } from "@expo/vector-icons";
+import React, { useState, useMemo, useRef } from "react";
+import { router } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { Swipeable } from 'react-native-gesture-handler';
 
 type Conversation = {
     id: number;
@@ -18,88 +19,135 @@ type Conversation = {
     avatar: string;
     isOnline?: boolean;
     isUnread?: boolean;
+    isArchived?: boolean;
 };
 
 const MOCK_CONVERSATIONS: Conversation[] = [
-    {
-        id: 1,
-        name: 'Sarah Miller',
-        itemName: 'Sony Alpha Camera',
-        lastMessage: 'Is the camera still available for this ...',
-        timeAgo: '2m ago',
-        avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-        isOnline: true,
-        isUnread: true,
-    },
-    {
-        id: 2,
-        name: 'James Davies',
-        itemName: 'Mountain Bike Pro',
-        lastMessage: 'Thanks again for the bike! It handle...',
-        timeAgo: '1h ago',
-        avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-        isOnline: false,
-        isUnread: true,
-    },
-    {
-        id: 3,
-        name: 'Elena Lopez',
-        itemName: 'KitchenAid Mixer',
-        lastMessage: 'I noticed a small scratch on the sid...',
-        timeAgo: '3h ago',
-        avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
-        isOnline: false,
-        isUnread: false,
-    },
-    {
-        id: 4,
-        name: 'Marcus Thompson',
-        itemName: 'Camping Tent 4-Person',
-        lastMessage: 'The tent is all cleaned and packed b...',
-        timeAgo: 'Yesterday',
-        avatar: 'https://randomuser.me/api/portraits/men/75.jpg',
-        isOnline: false,
-        isUnread: false,
-    },
-    {
-        id: 5,
-        name: 'Alice Wong',
-        itemName: 'Electric Pressure Washer',
-        lastMessage: 'Perfect! See you at 5 PM for the han...',
-        timeAgo: '2 days ago',
-        avatar: 'https://randomuser.me/api/portraits/women/90.jpg',
-        isOnline: false,
-        isUnread: false,
-    },
+    { id: 1, name: 'Sarah Miller', itemName: 'Sony Alpha Camera', lastMessage: 'Is the camera still available for this weekend?', timeAgo: '2m ago', avatar: 'https://randomuser.me/api/portraits/women/44.jpg', isOnline: true, isUnread: true, isArchived: false },
+    { id: 2, name: 'James Davies', itemName: 'Mountain Bike Pro', lastMessage: 'Thanks again for the bike! It handles great', timeAgo: '1h ago', avatar: 'https://randomuser.me/api/portraits/men/32.jpg', isOnline: false, isUnread: true, isArchived: false },
+    { id: 3, name: 'Elena Lopez', itemName: 'KitchenAid Mixer', lastMessage: 'I noticed a small scratch on the side', timeAgo: '3h ago', avatar: 'https://randomuser.me/api/portraits/women/68.jpg', isOnline: false, isUnread: false, isArchived: false },
+    { id: 4, name: 'Marcus Thompson', itemName: 'Camping Tent 4-Person', lastMessage: 'The tent is all cleaned and packed', timeAgo: 'Yesterday', avatar: 'https://randomuser.me/api/portraits/men/75.jpg', isOnline: false, isUnread: false, isArchived: true },
+    { id: 5, name: 'Alice Wong', itemName: 'Electric Pressure Washer', lastMessage: 'Perfect! See you at 5 PM', timeAgo: '2d ago', avatar: 'https://randomuser.me/api/portraits/women/90.jpg', isOnline: false, isUnread: false, isArchived: true },
 ];
 
 export default function Inbox() {
     const [activeCategory, setActiveCategory] = useState<string>('All');
     const [searchText, setSearchText] = useState('');
+    const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
+    const swipeableRefs = useRef<Record<number, Swipeable | null>>({});
+
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
-    const handleCategorySelect = (categoryName: string) => {
-        setActiveCategory(categoryName);
-    };
+    const unreadCount = useMemo(
+        () => conversations.filter(c => c.isUnread && !c.isArchived).length,
+        [conversations]
+    );
 
-    const filteredConversations = MOCK_CONVERSATIONS.filter((conv) => {
+    const archivedCount = useMemo(
+        () => conversations.filter(c => c.isArchived).length,
+        [conversations]
+    );
+
+    const filteredConversations = conversations.filter((conv) => {
         const matchesSearch =
             conv.name.toLowerCase().includes(searchText.toLowerCase()) ||
-            conv.itemName.toLowerCase().includes(searchText.toLowerCase());
+            conv.itemName.toLowerCase().includes(searchText.toLowerCase()) ||
+            conv.lastMessage.toLowerCase().includes(searchText.toLowerCase());
 
-        if (activeCategory === 'Unread') return conv.isUnread && matchesSearch;
-        if (activeCategory === 'Archived') return false;
-        return matchesSearch;
+        if (activeCategory === 'Unread') return conv.isUnread && !conv.isArchived && matchesSearch;
+        if (activeCategory === 'Archived') return conv.isArchived && matchesSearch;
+        return !conv.isArchived && matchesSearch;
     });
+
+    const openChat = (conv: Conversation) => {
+        swipeableRefs.current[conv.id]?.close();
+
+        setConversations(prev =>
+            prev.map(c => c.id === conv.id ? { ...c, isUnread: false } : c)
+        );
+        router.push({
+            pathname: '/chat',
+            params: {
+                conversation: JSON.stringify({
+                    id: conv.id,
+                    name: conv.name,
+                    itemName: conv.itemName,
+                    avatar: conv.avatar,
+                    isOnline: conv.isOnline,
+                }),
+            },
+        });
+    };
+
+    const archiveConversation = (id: number) => {
+        setConversations(prev =>
+            prev.map(c => c.id === id ? { ...c, isArchived: true, isUnread: false } : c)
+        );
+    };
+
+    const unarchiveConversation = (id: number) => {
+        setConversations(prev =>
+            prev.map(c => c.id === id ? { ...c, isArchived: false } : c)
+        );
+    };
+
+    const deleteConversation = (id: number) => {
+        Alert.alert(
+            'Delete Conversation',
+            'This action cannot be undone.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: () => {
+                        setConversations(prev => prev.filter(c => c.id !== id));
+                    }
+                }
+            ]
+        );
+    };
+
+    const renderRightActions = (conv: Conversation) => (
+        <View style={styles.swipeActions}>
+            {!conv.isArchived ? (
+                <TouchableOpacity
+                    style={styles.archiveBtn}
+                    onPress={() => {
+                        swipeableRefs.current[conv.id]?.close();
+                        archiveConversation(conv.id);
+                    }}
+                >
+                    <Ionicons name="archive-outline" size={22} color={colors.iconColorInverse} />
+                </TouchableOpacity>
+            ) : (
+                <TouchableOpacity
+                    style={styles.unarchiveBtn}
+                    onPress={() => {
+                        swipeableRefs.current[conv.id]?.close();
+                        unarchiveConversation(conv.id);
+                    }}
+                >
+                    <Ionicons name="arrow-undo-outline" size={22} color={colors.iconColorInverse} />
+                </TouchableOpacity>
+            )}
+            <TouchableOpacity
+                style={styles.deleteBtn}
+                onPress={() => {
+                    swipeableRefs.current[conv.id]?.close();
+                    deleteConversation(conv.id);
+                }}
+            >
+                <Ionicons name="trash-outline" size={22} color={colors.iconColorInverse} />
+            </TouchableOpacity>
+        </View>
+    );
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <ScrollView
-                style={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
+            <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 {/* SEARCH BAR */}
                 <View style={styles.searchBar}>
                     <Fontisto name="search" style={styles.searchIcon} />
@@ -112,27 +160,32 @@ export default function Inbox() {
                     />
                     {searchText.length > 0 && (
                         <TouchableOpacity onPress={() => setSearchText('')}>
-                            <Text style={styles.clearBtn}>✕</Text>
+                            <Ionicons name="close-circle" size={20} color={colors.textMuted} />
                         </TouchableOpacity>
                     )}
                 </View>
 
                 {/* FILTER TABS */}
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.categoryContent}
-                >
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryContent}>
                     {(['All', 'Unread', 'Archived'] as string[]).map((name) => {
                         const isActive = activeCategory === name;
+                        const count = name === 'Unread' ? unreadCount : name === 'Archived' ? archivedCount : 0;
+
                         return (
                             <TouchableOpacity
                                 key={name}
-                                style={[styles.CategoryButton, isActive && styles.CategoryButtonActive]}
-                                onPress={() => handleCategorySelect(name)}
+                                style={[
+                                    styles.CategoryButton,
+                                    isActive && styles.CategoryButtonActive
+                                ]}
+                                onPress={() => setActiveCategory(name)}
                             >
-                                <Text style={[styles.categoryText, isActive && styles.categoryTextActive]}>
+                                <Text style={[
+                                    styles.categoryText,
+                                    isActive && styles.categoryTextActive
+                                ]}>
                                     {name}
+                                    {count > 0 && ` (${count})`}
                                 </Text>
                             </TouchableOpacity>
                         );
@@ -142,48 +195,115 @@ export default function Inbox() {
                 {/* CONVERSATION LIST */}
                 <View style={styles.conversationList}>
                     {filteredConversations.length === 0 ? (
-                        <Text style={styles.emptyText}>No conversations found.</Text>
+                        <View style={styles.emptyContainer}>
+                            <Ionicons
+                                name={
+                                    activeCategory === 'Archived' ? 'archive-outline' :
+                                        activeCategory === 'Unread' ? 'mail-unread-outline' :
+                                            'chatbubbles-outline'
+                                }
+                                size={56}
+                                color={colors.textMuted}
+                            />
+                            <Text style={styles.emptyTitle}>
+                                {searchText
+                                    ? 'No results found'
+                                    : activeCategory === 'Archived'
+                                        ? 'No archived conversations'
+                                        : activeCategory === 'Unread'
+                                            ? 'All caught up!'
+                                            : 'No conversations yet'}
+                            </Text>
+                            <Text style={styles.emptySubtitle}>
+                                {searchText
+                                    ? 'Try a different search term'
+                                    : activeCategory === 'Archived'
+                                        ? 'Archived chats will appear here'
+                                        : activeCategory === 'Unread'
+                                            ? 'You have no unread messages'
+                                            : 'Start chatting by browsing items'}
+                            </Text>
+                        </View>
                     ) : (
                         filteredConversations.map((conv) => (
-                            <TouchableOpacity
+                            <View
                                 key={conv.id}
                                 style={[
-                                    styles.conversationItem,
-                                    !conv.isUnread && styles.conversationItemRead,
+                                    styles.swipeWrapper,
+                                    conv.isUnread && styles.swipeWrapperUnread
                                 ]}
-                                activeOpacity={0.7}
                             >
-                                {/* AVATAR */}
-                                <View style={styles.avatarWrapper}>
-                                    <Image
-                                        source={{ uri: conv.avatar }}
-                                        style={styles.avatar}
-                                    />
-                                    {conv.isOnline && <View style={styles.onlineDot} />}
-                                </View>
+                                <Swipeable
+                                    ref={(ref) => {
+                                        if (ref) swipeableRefs.current[conv.id] = ref;
+                                    }}
+                                    renderRightActions={() => renderRightActions(conv)}
+                                    overshootRight={false}
+                                    overshootLeft={false}
+                                    friction={1.5}
+                                    rightThreshold={40}
+                                    overshootFriction={5}
+                                    onSwipeableWillOpen={() => {
+                                        Object.entries(swipeableRefs.current).forEach(([id, ref]) => {
+                                            if (Number(id) !== conv.id && ref) {
+                                                ref.close();
+                                            }
+                                        });
+                                    }}
+                                >
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.conversationItem,
+                                            conv.isUnread && styles.conversationItemUnread
+                                        ]}
+                                        activeOpacity={0.7}
+                                        onPress={() => openChat(conv)}
+                                    >
 
-                                {/* CONTENT */}
-                                <View style={styles.convContent}>
-                                    <View style={styles.convHeader}>
-                                        <Text
-                                            style={[
-                                                styles.convName,
-                                                conv.isUnread && styles.convNameUnread,
-                                            ]}
-                                            numberOfLines={1}
-                                        >
-                                            {conv.name}
-                                        </Text>
-                                        <Text style={styles.timeAgo}>{conv.timeAgo}</Text>
-                                    </View>
-                                    <Text style={styles.itemName} numberOfLines={1}>
-                                        {conv.itemName.toUpperCase()}
-                                    </Text>
-                                    <Text style={styles.lastMessage} numberOfLines={1}>
-                                        {conv.lastMessage}
-                                    </Text>
-                                </View>
-                            </TouchableOpacity>
+
+                                        <View style={styles.avatarWrapper}>
+                                            <Image source={{ uri: conv.avatar }} style={styles.avatar} />
+                                            {conv.isOnline && <View style={styles.onlineDot} />}
+                                        </View>
+                                        <View style={styles.convContent}>
+                                            <View style={styles.convHeader}>
+                                                <Text
+                                                    style={[
+                                                        styles.convName,
+                                                        conv.isUnread && styles.convNameUnread
+                                                    ]}
+                                                    numberOfLines={1}
+                                                >
+                                                    {conv.name}
+                                                </Text>
+                                                <Text
+                                                    style={[
+                                                        styles.timeAgo,
+                                                        conv.isUnread && styles.timeAgoUnread
+                                                    ]}
+                                                >
+                                                    {conv.timeAgo}
+                                                </Text>
+                                            </View>
+                                            <View style={styles.messageRow}>
+                                                <Ionicons name="pricetag" size={11} color={colors.primary} />
+                                                <Text style={styles.itemName} numberOfLines={1}>
+                                                    {conv.itemName}
+                                                </Text>
+                                            </View>
+                                            <Text
+                                                style={[
+                                                    styles.lastMessage,
+                                                    conv.isUnread && styles.lastMessageUnread
+                                                ]}
+                                                numberOfLines={1}
+                                            >
+                                                {conv.lastMessage}
+                                            </Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                </Swipeable>
+                            </View>
                         ))
                     )}
                 </View>
@@ -207,11 +327,11 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginTop: 10,
-        marginBottom: 10,
+        marginBottom: 16,
         paddingHorizontal: 15,
         paddingVertical: 5,
         backgroundColor: colors.surface,
-        borderWidth: 0.5,
+        borderWidth: 1,
         borderColor: colors.border,
         borderRadius: 12,
     },
@@ -220,7 +340,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontSize: 16,
         color: colors.textMuted,
         marginRight: 8,
-        alignSelf: 'center',
     },
 
     searchInput: {
@@ -228,12 +347,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         height: 45,
         fontSize: 16,
         color: colors.text,
-    },
-
-    clearBtn: {
-        color: colors.textMuted,
-        fontSize: 16,
-        paddingHorizontal: 4,
     },
 
     categoryContent: {
@@ -251,7 +364,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         paddingHorizontal: 20,
         borderRadius: 9999,
         backgroundColor: colors.surface,
-        borderWidth: 0.5,
+        borderWidth: 1,
         borderColor: colors.border,
     },
 
@@ -271,8 +384,18 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontWeight: '600',
     },
 
-    conversationList: {
-        gap: 10,
+    conversationList: {},
+
+    swipeWrapper: {
+        borderRadius: 14,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: colors.border,
+        marginBottom: 10,
+    },
+
+    swipeWrapperUnread: {
+        borderColor: colors.primary + '30',
     },
 
     conversationItem: {
@@ -281,15 +404,17 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         paddingVertical: 14,
         paddingHorizontal: 16,
         backgroundColor: colors.card,
-        borderRadius: 14,
-        borderWidth: 0.5,
-        borderColor: colors.border,
+        borderLeftWidth: 0,
+        borderLeftColor: 'transparent',
     },
 
-    conversationItemRead: {
-        backgroundColor: colors.surface,
-        opacity: 0.4,
+    conversationItemUnread: {
+        backgroundColor: colors.card,
+        borderLeftWidth: 4,
+        borderLeftColor: colors.primary,
     },
+
+
 
     avatarWrapper: {
         position: 'relative',
@@ -305,19 +430,19 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
 
     onlineDot: {
         position: 'absolute',
-        bottom: 1,
-        right: 1,
+        bottom: 2,
+        right: 2,
         width: 12,
         height: 12,
         borderRadius: 14,
         backgroundColor: colors.success,
         borderWidth: 2,
-        borderColor: colors.background,
+        borderColor: colors.card,
     },
 
     convContent: {
         flex: 1,
-        gap: 2,
+        gap: 3,
     },
 
     convHeader: {
@@ -335,13 +460,25 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     },
 
     convNameUnread: {
-        fontWeight: '600',
-        color: colors.text,
+        fontWeight: '700',
     },
 
     timeAgo: {
         fontSize: 12,
         color: colors.textMuted,
+        fontWeight: '500',
+    },
+
+    timeAgoUnread: {
+        color: colors.primary,
+        fontWeight: '600',
+    },
+
+    messageRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        gap: 4,
     },
 
     itemName: {
@@ -349,6 +486,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontWeight: '600',
         color: colors.primary,
         letterSpacing: 0.4,
+        flex: 1,
     },
 
     lastMessage: {
@@ -357,10 +495,52 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         marginTop: 1,
     },
 
-    emptyText: {
-        textAlign: 'center',
+    lastMessageUnread: {
+        color: colors.text,
+        fontWeight: '500',
+    },
+
+    emptyContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 60,
+        gap: 8,
+    },
+
+    emptyTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: colors.text,
+        marginTop: 8,
+    },
+
+    emptySubtitle: {
+        fontSize: 13,
         color: colors.textMuted,
-        paddingVertical: 32,
-        fontSize: 14,
+        textAlign: 'center',
+    },
+
+    swipeActions: {
+        flexDirection: 'row',
+        alignItems: 'stretch',
+        justifyContent: 'flex-end',
+    },
+    archiveBtn: {
+        width: 75,
+        backgroundColor: colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    unarchiveBtn: {
+        width: 75,
+        backgroundColor: colors.success,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    deleteBtn: {
+        width: 75,
+        backgroundColor: colors.danger,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

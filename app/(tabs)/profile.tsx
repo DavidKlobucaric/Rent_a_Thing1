@@ -53,19 +53,19 @@ const MenuItem = ({
             activeOpacity={0.7}
         >
             <View style={styles.menuLeft}>
-                <View style={[styles.iconBox, isLogout && styles.logoutIconBox]}>
+                <View style={[styles.iconBox]}>
                     <Ionicons
                         name={iconName}
-                        size={20}
-                        color={isLogout ? colors.danger : colors.iconColor}
+                        size={24}
+
+                        color={isLogout ? colors.danger : colors.primary}
                     />
                 </View>
 
-                <View>
+                <View style={{ flex: 1 }}>
                     <Text style={[styles.menuTitle, isLogout && styles.logoutTitle]}>
                         {title}
                     </Text>
-
                     <Text style={styles.menuSubtitle}>
                         {subtitle}
                     </Text>
@@ -75,7 +75,7 @@ const MenuItem = ({
             {!isLogout && (
                 <Ionicons
                     name="chevron-forward"
-                    size={18}
+                    size={20}
                     color={colors.textSecondary}
                 />
             )}
@@ -114,7 +114,10 @@ export default function ProfileScreen() {
                 backgroundColor={colors.background}
             />
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
 
                 {/* PROFILE */}
                 <View style={styles.profileSection}>
@@ -136,19 +139,15 @@ export default function ProfileScreen() {
                             size={16}
                             color={colors.success}
                         />
-
                         <Text style={styles.verifiedText}>
                             Verified Member
                         </Text>
-
                         <Text style={styles.separator}>•</Text>
-
                         <Ionicons
                             name="star"
                             size={16}
-                            color={colors.warning}
+                            color={colors.rating}
                         />
-
                         <Text style={styles.ratingText}>
                             {userData.rating} Rating
                         </Text>
@@ -157,43 +156,36 @@ export default function ProfileScreen() {
 
                 {/* STATS */}
                 <View style={styles.statsContainer}>
-
                     <View style={styles.statBox}>
-                        <Text style={styles.statValue}>
-                            {userData.rentals}
-                        </Text>
-
                         <Text style={styles.statLabel}>
                             RENTALS
                         </Text>
+                        <Text style={styles.statValue}>
+                            {userData.rentals}
+                        </Text>
                     </View>
 
                     <View style={styles.statBox}>
-                        <Text style={styles.statValue}>
-                            {userData.reviews}
-                        </Text>
-
                         <Text style={styles.statLabel}>
                             REVIEWS
                         </Text>
+                        <Text style={styles.statValue}>
+                            {userData.reviews}
+                        </Text>
                     </View>
 
                     <View style={styles.statBox}>
-                        <Text style={styles.statValue}>
-                            {userData.responseRate}%
-                        </Text>
-
                         <Text style={styles.statLabel}>
                             RESPONSE
                         </Text>
+                        <Text style={styles.statValue}>
+                            {userData.responseRate}%
+                        </Text>
                     </View>
-
                 </View>
 
                 {/* MENU */}
                 <View style={styles.menuContainer}>
-
-
                     <MenuItem
                         colors={colors}
                         iconName="heart-outline"
@@ -215,7 +207,7 @@ export default function ProfileScreen() {
                         iconName="help-circle-outline"
                         title="Support"
                         subtitle="FAQs and direct help center"
-                        onPress={() => {}}
+                        onPress={() => {router.push('/support')}}
                     />
 
                     <MenuItem
@@ -226,7 +218,6 @@ export default function ProfileScreen() {
                         onPress={handleLogout}
                         isLogout
                     />
-
                 </View>
 
             </ScrollView>
@@ -241,81 +232,87 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         backgroundColor: colors.background,
     },
 
+    scrollContent: {
+        paddingBottom: 40,
+    },
+
     profileSection: {
         alignItems: 'center',
-        paddingVertical: 20,
+        paddingTop: 36,
+        paddingBottom: 28,
     },
 
     profileImageContainer: {
-        position: 'relative',
-        marginBottom: 12,
+        marginBottom: 18,
     },
 
     profileImage: {
-        width: 180,
-        height: 180,
+        width: 200,
+        height: 200,
         borderRadius: 9999,
-        backgroundColor: colors.border,
+        borderWidth: 1,
+        borderColor: colors.border,
+
     },
 
     userName: {
-        fontSize: 24,
-        fontWeight: '600',
+        fontSize: 22,
+        fontWeight: '700',
         color: colors.text,
         marginBottom: 8,
+        letterSpacing: -0.3,
     },
 
     userStatus: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: 6,
     },
 
     verifiedText: {
-        fontSize: 14,
+        fontSize: 13,
         color: colors.textSecondary,
     },
 
     separator: {
         fontSize: 14,
         color: colors.textMuted,
-        marginHorizontal: 4,
+        paddingHorizontal: 2,
     },
 
     ratingText: {
-        fontSize: 14,
-        color: colors.warning,
+        fontSize: 13,
+        color: colors.textSecondary,
     },
 
     statsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         paddingHorizontal: 16,
-        marginBottom: 20,
+        marginBottom: 28,
     },
 
     statBox: {
         flex: 1,
         backgroundColor: colors.surface,
-        paddingVertical: 20,
-        marginHorizontal: 6,
+        paddingVertical: 16,
+        marginHorizontal: 5,
         borderRadius: 14,
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: colors.border,
     },
 
     statValue: {
         fontSize: 24,
         fontWeight: '600',
-        color: colors.primarySecondary,
-        marginBottom: 4,
+        color: colors.text,
+
     },
 
     statLabel: {
-        fontSize: 12,
-        color: colors.primary,
+        fontSize: 11,
+        color: colors.textMuted,
         fontWeight: '600',
+        letterSpacing: 0.5,
     },
 
     menuContainer: {
@@ -331,7 +328,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-
     },
 
     logoutItem: {
@@ -343,24 +339,13 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
+        marginRight: 8,
     },
 
     iconBox: {
-        width: 40,
-        height: 40,
-        borderRadius: 9999,
-        backgroundColor: colors.surface,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
-        borderWidth: 1,
-        borderColor: colors.borderLight,
-    },
-
-    logoutIconBox: {
-        backgroundColor: colors.logoutBg,
-        borderColor: colors.logoutBorder,
-
+        marginRight: 14,
     },
 
     menuTitle: {

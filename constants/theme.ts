@@ -11,6 +11,7 @@ const tintColorDark = '#fff';
 export const Colors = {
 
   light: {
+
     background: '#F8F9FA',
     surface: '#FFFFFF',
     card: '#FFFFFF',
@@ -22,7 +23,7 @@ export const Colors = {
     primary: '#00646F',
     primarySecondary: '#191C1D',
     success: '#10B981',
-    warning: '#EAB308',
+    rating: '#EAB308',
     danger: '#EF4444',
     border: '#E6E6E6',
     borderLight: '#BDC9C880',
@@ -41,21 +42,24 @@ export const Colors = {
     statBoxBg: '#F3F4F5',
     googleButtonBorder: '#E6E6E6',
     googleButtonText: '#191C1D',
+
   },
 
+
   dark: {
+
     background: '#121212',
     surface: '#1E1E1E',
     card: '#232323',
     header: '#1E1E1E',
     text: '#FFFFFF',
     textSecondary: '#B3B3B3',
-    textMuted: '#8A8A8A',
+    textMuted: '#A1A1A1',
     textInverse: '#121212',
     primary: '#4DB8C3',
     primarySecondary: '#FFFFFF',
     success: '#10B981',
-    warning: '#EAB308',
+    rating: '#EAB308',
     danger: '#EF4444',
     border: '#FFFFFF0D',
     borderLight: '#FFFFFF0A',
@@ -69,11 +73,12 @@ export const Colors = {
     activeTabBg: '#4DB8C3',
     activeTabText: '#FFFFFF',
     tabText: '#FFFFFF',
-    logoutBg: '#EF44441F',
-    logoutBorder: '#EF44442E',
+    logoutBg: '#EF44440F',
+    logoutBorder: '#EF44441A',
     statBoxBg: '#232323',
     googleButtonBorder: '#FFFFFF0D',
     googleButtonText: '#FFFFFF',
+
   },
 };
 

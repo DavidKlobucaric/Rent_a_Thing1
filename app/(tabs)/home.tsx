@@ -10,6 +10,8 @@ import { searchListings, getRecommendedListings } from '@/src/api/itemsApi';
 import { useAuth } from '@/src/context/authContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import {router} from "expo-router";
+
 
 type Category = {
     id: string;
@@ -175,7 +177,13 @@ export default function HomeScreen() {
                             showsHorizontalScrollIndicator={false}
                             contentContainerStyle={{ paddingHorizontal: 10 }}
                             renderItem={({ item }) => (
-                                <View style={styles.itemCard}>
+                                <TouchableOpacity
+                                    style={styles.itemCard}
+                                    onPress={() => router.push({
+                                        pathname: '/item',
+                                        params: { listingId: item.listingId.toString() }
+                                    })}
+                                >
                                     <Image
                                         source={{ uri: getFirstImage(item.imageUrls) }}
                                         style={styles.itemImage}
@@ -186,7 +194,7 @@ export default function HomeScreen() {
                                         <Text style={styles.price}>${item.price}</Text>
                                         <Text style={styles.perDay}>/day</Text>
                                     </View>
-                                </View>
+                                </TouchableOpacity>
                             )}
                         />
                     )}
@@ -203,7 +211,14 @@ export default function HomeScreen() {
                     </Text>
                 ) : (
                     recommended.map((item) => (
-                        <View key={item.listingId} style={styles.card}>
+                        <TouchableOpacity
+                            key={item.listingId}
+                            style={styles.card}
+                            onPress={() => router.push({
+                                pathname: '/item',
+                                params: { listingId: item.listingId.toString() }
+                            })}
+                        >
                             <Image
                                 source={{ uri: getFirstImage(item.imageUrls) }}
                                 style={styles.thumbnail}
@@ -225,7 +240,7 @@ export default function HomeScreen() {
                                     />
                                 </TouchableOpacity>
                             </View>
-                        </View>
+                        </TouchableOpacity>
                     ))
                 )}
 

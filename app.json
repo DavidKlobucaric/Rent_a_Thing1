@@ -27,7 +27,11 @@
       "package": "com.anonymous.Rent_a_Thing",
       "config": {
         "usesCleartextTraffic": true
-      }
+      },
+
+
+
+
     },
     "web": {
       "output": "static",

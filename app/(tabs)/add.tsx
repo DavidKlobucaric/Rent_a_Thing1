@@ -1,35 +1,104 @@
 import {
     View, Text, TextInput, TouchableOpacity,
-    StyleSheet, Image, Modal, ScrollView, Alert, ActivityIndicator,
+    StyleSheet, Modal, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 import { uploadImages, createThing, createListing } from '@/src/api/itemsApi';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 
+const DRAFT_KEY = '@listing_draft';
+const categories = ['Tools', 'Camping', 'Tech', 'Games', 'Sports', 'Clothes'];
+
+type DraftData = {
+    title: string;
+    category: string;
+    description: string;
+    rate: string;
+    deposit: string;
+    location: string;
+    images: string[];
+};
+
 export default function AddScreen() {
-    const categories = ['Tools', 'Camping', 'Tech', 'Games', 'Sports', 'Clothes'];
+    const router = useRouter();
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
-    const [title, setTitle]                       = useState('');
+    const [title, setTitle] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('Tools');
-    const [description, setDescription]           = useState('');
-    const [dailyRate, setDailyRate]               = useState('');
-    const [securityDeposit, setSecurityDeposit]   = useState('');
-    const [location, setLocation]                 = useState('');
-    const [images, setImages]                     = useState<string[]>([]);
-    const [modalVisible, setModalVisible]         = useState(false);
-    const [publishing, setPublishing]             = useState(false);
+    const [description, setDescription] = useState('');
+    const [dailyRate, setDailyRate] = useState('');
+    const [securityDeposit, setSecurityDeposit] = useState('');
+    const [location, setLocation] = useState('');
+    const [images, setImages] = useState<string[]>([]);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [publishing, setPublishing] = useState(false);
+
+    // ───────── UČITAJ DRAFT na mount ─────────
+    useEffect(() => {
+        (async () => {
+            try {
+                const saved = await AsyncStorage.getItem(DRAFT_KEY);
+                if (saved) {
+                    const d: DraftData = JSON.parse(saved);
+                    setTitle(d.title || '');
+                    setSelectedCategory(d.category || 'Tools');
+                    setDescription(d.description || '');
+                    setDailyRate(d.rate || '');
+                    setSecurityDeposit(d.deposit || '');
+                    setLocation(d.location || '');
+                    setImages(d.images || []);
+                }
+            } catch (e) {
+                console.log('Draft load error:', e);
+            }
+        })();
+    }, []);
+
+    // ───────── SPREMI DRAFT s debounce-om (800ms) ─────────
+    useEffect(() => {
+        const save = async () => {
+            const hasData = title || description || dailyRate || location || images.length > 0;
+
+            if (!hasData) {
+                await AsyncStorage.removeItem(DRAFT_KEY);
+                return;
+            }
+
+            const draft: DraftData = {
+                title,
+                category: selectedCategory,
+                description,
+                rate: dailyRate,
+                deposit: securityDeposit,
+                location,
+                images,
+            };
+
+            try {
+                await AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            } catch (e) {
+                console.log('Draft save error:', e);
+            }
+        };
+
+        const timeout = setTimeout(save, 800);
+        return () => clearTimeout(timeout);
+    }, [title, selectedCategory, description, dailyRate, securityDeposit, location, images]);
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             allowsMultipleSelection: true,
             quality: 0.8,
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
         });
         if (!result.canceled) {
             setImages(prev => [...prev, ...result.assets.map(a => a.uri)]);
@@ -92,11 +161,17 @@ export default function AddScreen() {
                 return;
             }
 
-            Alert.alert('Success', 'Item added successfully.');
+            // ✅ Uspjeh - obriši draft i resetiraj formu
+            await AsyncStorage.removeItem(DRAFT_KEY);
             setTitle(''); setDescription(''); setDailyRate('');
             setSecurityDeposit(''); setLocation(''); setImages([]);
             setSelectedCategory('Tools');
 
+            Alert.alert(
+                '🎉 Success',
+                'Your item has been listed!',
+                [{ text: 'OK', onPress: () => router.back() }]
+            );
         } catch (e: any) {
             Alert.alert('Error', 'Something went wrong: ' + e?.message);
         } finally {
@@ -111,11 +186,15 @@ export default function AddScreen() {
                 nestedScrollEnabled={true}
                 contentContainerStyle={styles.scrollContent}
             >
+                {/* HEADER */}
                 <View style={styles.header}>
                     <Text style={styles.titleText}>List your thing</Text>
-                    <Text style={styles.bodyText}>Share your items with the community and start earning.</Text>
+                    <Text style={styles.bodyText}>
+                        Share your items with the community and start earning.
+                    </Text>
                 </View>
 
+                {/* BASIC INFO SECTION */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <MaterialIcons name="info" size={22} color={colors.primary} />
@@ -133,20 +212,28 @@ export default function AddScreen() {
                         />
                         <View style={styles.hint}>
                             <MaterialIcons name="lightbulb-outline" size={13} color={colors.primary} />
-                            <Text style={styles.hintText}>Titles with brands often get 20% more clicks.</Text>
+                            <Text style={styles.hintText}>
+                                Titles with brands often get 20% more clicks.
+                            </Text>
                         </View>
                     </View>
 
                     <View style={styles.fieldGroup}>
                         <Text style={styles.labelText}>Category</Text>
-                        <TouchableOpacity style={styles.dropdownButton} onPress={() => setModalVisible(true)}>
+                        <TouchableOpacity
+                            style={styles.dropdownButton}
+                            onPress={() => setModalVisible(true)}
+                        >
                             <Text style={styles.dropdownText}>{selectedCategory}</Text>
                             <MaterialIcons name="keyboard-arrow-down" size={22} color={colors.textMuted} />
                         </TouchableOpacity>
                     </View>
 
                     <Modal visible={modalVisible} transparent animationType="fade">
-                        <TouchableOpacity style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
+                        <TouchableOpacity
+                            style={styles.modalOverlay}
+                            onPress={() => setModalVisible(false)}
+                        >
                             <View style={styles.modalContent}>
                                 {categories.map((cat, index) => (
                                     <TouchableOpacity
@@ -155,7 +242,10 @@ export default function AddScreen() {
                                             styles.modalItem,
                                             index === categories.length - 1 && styles.modalItemLast,
                                         ]}
-                                        onPress={() => { setSelectedCategory(cat); setModalVisible(false); }}
+                                        onPress={() => {
+                                            setSelectedCategory(cat);
+                                            setModalVisible(false);
+                                        }}
                                     >
                                         <Text style={styles.modalItemText}>{cat}</Text>
                                     </TouchableOpacity>
@@ -175,10 +265,13 @@ export default function AddScreen() {
                             textAlignVertical="top"
                             value={description}
                             onChangeText={setDescription}
+                            maxLength={500}
                         />
+                        <Text style={styles.charCount}>{description.length}/500</Text>
                     </View>
                 </View>
 
+                {/* PHOTOS SECTION */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <MaterialIcons name="photo-camera" size={22} color={colors.primary} />
@@ -207,19 +300,41 @@ export default function AddScreen() {
                         {images.map((uri, i) => (
                             <View key={i} style={styles.imageWrapper}>
                                 <Image source={{ uri }} style={styles.imageThumb} />
-                                <TouchableOpacity style={styles.removeButton} onPress={() => removeImage(i)}>
+                                <TouchableOpacity
+                                    style={styles.removeButton}
+                                    onPress={() => removeImage(i)}
+                                >
                                     <MaterialIcons name="close" size={13} color="white" />
                                 </TouchableOpacity>
+                                {i === 0 && (
+                                    <View style={styles.coverBadge}>
+                                        <Text style={styles.coverBadgeText}>COVER</Text>
+                                    </View>
+                                )}
                             </View>
                         ))}
                     </ScrollView>
 
+                    {/* Remove all photos button */}
+                    {images.length > 1 && (
+                        <TouchableOpacity
+                            style={styles.removeAllBtn}
+                            onPress={() => setImages([])}
+                        >
+                            <MaterialIcons name="delete-sweep" size={18} color={colors.danger} />
+                            <Text style={styles.removeAllText}>Remove all photos</Text>
+                        </TouchableOpacity>
+                    )}
+
                     <View style={styles.hint}>
                         <MaterialIcons name="star-outline" size={13} color={colors.primary} />
-                        <Text style={styles.hintText}>High-quality daylight photos perform best.</Text>
+                        <Text style={styles.hintText}>
+                            High-quality daylight photos perform best.
+                        </Text>
                     </View>
                 </View>
 
+                {/* PRICING SECTION */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <MaterialIcons name="monetization-on" size={22} color={colors.primary} />
@@ -243,7 +358,10 @@ export default function AddScreen() {
                         </View>
 
                         <View style={styles.pricingField}>
-                            <Text style={styles.labelText}>Security Deposit</Text>
+                            <Text style={styles.labelText}>
+                                Security Deposit{' '}
+                                <Text style={styles.optional}>(Optional)</Text>
+                            </Text>
                             <View style={styles.priceInputContainer}>
                                 <Text style={styles.currencySymbol}>$</Text>
                                 <TextInput
@@ -260,10 +378,13 @@ export default function AddScreen() {
 
                     <View style={styles.hint}>
                         <MaterialIcons name="lightbulb-outline" size={13} color={colors.primary} />
-                        <Text style={styles.hintText}>Deposit is returned after the item is safely returned.</Text>
+                        <Text style={styles.hintText}>
+                            Deposit is returned after the item is safely returned.
+                        </Text>
                     </View>
                 </View>
 
+                {/* LOCATION SECTION */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <MaterialIcons name="location-pin" size={22} color={colors.primary} />
@@ -281,11 +402,14 @@ export default function AddScreen() {
                         />
                         <View style={styles.hint}>
                             <MaterialIcons name="lock-outline" size={13} color={colors.primary} />
-                            <Text style={styles.hintText}>Your exact address is only shared after a booking is confirmed.</Text>
+                            <Text style={styles.hintText}>
+                                Your exact address is only shared after a booking is confirmed.
+                            </Text>
                         </View>
                     </View>
                 </View>
 
+                {/* ACTIONS */}
                 <View style={styles.actions}>
                     <TouchableOpacity
                         style={[styles.publishButton, publishing && { opacity: 0.7 }]}
@@ -300,10 +424,6 @@ export default function AddScreen() {
                             </>
                         }
                     </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.publishButton, styles.draftButton]}>
-                        <Text style={[styles.publishButtonText, { color: colors.primary }]}>Save as draft</Text>
-                    </TouchableOpacity>
                 </View>
 
             </ScrollView>
@@ -312,7 +432,6 @@ export default function AddScreen() {
 }
 
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-
     container: {
         flex: 1,
         backgroundColor: colors.background,
@@ -323,7 +442,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         paddingBottom: 32,
         gap: 0,
     },
-
     header: {
         paddingTop: 20,
         paddingBottom: 28,
@@ -345,7 +463,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         lineHeight: 22,
         maxWidth: 280,
     },
-
     section: {
         marginBottom: 4,
         paddingTop: 20,
@@ -364,7 +481,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontWeight: '600',
         color: colors.text,
     },
-
     fieldGroup: {
         marginBottom: 20,
     },
@@ -375,6 +491,11 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         marginBottom: 8,
         letterSpacing: 0.6,
         textTransform: 'uppercase',
+    },
+    optional: {
+        textTransform: 'none',
+        fontWeight: '400',
+        color: colors.textMuted,
     },
     input: {
         width: '100%',
@@ -400,6 +521,12 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         height: 116,
         textAlignVertical: 'top',
     },
+    charCount: {
+        fontSize: 11,
+        color: colors.textMuted,
+        textAlign: 'right',
+        marginTop: 4,
+    },
     dropdownButton: {
         width: '100%',
         paddingVertical: 13,
@@ -416,7 +543,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontSize: 15,
         color: colors.text,
     },
-
     hint: {
         flexDirection: 'row',
         alignItems: 'flex-start',
@@ -430,7 +556,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         flex: 1,
         lineHeight: 17,
     },
-
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.45)',
@@ -457,7 +582,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         color: colors.text,
         fontWeight: '500',
     },
-
     imageScroll: {
         marginBottom: 4,
     },
@@ -500,6 +624,36 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         borderRadius: 9999,
         padding: 4,
     },
+    coverBadge: {
+        position: 'absolute',
+        bottom: 8,
+        left: 8,
+        backgroundColor: colors.primary,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 6,
+    },
+    coverBadgeText: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: '700',
+    },
+    removeAllBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        marginTop: 12,
+        alignSelf: 'flex-start',
+        borderRadius: 8,
+        backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    },
+    removeAllText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#FF3B30',
+    },
     addImageButton: {
         width: 130,
         height: 130,
@@ -518,7 +672,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontWeight: '600',
         textAlign: 'center',
     },
-
     pricingRow: {
         flexDirection: 'row',
         gap: 12,
@@ -548,7 +701,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontSize: 15,
         color: colors.text,
     },
-
     actions: {
         marginTop: 28,
         gap: 10,
@@ -564,10 +716,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         backgroundColor: colors.primary,
         borderWidth: 1,
         borderColor: colors.primary,
-    },
-    draftButton: {
-        backgroundColor: colors.surface,
-        borderColor: colors.border,
     },
     publishButtonText: {
         fontSize: 15,

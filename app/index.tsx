@@ -12,7 +12,9 @@ export default function Index() {
     const router = useRouter();
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
-    const styles = useMemo(() => makeStyles(colors), [colors]);
+
+
+    const styles = useMemo(() => makeStyles(colors, scheme === 'dark'), [colors, scheme]);
 
     useFocusEffect(
         useCallback(() => {
@@ -20,9 +22,6 @@ export default function Index() {
             return () => sub.remove();
         }, [])
     );
-
-
-
 
     return (
         <>
@@ -64,7 +63,7 @@ export default function Index() {
     );
 }
 
-const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
+const makeStyles = (colors: typeof Colors.light, isDark: boolean) => StyleSheet.create({
     container: {
         flex: 1,
         paddingHorizontal: 28,
@@ -87,7 +86,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     titleText: {
         fontSize: 42,
         fontWeight: '800',
-
         color: '#FFFFFF',
         letterSpacing: 0.5,
         marginTop: 4,
@@ -96,20 +94,18 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
 
     subtitle: {
         fontSize: 17,
-
         color: colors.activeTabText,
         textAlign: 'center',
         lineHeight: 24,
         marginTop: 12,
         paddingHorizontal: 20,
-        opacity:0.8
+        opacity: 0.8
     },
 
     bottom: {
         width: '100%',
         gap: 12,
     },
-
 
     btnPrimary: {
         width: '100%',
@@ -120,18 +116,14 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         backgroundColor: colors.surface,
         borderWidth: 1,
         borderColor: colors.border,
-
     },
 
-
     btnPrimaryText: {
-        color: colors.text,
+        color: isDark ? '#FFFFFF' : colors.primary,
         fontWeight: '600',
         fontSize: 16,
         letterSpacing: 0.2,
-
     },
-
 
     btnSecondary: {
         width: '100%',
@@ -144,13 +136,11 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         borderColor: colors.activeTabBg,
     },
 
-
     btnSecondaryText: {
         color: colors.activeTabText,
         fontWeight: '600',
         fontSize: 16,
         letterSpacing: 0.2,
-
     },
 
     footer: {
@@ -160,6 +150,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         marginTop: 8,
         textAlign: 'center',
         fontWeight: '500',
-        opacity:0.8
+        opacity: 0.8
     },
 });
