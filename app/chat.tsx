@@ -51,8 +51,7 @@ export default function Chat() {
 
     useEffect(() => { setMessages([]); }, [conv.id]);
 
-    // ✅ JEDINI keyboard listener — samo za marginBottom offset
-    // NE poziva scroll ovdje (scroll radi onContentSizeChange)
+
     useEffect(() => {
         const showSub = Keyboard.addListener(
             Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
@@ -89,9 +88,7 @@ export default function Chat() {
         date ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
     return (
-        // ✅ FIX: Uklonjen TouchableWithoutFeedback — konzumirao je touch evente i
-        // blokirao ScrollView od primanja scroll gesta.
-        // Keyboard dismiss sada radi kroz keyboardDismissMode="interactive" na ScrollViewu.
+
         <SafeAreaView
             style={[styles.container, { marginBottom: keyboardOffset }]}
             edges={['top']}
@@ -119,14 +116,11 @@ export default function Chat() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="interactive"
-                // ✅ KLJUČNI FIX: onContentSizeChange se poziva NAKON što je layout finaliziran.
-                // Ovo je jedini siguran način za scrollToEnd — ne ovisi o timerima ni rAF.
-                // requestAnimationFrame/setTimeout mogu se pozvati PRIJE nego RN izračuna visinu.
+
                 onContentSizeChange={() => {
                     scrollRef.current?.scrollToEnd({ animated: true });
                 }}
-                // ❌ UKLONJENO: automaticallyAdjustKeyboardInsets — conflict s marginBottom
-                // Kad oba rade, ScrollView dobiva dvije instrukcije za layout i zamrzne se.
+
                 decelerationRate="normal"
                 removeClippedSubviews={false}
             >

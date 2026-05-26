@@ -80,7 +80,7 @@ const makeStyles = (colors: typeof Colors.light, isDark: boolean) => StyleSheet.
     logo: {
         width: 300,
         height: 220,
-        marginBottom: 24,
+        marginBottom: 34,
     },
 
     titleText: {
@@ -97,7 +97,7 @@ const makeStyles = (colors: typeof Colors.light, isDark: boolean) => StyleSheet.
         color: colors.activeTabText,
         textAlign: 'center',
         lineHeight: 24,
-        marginTop: 12,
+        marginTop: 10,
         paddingHorizontal: 20,
         opacity: 0.8
     },

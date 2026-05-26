@@ -169,9 +169,7 @@ export default function SettingsScreen() {
                 <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: 20 }]}>Notifications</Text>
                 <View style={styles.settingContainer}>
                     <SettingItem colors={colors} iconName="notifications" title="Push Notifications" description="Receive push notifications on your device" type="toggle" value={notifications.pushEnabled} onToggle={() => toggleNotification('pushEnabled')} />
-                    <SettingItem colors={colors} iconName="mail" title="Email Notifications" description="Receive updates via email" type="toggle" value={notifications.emailEnabled} onToggle={() => toggleNotification('emailEnabled')} />
                     <SettingItem colors={colors} iconName="chatbubbles" title="New Messages" description="Get notified when you receive a message" type="toggle" value={notifications.newMessages} onToggle={() => toggleNotification('newMessages')} />
-                    <SettingItem colors={colors} iconName="calendar" title="Booking Requests" description="Notifications for new rental requests" type="toggle" value={notifications.bookingRequests} onToggle={() => toggleNotification('bookingRequests')} />
                     <SettingItem colors={colors} iconName="time" title="Reminders" description="Rental return and pickup reminders" type="toggle" value={notifications.reminders} onToggle={() => toggleNotification('reminders')} />
                     <SettingItem colors={colors} iconName="pricetag" title="Promotions" description="Special offers and discounts" type="toggle" value={notifications.promotions} onToggle={() => toggleNotification('promotions')} />
                 </View>
@@ -181,7 +179,6 @@ export default function SettingsScreen() {
                 <View style={styles.settingContainer}>
                     <SettingItem colors={colors} iconName="eye" title="Profile Visibility" description={`Currently: ${privacy.profileVisibility}`} type="link" onPress={() => handleLinkPress('Profile Visibility')} />
                     <SettingItem colors={colors} iconName="call" title="Show Phone Number" description="Allow others to see your phone number" type="toggle" value={privacy.showPhoneNumber} onToggle={() => togglePrivacy('showPhoneNumber')} />
-                    <SettingItem colors={colors} iconName="mail" title="Show Email Address" description="Allow others to see your email" type="toggle" value={privacy.showEmail} onToggle={() => togglePrivacy('showEmail')} />
                     <SettingItem colors={colors} iconName="location" title="Location Sharing" description="Share your location for nearby rentals" type="toggle" value={privacy.locationSharing} onToggle={() => togglePrivacy('locationSharing')} />
                 </View>
 
