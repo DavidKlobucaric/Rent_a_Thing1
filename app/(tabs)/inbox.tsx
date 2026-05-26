@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { Swipeable } from 'react-native-gesture-handler';
+import { useLanguage } from '@/src/context/languageContext';
 
 type Conversation = {
     id: number;
@@ -31,6 +32,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
 ];
 
 export default function Inbox() {
+    const { t } = useLanguage();
     const [activeCategory, setActiveCategory] = useState<string>('All');
     const [searchText, setSearchText] = useState('');
     const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
@@ -95,12 +97,12 @@ export default function Inbox() {
 
     const deleteConversation = (id: number) => {
         Alert.alert(
-            'Delete Conversation',
-            'This action cannot be undone.',
+            t('inbox', 'deleteConversation'),
+            t('inbox', 'cannotUndo'),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common', 'cancel'), style: 'cancel' },
                 {
-                    text: 'Delete',
+                    text: t('common', 'delete'),
                     style: 'destructive',
                     onPress: () => {
                         setConversations(prev => prev.filter(c => c.id !== id));
@@ -145,6 +147,13 @@ export default function Inbox() {
         </View>
     );
 
+    // Prijevodi za filtere
+    const filterLabels: Record<string, string> = {
+        'All': t('inbox', 'all'),
+        'Unread': t('inbox', 'unread'),
+        'Archived': t('inbox', 'archived'),
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -153,7 +162,7 @@ export default function Inbox() {
                     <Fontisto name="search" style={styles.searchIcon} />
                     <TextInput
                         style={styles.searchInput}
-                        placeholder="Search conversations..."
+                        placeholder={t('inbox', 'search')}
                         placeholderTextColor={colors.placeholder}
                         value={searchText}
                         onChangeText={setSearchText}
@@ -184,7 +193,7 @@ export default function Inbox() {
                                     styles.categoryText,
                                     isActive && styles.categoryTextActive
                                 ]}>
-                                    {name}
+                                    {filterLabels[name]}
                                     {count > 0 && ` (${count})`}
                                 </Text>
                             </TouchableOpacity>
@@ -207,21 +216,21 @@ export default function Inbox() {
                             />
                             <Text style={styles.emptyTitle}>
                                 {searchText
-                                    ? 'No results found'
+                                    ? t('inbox', 'noResults')
                                     : activeCategory === 'Archived'
-                                        ? 'No archived conversations'
+                                        ? t('inbox', 'noArchived')
                                         : activeCategory === 'Unread'
-                                            ? 'All caught up!'
-                                            : 'No conversations yet'}
+                                            ? t('inbox', 'allCaught')
+                                            : t('inbox', 'noConversations')}
                             </Text>
                             <Text style={styles.emptySubtitle}>
                                 {searchText
-                                    ? 'Try a different search term'
+                                    ? t('inbox', 'tryDifferent')
                                     : activeCategory === 'Archived'
-                                        ? 'Archived chats will appear here'
+                                        ? t('inbox', 'archivedHere')
                                         : activeCategory === 'Unread'
-                                            ? 'You have no unread messages'
-                                            : 'Start chatting by browsing items'}
+                                            ? t('inbox', 'noUnread')
+                                            : t('inbox', 'startChatting')}
                             </Text>
                         </View>
                     ) : (
@@ -259,8 +268,6 @@ export default function Inbox() {
                                         activeOpacity={0.7}
                                         onPress={() => openChat(conv)}
                                     >
-
-
                                         <View style={styles.avatarWrapper}>
                                             <Image source={{ uri: conv.avatar }} style={styles.avatar} />
                                             {conv.isOnline && <View style={styles.onlineDot} />}
@@ -413,8 +420,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         borderLeftWidth: 4,
         borderLeftColor: colors.primary,
     },
-
-
 
     avatarWrapper: {
         position: 'relative',

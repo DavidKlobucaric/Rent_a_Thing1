@@ -16,6 +16,7 @@ import { useAuth } from '@/src/context/authContext';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { useLanguage } from '@/src/context/languageContext';
 
 const userData = {
     name: 'Alex Neighbor',
@@ -36,7 +37,6 @@ type MenuItemProps = {
 };
 
 const MenuItem = ({ iconName, title, subtitle, onPress, colors, showSeparator = true }: MenuItemProps) => {
-    // Dodan useMemo za performanse kako se stilovi ne bi ponovno kreirali unutar liste
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
     return (
@@ -62,6 +62,7 @@ const MenuItem = ({ iconName, title, subtitle, onPress, colors, showSeparator = 
 export default function ProfileScreen() {
     const { logout } = useAuth();
     const router = useRouter();
+    const { t } = useLanguage();
 
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
@@ -95,12 +96,12 @@ export default function ProfileScreen() {
                         <View style={styles.ratingRow}>
                             <Ionicons name="star" size={16} color={colors.rating || colors.primary} />
                             <Text style={styles.ratingText}>{userData.rating}</Text>
-                            <Text style={styles.ratingCount}>({userData.reviews} reviews)</Text>
+                            <Text style={styles.ratingCount}>({userData.reviews} {t('profile', 'reviews').toLowerCase()})</Text>
                         </View>
 
                         <View style={styles.verifiedBadge}>
                             <Ionicons name="checkmark-circle-outline" size={14} color={colors.success} />
-                            <Text style={styles.verifiedText}>Verified Member</Text>
+                            <Text style={styles.verifiedText}>{t('profile', 'verifiedMember')}</Text>
                         </View>
                     </View>
                 </View>
@@ -109,49 +110,49 @@ export default function ProfileScreen() {
                 <View style={styles.statsRowContainer}>
                     <View style={styles.statBox}>
                         <Text style={styles.statValue}>{userData.rentals}</Text>
-                        <Text style={styles.statLabel}>Rentals</Text>
+                        <Text style={styles.statLabel}>{t('profile', 'rentals')}</Text>
                     </View>
 
                     <View style={styles.statDivider} />
 
                     <View style={styles.statBox}>
                         <Text style={styles.statValue}>{userData.responseRate}%</Text>
-                        <Text style={styles.statLabel}>Response</Text>
+                        <Text style={styles.statLabel}>{t('profile', 'response')}</Text>
                     </View>
 
                     <View style={styles.statDivider} />
 
                     <View style={styles.statBox}>
                         <Text style={styles.statValue}>{userData.reviews}</Text>
-                        <Text style={styles.statLabel}>Reviews</Text>
+                        <Text style={styles.statLabel}>{t('profile', 'reviews')}</Text>
                     </View>
                 </View>
 
                 {/* 3. POSTAVKE  */}
                 <View style={styles.menuSection}>
-                    <Text style={styles.sectionTitle}>Account Settings</Text>
+                    <Text style={styles.sectionTitle}>{t('profile', 'accountSettings')}</Text>
                     <View style={styles.menuGroup}>
                         <MenuItem
                             colors={colors}
                             iconName="heart-outline"
-                            title="Saved Items"
-                            subtitle="Things you want to rent later"
+                            title={t('profile', 'savedItems')}
+                            subtitle={t('profile', 'savedItemsSub')}
                             onPress={() => router.push('/saved-items')}
                         />
 
                         <MenuItem
                             colors={colors}
                             iconName="settings-outline"
-                            title="Settings"
-                            subtitle="Privacy, Notifications & Account"
+                            title={t('profile', 'settings')}
+                            subtitle={t('profile', 'settingsSub')}
                             onPress={() => router.push('/settings')}
                         />
 
                         <MenuItem
                             colors={colors}
                             iconName="help-circle-outline"
-                            title="Support"
-                            subtitle="FAQs and direct help center"
+                            title={t('profile', 'support')}
+                            subtitle={t('profile', 'supportSub')}
                             onPress={() => router.push('/support')}
                             showSeparator={false}
                         />
@@ -161,7 +162,7 @@ export default function ProfileScreen() {
                 {/* 4. SIGN OUT  */}
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
                     <Ionicons name="log-out-outline" size={18} color={colors.danger} />
-                    <Text style={styles.logoutText}>Sign Out</Text>
+                    <Text style={styles.logoutText}>{t('profile', 'signOut')}</Text>
                 </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>

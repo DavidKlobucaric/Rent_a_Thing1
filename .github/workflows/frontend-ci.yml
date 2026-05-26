@@ -3,9 +3,9 @@ name: React Native Frontend CI
 # Pipeline se pokreće na svaki push ili pull request na main ili master granu
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "**" ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "**" ]
 
 jobs:
   build:

@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { uploadImages, createThing, createListing } from '@/src/api/itemsApi';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { useLanguage } from '@/src/context/languageContext';
 
 const DRAFT_KEY = '@listing_draft';
 const categories = ['Tools', 'Camping', 'Tech', 'Games', 'Sports', 'Clothes'];
@@ -31,6 +32,7 @@ export default function AddScreen() {
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
+    const { t } = useLanguage();
 
     const [title, setTitle] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('Tools');
@@ -111,15 +113,15 @@ export default function AddScreen() {
 
     const handlePublish = async () => {
         if (!title.trim()) {
-            Alert.alert('Missing info', 'Please enter an item title.');
+            Alert.alert(t('common', 'error'), t('add', 'missingTitle'));
             return;
         }
         if (!dailyRate || isNaN(Number(dailyRate))) {
-            Alert.alert('Missing info', 'Please enter a valid daily rate.');
+            Alert.alert(t('common', 'error'), t('add', 'missingRate'));
             return;
         }
         if (!location.trim()) {
-            Alert.alert('Missing info', 'Please enter a location.');
+            Alert.alert(t('common', 'error'), t('add', 'missingLocation'));
             return;
         }
 
@@ -129,7 +131,7 @@ export default function AddScreen() {
             if (images.length > 0) {
                 const uploadResult = await uploadImages(images);
                 if (!uploadResult.success) {
-                    Alert.alert('Upload failed', uploadResult.message);
+                    Alert.alert(t('common', 'error'), uploadResult.message);
                     return;
                 }
                 imageUrlsCsv = uploadResult.urls.join(',');
@@ -144,7 +146,7 @@ export default function AddScreen() {
             const thingResult = await createThing(thingPayload);
 
             if (!thingResult.success) {
-                Alert.alert('Error', thingResult.message);
+                Alert.alert(t('common', 'error'), thingResult.message);
                 return;
             }
 
@@ -157,7 +159,7 @@ export default function AddScreen() {
             const listingResult = await createListing(listingPayload);
 
             if (!listingResult.success) {
-                Alert.alert('Error', listingResult.message);
+                Alert.alert(t('common', 'error'), listingResult.message);
                 return;
             }
 
@@ -168,12 +170,12 @@ export default function AddScreen() {
             setSelectedCategory('Tools');
 
             Alert.alert(
-                '🎉 Success',
-                'Your item has been listed!',
-                [{ text: 'OK', onPress: () => router.back() }]
+                '🎉 ' + t('common', 'success'),
+                t('add', 'publishSuccess'),
+                [{ text: t('common', 'ok'), onPress: () => router.back() }]
             );
         } catch (e: any) {
-            Alert.alert('Error', 'Something went wrong: ' + e?.message);
+            Alert.alert(t('common', 'error'), 'Something went wrong: ' + e?.message);
         } finally {
             setPublishing(false);
         }
@@ -188,9 +190,9 @@ export default function AddScreen() {
             >
                 {/* HEADER */}
                 <View style={styles.header}>
-                    <Text style={styles.titleText}>List your thing</Text>
+                    <Text style={styles.titleText}>{t('add', 'listThing')}</Text>
                     <Text style={styles.bodyText}>
-                        Share your items with the community and start earning.
+                        {t('add', 'subtitle')}
                     </Text>
                 </View>
 
@@ -198,14 +200,14 @@ export default function AddScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <MaterialIcons name="info" size={22} color={colors.primary} />
-                        <Text style={styles.sectionTitle}>Basic info</Text>
+                        <Text style={styles.sectionTitle}>{t('add', 'basicInfo')}</Text>
                     </View>
 
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.labelText}>Item Title</Text>
+                        <Text style={styles.labelText}>{t('add', 'itemTitle')}</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="e.g. Bosch Drill"
+                            placeholder={t('add', 'titlePlaceholder')}
                             placeholderTextColor={colors.textMuted}
                             value={title}
                             onChangeText={setTitle}
@@ -213,13 +215,13 @@ export default function AddScreen() {
                         <View style={styles.hint}>
                             <MaterialIcons name="lightbulb-outline" size={13} color={colors.primary} />
                             <Text style={styles.hintText}>
-                                Titles with brands often get 20% more clicks.
+                                {t('add', 'titleHint')}
                             </Text>
                         </View>
                     </View>
 
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.labelText}>Category</Text>
+                        <Text style={styles.labelText}>{t('add', 'category')}</Text>
                         <TouchableOpacity
                             style={styles.dropdownButton}
                             onPress={() => setModalVisible(true)}
@@ -255,12 +257,12 @@ export default function AddScreen() {
                     </Modal>
 
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.labelText}>Description</Text>
+                        <Text style={styles.labelText}>{t('add', 'description')}</Text>
                         <TextInput
                             style={styles.descriptionInput}
                             multiline
                             numberOfLines={4}
-                            placeholder="Describe your item..."
+                            placeholder={t('add', 'descPlaceholder')}
                             placeholderTextColor={colors.textMuted}
                             textAlignVertical="top"
                             value={description}
@@ -275,7 +277,7 @@ export default function AddScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <MaterialIcons name="photo-camera" size={22} color={colors.primary} />
-                        <Text style={styles.sectionTitle}>Photos</Text>
+                        <Text style={styles.sectionTitle}>{t('add', 'photos')}</Text>
                     </View>
 
                     <ScrollView
@@ -287,13 +289,13 @@ export default function AddScreen() {
                     >
                         <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
                             <MaterialIcons name="add-a-photo" size={38} color={colors.primary} />
-                            <Text style={styles.addImageText}>Add Photo</Text>
+                            <Text style={styles.addImageText}>{t('add', 'addPhoto')}</Text>
                         </TouchableOpacity>
 
                         {images.length === 0 && (
                             <View style={styles.placeholderImage}>
                                 <MaterialIcons name="image" size={30} color={colors.textMuted} />
-                                <Text style={styles.placeholderText}>Preview</Text>
+                                <Text style={styles.placeholderText}>{t('add', 'preview')}</Text>
                             </View>
                         )}
 
@@ -308,7 +310,7 @@ export default function AddScreen() {
                                 </TouchableOpacity>
                                 {i === 0 && (
                                     <View style={styles.coverBadge}>
-                                        <Text style={styles.coverBadgeText}>COVER</Text>
+                                        <Text style={styles.coverBadgeText}>{t('add', 'cover')}</Text>
                                     </View>
                                 )}
                             </View>
@@ -322,14 +324,14 @@ export default function AddScreen() {
                             onPress={() => setImages([])}
                         >
                             <MaterialIcons name="delete-sweep" size={18} color={colors.danger} />
-                            <Text style={styles.removeAllText}>Remove all photos</Text>
+                            <Text style={styles.removeAllText}>{t('add', 'removeAll')}</Text>
                         </TouchableOpacity>
                     )}
 
                     <View style={styles.hint}>
                         <MaterialIcons name="star-outline" size={13} color={colors.primary} />
                         <Text style={styles.hintText}>
-                            High-quality daylight photos perform best.
+                            {t('add', 'photoHint')}
                         </Text>
                     </View>
                 </View>
@@ -338,12 +340,12 @@ export default function AddScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <MaterialIcons name="monetization-on" size={22} color={colors.primary} />
-                        <Text style={styles.sectionTitle}>Pricing</Text>
+                        <Text style={styles.sectionTitle}>{t('add', 'pricing')}</Text>
                     </View>
 
                     <View style={styles.pricingRow}>
                         <View style={styles.pricingField}>
-                            <Text style={styles.labelText}>Daily Rate</Text>
+                            <Text style={styles.labelText}>{t('add', 'dailyRate')}</Text>
                             <View style={styles.priceInputContainer}>
                                 <Text style={styles.currencySymbol}>$</Text>
                                 <TextInput
@@ -359,8 +361,7 @@ export default function AddScreen() {
 
                         <View style={styles.pricingField}>
                             <Text style={styles.labelText}>
-                                Security Deposit{' '}
-                                <Text style={styles.optional}>(Optional)</Text>
+                                {t('add', 'securityDeposit')}{' '}
                             </Text>
                             <View style={styles.priceInputContainer}>
                                 <Text style={styles.currencySymbol}>$</Text>
@@ -379,7 +380,7 @@ export default function AddScreen() {
                     <View style={styles.hint}>
                         <MaterialIcons name="lightbulb-outline" size={13} color={colors.primary} />
                         <Text style={styles.hintText}>
-                            Deposit is returned after the item is safely returned.
+                            {t('add', 'depositHint')}
                         </Text>
                     </View>
                 </View>
@@ -388,14 +389,14 @@ export default function AddScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <MaterialIcons name="location-pin" size={22} color={colors.primary} />
-                        <Text style={styles.sectionTitle}>Location</Text>
+                        <Text style={styles.sectionTitle}>{t('add', 'location')}</Text>
                     </View>
 
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.labelText}>City or Neighbourhood</Text>
+                        <Text style={styles.labelText}>{t('add', 'city')}</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="e.g. Zagreb"
+                            placeholder={t('add', 'locationPlaceholder')}
                             placeholderTextColor={colors.textMuted}
                             value={location}
                             onChangeText={setLocation}
@@ -403,7 +404,7 @@ export default function AddScreen() {
                         <View style={styles.hint}>
                             <MaterialIcons name="lock-outline" size={13} color={colors.primary} />
                             <Text style={styles.hintText}>
-                                Your exact address is only shared after a booking is confirmed.
+                                {t('add', 'locationHint')}
                             </Text>
                         </View>
                     </View>
@@ -419,7 +420,7 @@ export default function AddScreen() {
                         {publishing
                             ? <ActivityIndicator color="white" />
                             : <>
-                                <Text style={styles.publishButtonText}>Publish Listing</Text>
+                                <Text style={styles.publishButtonText}>{t('add', 'publish')}</Text>
                                 <MaterialIcons name="rocket-launch" size={15} color="white" />
                             </>
                         }

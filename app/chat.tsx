@@ -16,6 +16,7 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { router, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { useLanguage } from '@/src/context/languageContext';
 
 type Message = {
     id: string;
@@ -38,6 +39,7 @@ export default function Chat() {
         ? JSON.parse(conversation)
         : { id: 1, name: 'User', itemName: 'Item', avatar: '', isOnline: false };
 
+    const { t } = useLanguage();
     const insets = useSafeAreaInsets();
 
     const [messages, setMessages] = useState<Message[]>([]);
@@ -46,11 +48,10 @@ export default function Chat() {
 
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
-    const styles = useMemo(() => makeStyles(colors, insets.bottom), [colors, insets.bottom]);
+    const styles = useMemo(() => makeStyles(colors ), [colors]);
     const scrollRef = useRef<ScrollView>(null);
 
     useEffect(() => { setMessages([]); }, [conv.id]);
-
 
     useEffect(() => {
         const showSub = Keyboard.addListener(
@@ -79,7 +80,12 @@ export default function Chat() {
         setTimeout(() => {
             setMessages(prev => [
                 ...prev,
-                { id: `them_${Date.now()}`, text: "Thanks! I'll get back to you soon. 👍", senderId: 'them', createdAt: new Date() }
+                {
+                    id: `them_${Date.now()}`,
+                    text: t('chat', 'autoReply'),
+                    senderId: 'them',
+                    createdAt: new Date()
+                }
             ]);
         }, 1500);
     };
@@ -88,7 +94,6 @@ export default function Chat() {
         date ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
     return (
-
         <SafeAreaView
             style={[styles.container, { marginBottom: keyboardOffset }]}
             edges={['top']}
@@ -116,18 +121,18 @@ export default function Chat() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="interactive"
-
                 onContentSizeChange={() => {
                     scrollRef.current?.scrollToEnd({ animated: true });
                 }}
-
                 decelerationRate="normal"
                 removeClippedSubviews={false}
             >
                 {messages.length === 0 ? (
                     <View style={styles.emptyState}>
                         <Ionicons name="chatbubble-ellipses-outline" size={56} color={colors.textSecondary} />
-                        <Text style={styles.emptyText}>No messages yet{'\n'}Start the conversation! 👋</Text>
+                        <Text style={styles.emptyText}>
+                            {t('chat', 'noMessages')}{'\n'}{t('chat', 'startConv')}
+                        </Text>
                     </View>
                 ) : (
                     messages.map((msg) => {
@@ -166,7 +171,7 @@ export default function Chat() {
             <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 8 }]}>
                 <TextInput
                     style={styles.input}
-                    placeholder="Type a message..."
+                    placeholder={t('chat', 'typeMessage')}
                     placeholderTextColor={colors.textSecondary}
                     value={input}
                     onChangeText={setInput}
@@ -191,7 +196,7 @@ export default function Chat() {
     );
 }
 
-const makeStyles = (colors: typeof Colors.light, bottomInset: number) => StyleSheet.create({
+const makeStyles = (colors: typeof Colors.light ) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
@@ -237,7 +242,6 @@ const makeStyles = (colors: typeof Colors.light, bottomInset: number) => StyleSh
     },
 
     messagesContent: {
-
         flexGrow: 1,
         justifyContent: 'flex-end',
         padding: 18,

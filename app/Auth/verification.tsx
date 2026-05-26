@@ -15,6 +15,8 @@ import { verifyCode, resendCode } from "@/src/api/authApi";
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 
+import { useLanguage } from '@/src/context/languageContext';
+
 export default function VerificationScreen() {
     const [code, setCode] = useState(['', '', '', '', '', '']);
     const [timer, setTimer] = useState(60);
@@ -24,6 +26,7 @@ export default function VerificationScreen() {
     const inputRefs = useRef<(TextInput | null)[]>([]);
     const { email = 'user@example.com' } = useLocalSearchParams<{email: string}>();
 
+    const { t } = useLanguage();
     const router = useRouter();
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
@@ -108,7 +111,7 @@ export default function VerificationScreen() {
                 <View style={styles.verificationIcon}>
                     <MaterialIcons name="verified-user" size={40} color={colors.iconColor} />
                 </View>
-                <Text style={styles.titleText}>Verify Your Account</Text>
+                <Text style={styles.titleText}>{t('auth', 'verifyAccount')}</Text>
             </View>
 
             {/* SUBTITLE */}
@@ -150,8 +153,8 @@ export default function VerificationScreen() {
 
                 {/* RESEND */}
                 <View style={styles.resendContainer}>
-                    <Text style={[styles.resendLabel, { color: colors.textMuted }]}>
-                        Didn{"'"}t receive the code?{' '}
+                    <Text style={[styles.resendLabel]}>
+                        {t('auth', 'didntReceive')}
                     </Text>
                     <TouchableOpacity
                         onPress={handleResend}
@@ -159,12 +162,8 @@ export default function VerificationScreen() {
                     >
                         {resending
                             ? <ActivityIndicator color={colors.primary} size="small" />
-                            : <Text style={[
-                                styles.resendText,
-                                { color: canResend ? colors.primary : colors.textMuted }
-                            ]}>
-                                {canResend ? 'Resend Code' : `Resend in ${formatTime(timer)}`}
-                            </Text>
+                            : <Text style={[ styles.resendText,
+                        { color: canResend ? colors.primary : colors.textMuted }]}>{canResend ? t('auth', 'resendCode') : `${t('auth', 'resendIn')} ${formatTime(timer)}`}</Text>
                         }
                     </TouchableOpacity>
                 </View>
@@ -180,21 +179,15 @@ export default function VerificationScreen() {
                 >
                     {verifying
                         ? <ActivityIndicator color={colors.primarySecondary} />
-                        : <Text style={styles.verifyButtonText}>
-                            Verify Account
-                        </Text>
+                        : <Text style={styles.verifyButtonText}>{t('auth', 'verify')}</Text>
                     }
                 </TouchableOpacity>
 
                 {/* CHANGE EMAIL */}
                 <View style={[styles.resendContainer, { marginBottom: 0, marginTop: 30 }]}>
-                    <Text style={[styles.resendLabel, { color: colors.textMuted }]}>
-                        Wrong email?{' '}
-                    </Text>
+                    <Text style={[styles.resendLabel, { color: colors.textMuted }]}>{t('auth', 'wrongEmail')}</Text>
                     <TouchableOpacity onPress={() => router.back()}>
-                        <Text style={[styles.changeText, { color: colors.primary }]}>
-                            Change
-                        </Text>
+                        <Text style={[styles.changeText, { color: colors.primary }]}>{t('common', 'change')}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -210,8 +203,8 @@ export default function VerificationScreen() {
                     </View>
                 </View>
                 <View style={styles.badgeLabels}>
-                    <Text style={styles.badgeText}>End-to-End Encrypted</Text>
-                    <Text style={styles.badgeText}>Code Expires in 10min</Text>
+                    <Text style={styles.badgeText}>{t('auth', 'encrypted')}</Text>
+                    <Text style={styles.badgeText}>{t('auth', 'expires')}</Text>
                 </View>
             </View>
 
@@ -220,7 +213,7 @@ export default function VerificationScreen() {
 }
 
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    // ✅ IDENTIČNO KAO ORIGINAL - samo boje preko teme
+
     MainPage: {
         flex: 1,
         backgroundColor: colors.background,
