@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { LanguageProvider } from "@/src/context/languageContext";
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from "@/src/context/authContext";
@@ -17,21 +18,23 @@ export default function RootLayout() {
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <AuthProvider>
-                <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                    <Stack>
-                        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade', animationDuration: 1050 }} />
-                        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-                        <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
-                        <Stack.Screen name="sign-in" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
-                        <Stack.Screen name="log-in" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
-                        <Stack.Screen name="verification" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
-                        <Stack.Screen name="saved-items" options={{ title: 'Saved Items', animation: 'fade', animationDuration: 550 }} />
-                        <Stack.Screen name="settings" options={{ title: 'Settings', animation: 'fade', animationDuration: 550 }} />
-                        <Stack.Screen name="chat" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
-                        <Stack.Screen name="support" options={{ title: 'Support', animation: 'fade', animationDuration: 550 }} />
-                    </Stack>
-                    <StatusBar style="auto" />
-                </ThemeProvider>
+                <LanguageProvider>
+                    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                        <Stack>
+                            <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade', animationDuration: 1050 }} />
+                            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+                            <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
+                            <Stack.Screen name="sign-in" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
+                            <Stack.Screen name="log-in" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
+                            <Stack.Screen name="verification" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
+                            <Stack.Screen name="saved-items" options={{ title: 'Saved Items', animation: 'fade', animationDuration: 550 }} />
+                            <Stack.Screen name="settings" options={{ title: 'Settings', animation: 'fade', animationDuration: 550 }} />
+                            <Stack.Screen name="chat" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
+                            <Stack.Screen name="support" options={{ title: 'Support', animation: 'fade', animationDuration: 550 }} />
+                        </Stack>
+                        <StatusBar style="auto" />
+                    </ThemeProvider>
+                </LanguageProvider>
             </AuthProvider>
         </GestureHandlerRootView>
     );

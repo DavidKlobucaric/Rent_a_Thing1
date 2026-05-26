@@ -1,20 +1,18 @@
-import React, { useState, useRef, useMemo,useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
     StyleSheet, View, Text, TextInput, TouchableOpacity,
-    ActivityIndicator, Keyboard, ScrollView,
+    ActivityIndicator, Keyboard, ScrollView, Alert,
 } from 'react-native';
 
-import Mapbox, { MapView, Camera, PointAnnotation, } from '@rnmapbox/maps';
+import Mapbox, { MapView, Camera, PointAnnotation } from '@rnmapbox/maps';
 import { Fontisto, Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from '@/hooks/use-color-scheme';
-
 import { Colors } from '@/constants/theme';
+import { useLanguage } from '@/src/context/languageContext';
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '');
 const LIGHT_MAP_STYLE = 'mapbox://styles/mapbox/streets-v12';
 const DARK_MAP_STYLE = 'mapbox://styles/mapbox/dark-v11';
-
-
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -24,6 +22,7 @@ interface Coordinate {
 }
 
 export default function MapScreen() {
+    const { t } = useLanguage();
     const cameraRef = useRef<Camera>(null);
     const [searchText, setSearchText] = useState('');
     const [loading, setLoading] = useState(false);
@@ -35,7 +34,6 @@ export default function MapScreen() {
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
-
     useEffect(() => {
         fetch('https://api.mapbox.com/styles/v1/mapbox/streets-v12?access_token=' + process.env.EXPO_PUBLIC_MAPBOX_TOKEN)
             .then(r => console.log('MAPBOX STATUS:', r.status))
@@ -46,7 +44,6 @@ export default function MapScreen() {
         if (!searchText.trim()) return;
         Keyboard.dismiss();
         setLoading(true);
-
 
         try {
             const response = await fetch(
@@ -71,11 +68,11 @@ export default function MapScreen() {
                 setMarkerTitle(shortName);
                 setSearchText(shortName);
             } else {
-                alert('Lokacija nije pronađena. Pokušaj s drugim pojmom.');
+                Alert.alert(t('common', 'error'), t('map', 'locationNotFound'));
             }
         } catch (error) {
             console.error("Greška:", error);
-            alert('Došlo je do greške pri pretrazi.');
+            Alert.alert(t('common', 'error'), t('map', 'searchError'));
         } finally {
             setLoading(false);
         }
@@ -106,18 +103,12 @@ export default function MapScreen() {
                 logoEnabled={false}
                 attributionEnabled={false}
                 scaleBarEnabled={false}
-
-
-
             >
                 <Camera
                     ref={cameraRef}
                     centerCoordinate={[15.9819, 45.8150]}
                     zoomLevel={12}
-
                 />
-
-
 
                 {markerCoordinate && (
                     <PointAnnotation
@@ -149,7 +140,7 @@ export default function MapScreen() {
 
                     <TextInput
                         style={styles.input}
-                        placeholder="Pretraži (npr. Zagreb, Rijeka...)"
+                        placeholder={t('map', 'searchPlaceholder')}
                         placeholderTextColor={colors.placeholder}
                         value={searchText}
                         onChangeText={setSearchText}
@@ -220,7 +211,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         flex: 1,
     },
 
-
     marker: {
         width: 32,
         height: 32,
@@ -228,7 +218,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         backgroundColor: colors.primary + '30',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 2,
+        borderWidth: 1,
         borderColor: colors.background,
     },
 
@@ -237,19 +227,18 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         height: 14,
         borderRadius: 7,
         backgroundColor: colors.primary,
-        borderWidth: 2,
+        borderWidth: 1,
         borderColor: colors.background,
     },
 
     searchContainer: {
         position: 'absolute',
         top: 55,
-        paddingHorizontal:13,
+        paddingHorizontal: 13,
         alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',
         zIndex: 10,
-
     },
 
     inputWrapper: {
@@ -262,7 +251,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.border,
         borderRadius: 14,
-
     },
 
     searchIcon: {

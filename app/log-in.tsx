@@ -17,6 +17,7 @@ import { loginUser } from "@/src/api/authApi";
 import { useAuth } from "@/src/context/authContext";
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { useLanguage } from '@/src/context/languageContext';
 
 export default function LogInScreen() {
     const [email, setEmail] = useState('');
@@ -26,13 +27,15 @@ export default function LogInScreen() {
 
     const router = useRouter();
     const { refreshAuth } = useAuth();
+    const { t } = useLanguage();
+
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
     const handleLogIn = async () => {
-        if(!email.trim() || !password.trim()) {
-            Alert.alert('Missing info', 'Please enter your email and password.');
+        if (!email.trim() || !password.trim()) {
+            Alert.alert(t('auth', 'missingInfo'), t('auth', 'fillAllFields'));
             return;
         }
         setLoading(true);
@@ -43,7 +46,7 @@ export default function LogInScreen() {
             await refreshAuth();
             router.replace('/home');
         } else {
-            Alert.alert('Login failed', result.message);
+            Alert.alert(t('auth', 'loginFailed'), result.message);
         }
     };
 
@@ -52,64 +55,63 @@ export default function LogInScreen() {
 
             {/* HEADER */}
             <View style={styles.header}>
-                <Text style={styles.titleText}>Welcome Back!</Text>
+                <Text style={styles.titleText}>{t('auth', 'welcomeBack')}</Text>
             </View>
 
             {/* SUBTITLE */}
             <View style={styles.subtitleContainer}>
                 <Text style={styles.subtitleText}>
-                    Log in to your account and continue sharing with your community.
+                    {t('auth', 'logInSubtitle')}
                 </Text>
             </View>
 
             {/* LOGIN CARD */}
             <View style={styles.card}>
 
-                    <Text style={styles.labelText}>EMAIL ADDRESS</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Joe@example.com"
-                        placeholderTextColor={colors.placeholder}
-                        value={email}
-                        onChangeText={setEmail}
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                    />
+                <Text style={styles.labelText}>{t('auth', 'email')}</Text>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Joe@example.com"
+                    placeholderTextColor={colors.placeholder}
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                />
 
-                    {/* PASSWORD */}
-                    <Text style={styles.labelText}>PASSWORD</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="********"
-                        placeholderTextColor={colors.placeholder}
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry={true}
-                    />
+                {/* PASSWORD */}
+                <Text style={styles.labelText}>{t('auth', 'password')}</Text>
+                <TextInput
+                    style={styles.input}
+                    placeholder="********"
+                    placeholderTextColor={colors.placeholder}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={true}
+                />
 
-                    {/* REMEMBER ME + FORGOT PASSWORD */}
-                    <View style={styles.rememberRow}>
-                        <TouchableOpacity
-                            style={styles.rememberMeContainer}
-                            onPress={() => setRememberMe(!rememberMe)}
-                        >
-                            <MaterialIcons
-                                name={rememberMe ? "check-box" : "check-box-outline-blank"}
-                                size={22}
-                                color={rememberMe ? colors.primary : colors.textMuted}
-                            />
-                            <Text style={[styles.smallText, { color: colors.textSecondary }]}>
-                                Remember me
-                            </Text>
-                        </TouchableOpacity>
+                {/* REMEMBER ME + FORGOT PASSWORD */}
+                <View style={styles.rememberRow}>
+                    <TouchableOpacity
+                        style={styles.rememberMeContainer}
+                        onPress={() => setRememberMe(!rememberMe)}
+                    >
+                        <MaterialIcons
+                            name={rememberMe ? "check-box" : "check-box-outline-blank"}
+                            size={22}
+                            color={rememberMe ? colors.primary : colors.textMuted}
+                        />
+                        <Text style={[styles.smallText, { color: colors.textSecondary }]}>
+                            {t('auth', 'rememberMe')}
+                        </Text>
+                    </TouchableOpacity>
 
-                        <TouchableOpacity>
-                            <Text style={[styles.smallText, { color: colors.primary, fontWeight: '600' }]}>
-                                Forgot password?
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-
+                    <TouchableOpacity>
+                        <Text style={[styles.smallText, { color: colors.primary, fontWeight: '600' }]}>
+                            {t('auth', 'forgotPassword')}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
 
                 {/* LOGIN BUTTON */}
                 <TouchableOpacity
@@ -119,14 +121,14 @@ export default function LogInScreen() {
                 >
                     {loading
                         ? <ActivityIndicator color={colors.primarySecondary} />
-                        : <Text style={styles.primaryButtonText}>Log In</Text>
+                        : <Text style={styles.primaryButtonText}>{t('auth', 'logIn')}</Text>
                     }
                 </TouchableOpacity>
 
                 {/* DIVIDER */}
                 <View style={styles.dividerContainer}>
                     <View style={styles.dividerLine} />
-                    <Text style={styles.dividerText}>OR WITH GOOGLE</Text>
+                    <Text style={styles.dividerText}>{t('auth', 'orWithGoogle')}</Text>
                     <View style={styles.dividerLine} />
                 </View>
 
@@ -138,7 +140,7 @@ export default function LogInScreen() {
                             style={styles.socialIcon}
                         />
                         <Text style={[styles.mediumText, { color: colors.googleButtonText }]}>
-                            Sign in with Google
+                            {t('auth', 'signInGoogle')}
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -146,10 +148,10 @@ export default function LogInScreen() {
 
             {/* SIGN UP LINK */}
             <View style={styles.signUpContainer}>
-                <Text style={styles.mediumText}>Don{"'"}t have an account?</Text>
-                <TouchableOpacity  onPress={() => router.push('/sign-in')}>
+                <Text style={styles.mediumText}>{t('auth', 'noAccount')}</Text>
+                <TouchableOpacity onPress={() => router.push('/sign-in')}>
                     <Text style={[styles.mediumText, { color: colors.primary, fontWeight: "600" }]}>
-                        Sign Up
+                        {t('auth', 'signUp')}
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -165,8 +167,8 @@ export default function LogInScreen() {
                     </View>
                 </View>
                 <View style={styles.badgeLabels}>
-                    <Text style={styles.badgeText}>Secure & Private</Text>
-                    <Text style={styles.badgeText}>Community Trust</Text>
+                    <Text style={styles.badgeText}>{t('auth', 'secure')}</Text>
+                    <Text style={styles.badgeText}>{t('auth', 'communityTrust')}</Text>
                 </View>
             </View>
 
@@ -214,9 +216,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         padding: 20,
         paddingTop: 0,
         alignSelf: 'center',
-
     },
-
 
     labelText: {
         fontSize: 12,
@@ -373,6 +373,4 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontWeight: "500",
         textAlign: "center",
     },
-
-
 });

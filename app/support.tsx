@@ -15,39 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
-
-const faqs = [
-    {
-        id: '1',
-        question: 'How do I rent an item?',
-        answer:
-            'Browse items, tap one you like, choose your rental dates and confirm. The owner will approve your request and you can arrange pickup.',
-    },
-    {
-        id: '2',
-        question: 'What if an item is damaged?',
-        answer:
-            'All rentals include basic damage protection. Report any damage within 24 hours of return through the app and our team will assist you.',
-    },
-    {
-        id: '3',
-        question: 'How do I list my own item?',
-        answer:
-            'Tap the "+" button on the home screen, fill in the details, set your price and availability, then publish. It usually goes live within minutes.',
-    },
-    {
-        id: '4',
-        question: 'When will I receive my payment?',
-        answer:
-            'Payouts are processed 24 hours after the rental period ends and transferred to your linked bank account within 3–5 business days.',
-    },
-    {
-        id: '5',
-        question: 'Can I cancel a rental?',
-        answer:
-            'Yes. Cancellations made 48+ hours before the rental start are fully refunded. Later cancellations may incur a small fee per our cancellation policy.',
-    },
-];
+import { useLanguage } from '@/src/context/languageContext';
 
 type FAQItemProps = {
     question: string;
@@ -93,39 +61,68 @@ const FAQItem = ({ question, answer, colors, isLast = false }: FAQItemProps) => 
 
 export default function SupportScreen() {
     const router = useRouter();
+    const { t } = useLanguage();
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const isDark = scheme === 'dark';
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
+    // FAQ niz unutar komponente da bi mogao koristiti t() funkciju
+    const faqs = [
+        {
+            id: '1',
+            question: t('support', 'faq1Q'),
+            answer: t('support', 'faq1A'),
+        },
+        {
+            id: '2',
+            question: t('support', 'faq2Q'),
+            answer: t('support', 'faq2A'),
+        },
+        {
+            id: '3',
+            question: t('support', 'faq3Q'),
+            answer: t('support', 'faq3A'),
+        },
+        {
+            id: '4',
+            question: t('support', 'faq4Q'),
+            answer: t('support', 'faq4A'),
+        },
+        {
+            id: '5',
+            question: t('support', 'faq5Q'),
+            answer: t('support', 'faq5A'),
+        },
+    ];
+
     const contactOptions = [
         {
             icon: 'chatbubble-ellipses-outline' as const,
-            label: 'Live Chat',
-            detail: 'Replies in minutes',
+            label: t('support', 'liveChat'),
+            detail: t('support', 'liveChatDetail'),
             onPress: () => router.push('/inbox'),
         },
         {
             icon: 'mail-outline' as const,
-            label: 'Email Us',
+            label: t('support', 'emailUs'),
             detail: 'support@rentathing.com',
             onPress: () => Linking.openURL('mailto:support@rentathing.com'),
         },
         {
             icon: 'call-outline' as const,
-            label: 'Call Us',
-            detail: 'Mon–Fri, 9am–6pm',
+            label: t('support', 'callUs'),
+            detail: t('support', 'callDetail'),
             onPress: () => Linking.openURL('tel:+1800000000'),
         },
     ];
 
     return (
-        <SafeAreaView style={styles.container} edges={[ 'left', 'right']}>
+        <SafeAreaView style={styles.container} edges={['left', 'right']}>
             <StatusBar
                 barStyle={isDark ? 'light-content' : 'dark-content'}
                 backgroundColor={colors.background}
             />
-
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
@@ -136,14 +133,14 @@ export default function SupportScreen() {
                     <View style={styles.heroIconBox}>
                         <Ionicons name="help-circle" size={32} color={colors.iconColorInverse} />
                     </View>
-                    <Text style={styles.heroTitle}>How can we help?</Text>
+                    <Text style={styles.heroTitle}>{t('support', 'heroTitle')}</Text>
                     <Text style={styles.heroSubtitle}>
-                        Browse FAQs below or reach out to our support team directly.
+                        {t('support', 'heroSubtitle')}
                     </Text>
                 </View>
 
                 {/* ─── CONTACT OPTIONS ─── */}
-                <Text style={styles.sectionTitle}>Contact Us</Text>
+                <Text style={styles.sectionTitle}>{t('support', 'contactUs')}</Text>
                 <View style={styles.contactCard}>
                     {contactOptions.map((option, index) => (
                         <TouchableOpacity
@@ -178,7 +175,7 @@ export default function SupportScreen() {
                 </View>
 
                 {/* ─── FAQ ─── */}
-                <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+                <Text style={styles.sectionTitle}>{t('support', 'faq')}</Text>
                 <View style={styles.faqContainer}>
                     {faqs.map((faq, index) => (
                         <FAQItem
@@ -195,7 +192,7 @@ export default function SupportScreen() {
                 <View style={styles.footerNote}>
                     <Ionicons name="shield-checkmark" size={16} color={colors.success} />
                     <Text style={styles.footerNoteText}>
-                        Your data is always kept private and secure.
+                        {t('support', 'privacyNote')}
                     </Text>
                 </View>
             </ScrollView>
@@ -205,7 +202,6 @@ export default function SupportScreen() {
 
 const makeStyles = (colors: typeof Colors.light) =>
     StyleSheet.create({
-
         container: {
             flex: 1,
             backgroundColor: colors.background,
@@ -214,7 +210,6 @@ const makeStyles = (colors: typeof Colors.light) =>
         scrollContent: {
             paddingBottom: 40,
         },
-
 
         header: {
             flexDirection: 'row',
@@ -240,7 +235,6 @@ const makeStyles = (colors: typeof Colors.light) =>
             fontWeight: '700',
             color: colors.text,
         },
-
 
         heroBanner: {
             alignItems: 'center',
@@ -287,7 +281,6 @@ const makeStyles = (colors: typeof Colors.light) =>
             marginTop: 8,
         },
 
-
         contactCard: {
             marginHorizontal: 20,
             marginBottom: 24,
@@ -317,8 +310,6 @@ const makeStyles = (colors: typeof Colors.light) =>
             justifyContent: 'center',
             alignItems: 'center',
             marginRight: 14,
-
-
         },
 
         contactTextContainer: {
@@ -336,7 +327,6 @@ const makeStyles = (colors: typeof Colors.light) =>
             fontSize: 13,
             color: colors.textMuted,
         },
-
 
         faqContainer: {
             marginHorizontal: 20,
@@ -408,7 +398,6 @@ const makeStyles = (colors: typeof Colors.light) =>
             color: colors.textSecondary,
             lineHeight: 21,
         },
-
 
         footerNote: {
             flexDirection: 'row',
