@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+
 import { Image } from 'expo-image';
 import React, { useMemo, useState } from 'react';
 import {
@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { useLanguage } from '@/src/context/languageContext';
 
 const MOCK_SAVED_ITEMS = [
     {
@@ -96,6 +97,7 @@ export default function SavedItemsScreen({
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
+    const { t } = useLanguage();
 
     const [localItems, setLocalItems] = useState(MOCK_SAVED_ITEMS);
 
@@ -106,12 +108,12 @@ export default function SavedItemsScreen({
 
     const handleRemove = (id: number) => {
         Alert.alert(
-            'Remove from Saved',
-            'Are you sure you want to remove this item from your favorites?',
+            t('saved', 'removeSaved'),
+            t('saved', 'removeConfirm'),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common', 'cancel'), style: 'cancel' },
                 {
-                    text: 'Remove',
+                    text: t('common', 'remove'),
                     style: 'destructive',
                     onPress: () => {
                         setLocalItems(prev => prev.filter(item => item.listingId !== id));
@@ -134,9 +136,9 @@ export default function SavedItemsScreen({
                     <View style={styles.emptyIconCircle}>
                         <Ionicons name="heart-outline" size={44} color={colors.textMuted} />
                     </View>
-                    <Text style={styles.emptyTitle}>No Saved Items</Text>
+                    <Text style={styles.emptyTitle}>{t('saved', 'noSaved')}</Text>
                     <Text style={styles.emptyText}>
-                        Tap the heart icon on any listing to save things you want to rent later.
+                        {t('saved', 'noSavedSub')}
                     </Text>
                 </View>
             </SafeAreaView>
@@ -152,7 +154,7 @@ export default function SavedItemsScreen({
                 showsVerticalScrollIndicator={false}
                 ListHeaderComponent={
                     <Text style={styles.headerSubtitle}>
-                        {savedItems.length} {savedItems.length === 1 ? 'saved item' : 'saved items'}
+                        {savedItems.length} {t('saved', 'header')}
                     </Text>
                 }
                 renderItem={({ item }) => (
@@ -171,7 +173,7 @@ export default function SavedItemsScreen({
                             />
                             {!item.isAvailable && (
                                 <View style={styles.unavailableBadge}>
-                                    <Text style={styles.unavailableText}>Unavailable</Text>
+                                    <Text style={styles.unavailableText}>{t('saved', 'unavailable')}</Text>
                                 </View>
                             )}
                         </View>
@@ -203,7 +205,7 @@ export default function SavedItemsScreen({
                             <View style={styles.footer}>
                                 <View style={styles.priceContainer}>
                                     <Text style={styles.price}>${item.price}</Text>
-                                    <Text style={styles.perDay}>/day</Text>
+                                    <Text style={styles.perDay}>{t('saved', 'perDay')}</Text>
                                 </View>
                                 <View style={styles.categoryBadge}>
                                     <Text style={styles.categoryText}>{item.category}</Text>

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,14 +7,21 @@ import { useFocusEffect } from 'expo-router';
 import { BackHandler } from 'react-native';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { useLanguage } from '@/src/context/languageContext';
 
 export default function Index() {
     const router = useRouter();
+    const { t } = useLanguage();
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
+    const isDark = scheme === 'dark';
 
+    // Definiraj gradijente ovisno o modu
+    const gradientColors: [string, string] = isDark
+        ? ['#121212', '#0f2b2f']
+        : ['#097F8C', '#00646F'];
 
-    const styles = useMemo(() => makeStyles(colors, scheme === 'dark'), [colors, scheme]);
+    const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
     useFocusEffect(
         useCallback(() => {
@@ -23,10 +30,10 @@ export default function Index() {
         }, [])
     );
 
+
+
     return (
-        <>
-            <StatusBar barStyle="light-content" translucent />
-            <LinearGradient colors={['#097F8C', '#00646F']}  style={{ flex: 1 }}>
+            <LinearGradient colors={gradientColors} style={{ flex: 1 }}>
                 <SafeAreaView style={styles.container}>
                     <View style={styles.top}>
                         <Image
@@ -35,7 +42,7 @@ export default function Index() {
                             resizeMode="contain"
                         />
                         <Text style={styles.titleText}>Rent-a-Thing</Text>
-                        <Text style={styles.subtitle}>Rent anything you need</Text>
+                        <Text style={styles.subtitle}>{t('index', 'subtitle')}</Text>
                     </View>
 
                     <View style={styles.bottom}>
@@ -44,7 +51,7 @@ export default function Index() {
                             onPress={() => router.push('/sign-in')}
                             activeOpacity={0.9}
                         >
-                            <Text style={styles.btnPrimaryText}>Sign In</Text>
+                            <Text style={styles.btnPrimaryText}>{t('index', 'signIn')}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -52,14 +59,14 @@ export default function Index() {
                             onPress={() => router.push('/log-in')}
                             activeOpacity={0.9}
                         >
-                            <Text style={styles.btnSecondaryText}>Log In</Text>
+                            <Text style={styles.btnSecondaryText}>{t('index', 'logIn')}</Text>
                         </TouchableOpacity>
 
-                        <Text style={styles.footer}>TRUSTED BY 5,000+ NEIGHBORS</Text>
+                        <Text style={styles.footer}>{t('index', 'trusted')}</Text>
                     </View>
                 </SafeAreaView>
             </LinearGradient>
-        </>
+
     );
 }
 
@@ -80,7 +87,7 @@ const makeStyles = (colors: typeof Colors.light, isDark: boolean) => StyleSheet.
     logo: {
         width: 300,
         height: 220,
-        marginBottom: 24,
+        marginBottom: 34,
     },
 
     titleText: {
@@ -97,7 +104,7 @@ const makeStyles = (colors: typeof Colors.light, isDark: boolean) => StyleSheet.
         color: colors.activeTabText,
         textAlign: 'center',
         lineHeight: 24,
-        marginTop: 12,
+        marginTop: 10,
         paddingHorizontal: 20,
         opacity: 0.8
     },
@@ -132,7 +139,7 @@ const makeStyles = (colors: typeof Colors.light, isDark: boolean) => StyleSheet.
         paddingVertical: 16,
         borderRadius: 14,
         backgroundColor: 'transparent',
-        borderWidth: 1,
+        borderWidth: 0.5,
         borderColor: colors.activeTabBg,
     },
 

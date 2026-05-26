@@ -17,6 +17,8 @@ import { registerUser } from "@/src/api/authApi";
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 
+import { useLanguage } from '@/src/context/languageContext';
+
 export default function SignUpScreen() {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -24,6 +26,7 @@ export default function SignUpScreen() {
     const [agreed, setAgreed] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    const { t } = useLanguage();
     const router = useRouter();
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
@@ -32,11 +35,11 @@ export default function SignUpScreen() {
     const handleSignUp = async () => {
         if (!agreed) {
 
-            Alert.alert('Terms & Conditions', 'Please agree with the terms and conditions.');
+            Alert.alert(t('auth', 'missingInfo'), t('auth', 'pleaseAgree'));
             return;
         }
         if (!username.trim() || !email.trim() || !password.trim()) {
-            Alert.alert("Missing info", "Please fill in all fields");
+            Alert.alert(t('auth', 'missingInfo'), t('auth', 'fillAllFields'));
             return;
         }
 
@@ -51,30 +54,26 @@ export default function SignUpScreen() {
                 params: { email: email.trim() }
             });
         } else {
-            Alert.alert("Registration failed", result.message);
+            Alert.alert(t('auth', 'registrationFailed'), result.message);
         }
     };
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
 
-
             <View style={styles.header}>
-                <Text style={styles.titleText}>Create Account</Text>
+                <Text style={styles.titleText}>{t('auth', 'createAccount')}</Text>
             </View>
 
-
             <View style={styles.subtitleContainer}>
-                <Text style={styles.subtitleText}>
-                    Join your neighbors and start sharing everything you need.
-                </Text>
+                <Text style={styles.subtitleText}>{t('auth', 'joinCommunity')}</Text>
             </View>
 
 
             <View style={styles.card}>
 
                 {/* USERNAME */}
-                <Text style={styles.labelText}>USERNAME</Text>
+                <Text style={styles.labelText}>{t('auth', 'username')}</Text>
                 <TextInput
                     style={styles.input}
                     placeholder="Joe Doe"
@@ -84,7 +83,7 @@ export default function SignUpScreen() {
                 />
 
                 {/* EMAIL */}
-                <Text style={styles.labelText}>EMAIL ADDRESS</Text>
+                <Text style={styles.labelText}>{t('auth', 'email')}</Text>
                 <TextInput
                     style={styles.input}
                     placeholder="Joe@example.com"
@@ -96,7 +95,7 @@ export default function SignUpScreen() {
                 />
 
                 {/* PASSWORD */}
-                <Text style={styles.labelText}>PASSWORD</Text>
+                <Text style={styles.labelText}>{t('auth', 'password')}</Text>
                 <TextInput
                     style={styles.input}
                     placeholder="********"
@@ -118,7 +117,7 @@ export default function SignUpScreen() {
                             color={agreed ? colors.primary : colors.textMuted}
                         />
                         <Text style={[styles.smallText, { color: colors.textSecondary }]}>
-                            I agree to the Terms & Privacy Policy
+                            {t('auth', 'agreeTerms')}
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -131,14 +130,14 @@ export default function SignUpScreen() {
                 >
                     {loading
                         ? <ActivityIndicator color={colors.iconColorInverse} />
-                        : <Text style={styles.primaryButtonText}>Sign Up</Text>
+                        : <Text style={styles.primaryButtonText}>{t('auth', 'signUp')}</Text>
                     }
                 </TouchableOpacity>
 
 
                 <View style={styles.dividerContainer}>
                     <View style={styles.dividerLine} />
-                    <Text style={styles.dividerText}>OR WITH GOOGLE</Text>
+                    <Text style={styles.dividerText}>{t('auth', 'orWithGoogle')}</Text>
                     <View style={styles.dividerLine} />
                 </View>
 
@@ -150,7 +149,7 @@ export default function SignUpScreen() {
                             style={styles.socialIcon}
                         />
                         <Text style={[styles.mediumText, { color: colors.googleButtonText }]}>
-                            Sign up with Google
+                            {t('auth', 'signUpGoogle')}
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -158,10 +157,10 @@ export default function SignUpScreen() {
 
 
             <View style={styles.signUpContainer}>
-                <Text style={styles.mediumText}>Already have an account?</Text>
+                <Text style={styles.mediumText}>{t('auth', 'haveAccount')}</Text>
                 <TouchableOpacity onPress={() => router.push('/log-in')}>
                     <Text style={[styles.mediumText, { color: colors.primary, fontWeight: "600" }]}>
-                        Log In
+                        {t('auth', 'logIn')}
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -177,8 +176,8 @@ export default function SignUpScreen() {
                     </View>
                 </View>
                 <View style={styles.badgeLabels}>
-                    <Text style={styles.badgeText}>Secure & Private</Text>
-                    <Text style={styles.badgeText}>Community Trust</Text>
+                    <Text style={styles.badgeText}>{t('auth', 'secure')}</Text>
+                    <Text style={styles.badgeText}>{t('auth', 'communityTrust')}</Text>
                 </View>
             </View>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import * as Linking from 'expo-linking';
 import {
     View,
@@ -11,8 +11,7 @@ import {
     Dimensions,
     Share,
     Platform,
-    StatusBar,
-    ActivityIndicator,
+    StatusBar
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,42 +20,58 @@ import { Calendar } from 'react-native-calendars';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
-import { getListingById, type Listing } from '@/src/api/itemsApi';
+import { useLanguage } from '@/src/context/languageContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const PLACEHOLDER_IMAGE = 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png';
+
+type Listing = {
+    listingId: number;
+    name: string;
+    description: string;
+    category: string;
+    price: number;
+    securityDeposit?: number;
+    location: string;
+    imageUrls: string;
+    userName: string;
+    userAvatar?: string;
+    userRating?: number;
+    isAvailable: boolean;
+};
+
+const MOCK_LISTINGS: Record<number, Listing> = {
+    101: {
+        listingId: 101,
+        name: 'Professional Drill Set',
+        description: 'High-quality cordless drill with 20+ attachments. Perfect for home improvement projects, furniture assembly, and light construction work. Includes carrying case, multiple drill bits, screwdriver heads, and two rechargeable batteries. Barely used, in excellent condition.',
+        category: 'TOOLS',
+        price: 45,
+        securityDeposit: 100,
+        location: 'San Francisco, CA',
+        imageUrls: 'https://images.unsplash.com/photo-1504198458649-3128b932f49e?w=800,https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=800,https://images.unsplash.com/photo-1581147036324-c17ac41f0a15?w=800',
+        userName: 'Mike Johnson',
+        userAvatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+        userRating: 4.8,
+        isAvailable: true,
+    }
+};
 
 export default function ListingDetailScreen() {
     const router = useRouter();
     const { listingId } = useLocalSearchParams<{ listingId: string }>();
+    const { t } = useLanguage();
 
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const isDark = scheme === 'dark';
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
-    const [listing, setListing] = useState<Listing | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [loadError, setLoadError] = useState('');
-
-    useEffect(() => {
-        if (!listingId) return;
-        (async () => {
-            setLoading(true);
-            const result = await getListingById(Number(listingId));
-            if (result.success) {
-                setListing(result.data);
-            } else {
-                setLoadError(result.message);
-            }
-            setLoading(false);
-        })();
-    }, [listingId]);
+    const listing = MOCK_LISTINGS[Number(listingId)] || MOCK_LISTINGS[101];
 
     const images = useMemo(() => {
-        if (!listing?.imageUrls || listing.imageUrls.length === 0) return [PLACEHOLDER_IMAGE];
-        return listing.imageUrls;
-    }, [listing]);
+        if (!listing.imageUrls) return [];
+        return listing.imageUrls.split(',').map(url => url.trim()).filter(Boolean);
+    }, [listing.imageUrls]);
 
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [isFavorite, setIsFavorite] = useState(false);
@@ -74,12 +89,12 @@ export default function ListingDetailScreen() {
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     }, [startDate, endDate]);
 
-    const subtotal = (listing?.price ?? 0) * numberOfDays;
-    const deposit = listing?.securityDeposit ?? 0;
+    const subtotal = listing.price * numberOfDays;
+    const deposit = listing.securityDeposit || 0;
     const total = subtotal + deposit;
 
     const formatDate = (dateStr: string | null) => {
-        if (!dateStr) return 'Select date';
+        if (!dateStr) return t('listing', 'selectDate');
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-US', {
             month: 'short',
@@ -142,7 +157,6 @@ export default function ListingDetailScreen() {
     }, [startDate, endDate, colors]);
 
     const handleContactHost = () => {
-        if (!listing) return;
         router.push({
             pathname: '/chat',
             params: {
@@ -150,7 +164,7 @@ export default function ListingDetailScreen() {
                     id: listing.listingId,
                     name: listing.userName,
                     itemName: listing.name,
-                    avatar: '',
+                    avatar: listing.userAvatar || '',
                     isOnline: false,
                 }),
             },
@@ -158,20 +172,20 @@ export default function ListingDetailScreen() {
     };
 
     const handleBook = () => {
-        if (!listing) return;
         if (!startDate || !endDate) {
-            Alert.alert('Select Dates', 'Please select your rental dates first.');
+            Alert.alert(t('listing', 'selectDates'), t('listing', 'selectDatesFirst'));
             return;
         }
+        const dayWord = numberOfDays === 1 ? t('listing', 'day') : t('listing', 'days');
         Alert.alert(
-            'Confirm Booking',
-            `Book ${listing.name} for ${numberOfDays} day${numberOfDays > 1 ? 's' : ''}?\n\nTotal: $${total}`,
+            t('listing', 'confirmBooking'),
+            `Book ${listing.name} for ${numberOfDays} ${dayWord}?\n\n${t('listing', 'total')}: $${total}`,
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common', 'cancel'), style: 'cancel' },
                 {
-                    text: 'Confirm',
+                    text: t('common', 'confirm'),
                     onPress: () => {
-                        Alert.alert('🎉 Booking Confirmed!', 'The host will contact you shortly.');
+                        Alert.alert('🎉 ' + t('listing', 'bookingConfirmed'), t('listing', 'hostContact'));
                         router.back();
                     },
                 },
@@ -180,7 +194,6 @@ export default function ListingDetailScreen() {
     };
 
     const handleShare = async () => {
-        if (!listing) return;
         try {
             const appUrl = Linking.createURL('/item', {
                 queryParams: { listingId: listing.listingId.toString() },
@@ -189,46 +202,20 @@ export default function ListingDetailScreen() {
                 await Share.share({
                     title: listing.name,
                     url: appUrl,
-                    message: `${listing.name}\n\n💰 $${listing.price}/day\n📍 ${listing.location}`,
+                    message: `${listing.name}\n\n💰 $${listing.price}${t('listing', 'perDay')}\n📍 ${listing.location}`,
                 });
             } else {
                 await Share.share({
                     title: listing.name,
-                    message: `📦 ${listing.name}\n\n💰 $${listing.price}/day\n📍 ${listing.location}\n\n👉 ${appUrl}`,
+                    message: `📦 ${listing.name}\n\n💰 $${listing.price}${t('listing', 'perDay')}\n📍 ${listing.location}\n\n👉 ${appUrl}`,
                 });
             }
         } catch (error: any) {
-            Alert.alert('Share Error', error.message || 'Could not share this listing.');
+            Alert.alert(t('common', 'error'), error.message || 'Could not share this listing.');
         }
     };
 
     const today = new Date().toISOString().split('T')[0];
-
-    if (loading) {
-        return (
-            <SafeAreaView style={styles.container} edges={['top']}>
-                <View style={styles.centered}>
-                    <ActivityIndicator size="large" color={colors.primary} />
-                </View>
-            </SafeAreaView>
-        );
-    }
-
-    if (loadError || !listing) {
-        return (
-            <SafeAreaView style={styles.container} edges={['top']}>
-                <View style={styles.centered}>
-                    <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
-                    <Text style={[styles.description, { marginTop: 12, textAlign: 'center' }]}>
-                        {loadError || 'Listing not found.'}
-                    </Text>
-                    <TouchableOpacity style={{ marginTop: 16 }} onPress={() => router.back()}>
-                        <Text style={{ color: colors.primary, fontWeight: '600' }}>Go Back</Text>
-                    </TouchableOpacity>
-                </View>
-            </SafeAreaView>
-        );
-    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -299,7 +286,7 @@ export default function ListingDetailScreen() {
 
                     {!listing.isAvailable && (
                         <View style={styles.unavailableBadge}>
-                            <Text style={styles.unavailableText}>Currently Unavailable</Text>
+                            <Text style={styles.unavailableText}>{t('listing', 'currentlyUnavailable')}</Text>
                         </View>
                     )}
                 </View>
@@ -308,8 +295,14 @@ export default function ListingDetailScreen() {
                 <View style={styles.contentContainer}>
                     <View style={styles.topInfoRow}>
                         <View style={styles.categoryBadge}>
-                            <Text style={styles.categoryText}>{listing.category?.toUpperCase()}</Text>
+                            <Text style={styles.categoryText}>{listing.category}</Text>
                         </View>
+                        {listing.userRating && (
+                            <View style={styles.ratingRow}>
+                                <Ionicons name="star" size={16} color={colors.rating} />
+                                <Text style={styles.ratingText}>{listing.userRating}</Text>
+                            </View>
+                        )}
                     </View>
 
                     <Text style={styles.title}>{listing.name}</Text>
@@ -321,29 +314,29 @@ export default function ListingDetailScreen() {
 
                     <View style={styles.priceRow}>
                         <Text style={styles.price}>${listing.price}</Text>
-                        <Text style={styles.perDay}>/day</Text>
+                        <Text style={styles.perDay}>{t('listing', 'perDay')}</Text>
                     </View>
 
                     <View style={styles.divider} />
 
-                    <Text style={styles.sectionTitle}>Description</Text>
-                    <Text style={styles.description}>{listing.description || 'No description provided.'}</Text>
+                    <Text style={styles.sectionTitle}>{t('listing', 'description')}</Text>
+                    <Text style={styles.description}>{listing.description}</Text>
 
                     <View style={styles.divider} />
 
                     {/* Hosted By */}
-                    <Text style={styles.sectionTitle}>Hosted by</Text>
+                    <Text style={styles.sectionTitle}>{t('listing', 'hostedBy')}</Text>
                     <View style={styles.hostCard}>
                         <View style={styles.hostInfo}>
                             <Image
-                                source={{ uri: 'https://i.pravatar.cc/150?u=' + listing.userId }}
+                                source={{ uri: listing.userAvatar || 'https://i.pravatar.cc/150' }}
                                 style={styles.hostAvatar}
                             />
                             <View style={styles.hostTextContainer}>
                                 <Text style={styles.hostName}>{listing.userName}</Text>
                                 <View style={styles.hostBadges}>
                                     <Ionicons name="shield-checkmark" size={14} color={colors.success} />
-                                    <Text style={styles.hostVerified}>Verified Host</Text>
+                                    <Text style={styles.hostVerified}>{t('listing', 'verifiedHost')}</Text>
                                 </View>
                             </View>
                         </View>
@@ -352,14 +345,14 @@ export default function ListingDetailScreen() {
                             onPress={handleContactHost}
                         >
                             <Ionicons name="chatbubble-outline" size={16} color={colors.primary} />
-                            <Text style={styles.contactButtonText}>Contact</Text>
+                            <Text style={styles.contactButtonText}>{t('listing', 'contact')}</Text>
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.divider} />
 
                     {/* Booking Section */}
-                    <Text style={styles.sectionTitle}>Select Dates</Text>
+                    <Text style={styles.sectionTitle}>{t('listing', 'selectDates')}</Text>
 
                     <TouchableOpacity
                         style={styles.datePickerButton}
@@ -367,20 +360,24 @@ export default function ListingDetailScreen() {
                         disabled={!listing.isAvailable}
                     >
                         <View style={styles.dateColumn}>
-                            <Text style={styles.dateLabel}>CHECK-IN</Text>
-                            <Text style={styles.dateValue}>{formatDate(startDate)}</Text>
+                            <Text style={styles.dateLabel}>{t('listing', 'checkIn')}</Text>
+                            <Text style={styles.dateValue}>
+                                {formatDate(startDate)}
+                            </Text>
                         </View>
                         <View style={styles.dateDivider} />
                         <View style={styles.dateColumn}>
-                            <Text style={styles.dateLabel}>CHECK-OUT</Text>
-                            <Text style={styles.dateValue}>{formatDate(endDate)}</Text>
+                            <Text style={styles.dateLabel}>{t('listing', 'checkOut')}</Text>
+                            <Text style={styles.dateValue}>
+                                {formatDate(endDate)}
+                            </Text>
                         </View>
                         <Ionicons name="calendar-outline" size={22} color={colors.primary} style={{ marginLeft: 6 }} />
                     </TouchableOpacity>
 
                     {(startDate || endDate) && (
                         <TouchableOpacity style={styles.resetButton} onPress={resetDates}>
-                            <Text style={styles.resetButtonText}>Reset dates</Text>
+                            <Text style={styles.resetButtonText}>{t('listing', 'resetDates')}</Text>
                         </TouchableOpacity>
                     )}
 
@@ -389,18 +386,18 @@ export default function ListingDetailScreen() {
                         <View style={styles.priceBreakdown}>
                             <View style={styles.breakdownRow}>
                                 <Text style={styles.breakdownLabel}>
-                                    ${listing.price} × {numberOfDays} day{numberOfDays > 1 ? 's' : ''}
+                                    ${listing.price} × {numberOfDays} {numberOfDays === 1 ? t('listing', 'day') : t('listing', 'days')}
                                 </Text>
                                 <Text style={styles.breakdownValue}>${subtotal}</Text>
                             </View>
                             {deposit > 0 && (
                                 <View style={styles.breakdownRow}>
-                                    <Text style={styles.breakdownLabel}>Security deposit</Text>
+                                    <Text style={styles.breakdownLabel}>{t('listing', 'securityDeposit')}</Text>
                                     <Text style={styles.breakdownValue}>${deposit}</Text>
                                 </View>
                             )}
                             <View style={[styles.breakdownRow, styles.breakdownTotal]}>
-                                <Text style={styles.breakdownTotalLabel}>Total</Text>
+                                <Text style={styles.breakdownTotalLabel}>{t('listing', 'total')}</Text>
                                 <Text style={styles.breakdownTotalValue}>${total}</Text>
                             </View>
                         </View>
@@ -414,7 +411,7 @@ export default function ListingDetailScreen() {
             <View style={styles.bottomBar}>
                 <View style={styles.bottomPriceInfo}>
                     <Text style={styles.bottomPrice}>${listing.price}</Text>
-                    <Text style={styles.bottomPerDay}>/day</Text>
+                    <Text style={styles.bottomPerDay}>{t('listing', 'perDay')}</Text>
                 </View>
                 <TouchableOpacity
                     style={[
@@ -426,7 +423,7 @@ export default function ListingDetailScreen() {
                 >
                     <Ionicons name="checkmark-circle-outline" size={18} color={colors.iconColorInverse} />
                     <Text style={styles.bookButtonText}>
-                        {listing.isAvailable ? 'Book Now' : 'Unavailable'}
+                        {listing.isAvailable ? t('listing', 'bookNow') : t('listing', 'unavailable')}
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -442,7 +439,7 @@ export default function ListingDetailScreen() {
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>
-                                {selectingStart ? 'Select Check-in' : 'Select Check-out'}
+                                {selectingStart ? t('listing', 'checkIn') : t('listing', 'checkOut')}
                             </Text>
                             <TouchableOpacity onPress={() => setCalendarVisible(false)}>
                                 <Ionicons name="close" size={26} color={colors.text} />
@@ -478,7 +475,7 @@ export default function ListingDetailScreen() {
 
                         <View style={styles.modalFooter}>
                             <TouchableOpacity style={styles.modalResetButton} onPress={resetDates}>
-                                <Text style={styles.modalResetText}>Reset</Text>
+                                <Text style={styles.modalResetText}>{t('common', 'reset')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[
@@ -490,8 +487,8 @@ export default function ListingDetailScreen() {
                             >
                                 <Text style={styles.modalDoneText}>
                                     {startDate && endDate
-                                        ? `Done (${numberOfDays} ${numberOfDays === 1 ? 'day' : 'days'})`
-                                        : 'Done'}
+                                        ? `${t('common', 'done')} (${numberOfDays} ${numberOfDays === 1 ? t('listing', 'day') : t('listing', 'days')})`
+                                        : t('common', 'done')}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -506,12 +503,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
-    },
-    centered: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 24,
     },
     scrollContent: {
         paddingBottom: 20,
@@ -605,6 +596,16 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontSize: 11,
         fontWeight: '700',
         letterSpacing: 0.5,
+    },
+    ratingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    ratingText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: colors.text,
     },
     title: {
         fontSize: 26,

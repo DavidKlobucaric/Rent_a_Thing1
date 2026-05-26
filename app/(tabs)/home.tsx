@@ -10,8 +10,8 @@ import { searchListings, getRecommendedListings } from '@/src/api/itemsApi';
 import { useAuth } from '@/src/context/authContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
-import {router} from "expo-router";
-
+import { router } from "expo-router";
+import { useLanguage } from '@/src/context/languageContext';
 
 type Category = {
     id: string;
@@ -45,20 +45,21 @@ type Listing = {
 
 export default function HomeScreen() {
     const { token } = useAuth();
+    const { t } = useLanguage(); // ✅ Ispravljeno - unutar komponente
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
-    const [searchText, setSearchText]         = useState('');
+    const [searchText, setSearchText] = useState('');
     const [activeCategory, setActiveCategory] = useState('tools');
-    const [favorites, setFavorites]           = useState<number[]>([]);
+    const [favorites, setFavorites] = useState<number[]>([]);
 
-    const [searchResults, setSearchResults]   = useState<Listing[]>([]);
-    const [searchLoading, setSearchLoading]   = useState(false);
-    const [searchError, setSearchError]       = useState('');
+    const [searchResults, setSearchResults] = useState<Listing[]>([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState('');
 
-    const [recommended, setRecommended]       = useState<Listing[]>([]);
-    const [recLoading, setRecLoading]         = useState(true);
+    const [recommended, setRecommended] = useState<Listing[]>([]);
+    const [recLoading, setRecLoading] = useState(true);
 
     useEffect(() => {
         (async () => {
@@ -113,7 +114,7 @@ export default function HomeScreen() {
                     <Fontisto name="search" style={[styles.searchIcon, { color: colors.primarySecondary }]} />
                     <TextInput
                         style={styles.searchInput}
-                        placeholder="Search..."
+                        placeholder={t('home', 'search')}
                         placeholderTextColor={colors.placeholder}
                         value={searchText}
                         onChangeText={setSearchText}
@@ -164,8 +165,8 @@ export default function HomeScreen() {
                     ) : searchResults.length === 0 ? (
                         <Text style={styles.emptyText}>
                             {searchText
-                                ? `No results for: "${searchText}"`
-                                : `No items in category: "${activeCategory}"`}
+                                ? `${t('home', 'noResults')} "${searchText}"`
+                                : `${t('home', 'noItemsCategory')} "${activeCategory}"`}
                         </Text>
                     ) : (
                         <FlatList
@@ -191,7 +192,7 @@ export default function HomeScreen() {
                                     <Text style={styles.locationText} numberOfLines={1}>📍 {item.location}</Text>
                                     <View style={{ flexDirection: 'row' }}>
                                         <Text style={styles.price}>${item.price}</Text>
-                                        <Text style={styles.perDay}>/day</Text>
+                                        <Text style={styles.perDay}>{t('home', 'perDay')}</Text>
                                     </View>
                                 </TouchableOpacity>
                             )}
@@ -200,13 +201,13 @@ export default function HomeScreen() {
                 </View>
 
                 {/* RECOMMENDED */}
-                <Text style={styles.sectionTitle}>Recommended for You</Text>
+                <Text style={styles.sectionTitle}>{t('home', 'recommended')}</Text>
 
                 {recLoading ? (
                     <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />
                 ) : recommended.length === 0 ? (
                     <Text style={[styles.emptyText, { marginHorizontal: 20 }]}>
-                        No recommendations for now.
+                        {t('home', 'noRecommendations')}
                     </Text>
                 ) : (
                     recommended.map((item) => (
@@ -227,7 +228,7 @@ export default function HomeScreen() {
                                 <Text style={styles.distanceText} numberOfLines={1}>📍 {item.location}</Text>
                                 <View style={{ flexDirection: 'row' }}>
                                     <Text style={styles.price}>${item.price}</Text>
-                                    <Text style={styles.perDay}>/day</Text>
+                                    <Text style={styles.perDay}>{t('home', 'perDay')}</Text>
                                 </View>
                             </View>
                             <View style={styles.actions}>
