@@ -1,4 +1,3 @@
-//mapa za IOS
 // for ios
 import React, { useState, useRef } from 'react';
 import {
@@ -207,6 +206,4 @@ const styles = StyleSheet.create({
     CategoryButtonActive: { backgroundColor: '#097F8C', borderColor: '#097F8C' },
     categoryTextActive: { color: '#fff', fontWeight: '600' },
 });
-
-////
 
