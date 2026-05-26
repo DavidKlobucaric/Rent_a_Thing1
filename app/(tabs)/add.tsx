@@ -125,21 +125,21 @@ export default function AddScreen() {
 
         setPublishing(true);
         try {
-            let imageUrlsCsv = '';
+            let imageUrlsList: string[] = [];
             if (images.length > 0) {
                 const uploadResult = await uploadImages(images);
                 if (!uploadResult.success) {
                     Alert.alert('Upload failed', uploadResult.message);
                     return;
                 }
-                imageUrlsCsv = uploadResult.urls.join(',');
+                imageUrlsList = uploadResult.urls;
             }
 
             const thingPayload = {
                 name: title.trim(),
                 category: selectedCategory.toLowerCase(),
                 description: description.trim(),
-                imageUrls: imageUrlsCsv,
+                imageUrls: imageUrlsList,
             };
             const thingResult = await createThing(thingPayload);
 
@@ -168,7 +168,7 @@ export default function AddScreen() {
             setSelectedCategory('Tools');
 
             Alert.alert(
-                '🎉 Success',
+                'Success',
                 'Your item has been listed!',
                 [{ text: 'OK', onPress: () => router.back() }]
             );

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import * as Linking from 'expo-linking';
 import {
     View,
@@ -11,7 +11,8 @@ import {
     Dimensions,
     Share,
     Platform,
-    StatusBar
+    StatusBar,
+    ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,40 +21,10 @@ import { Calendar } from 'react-native-calendars';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { getListingById, type Listing } from '@/src/api/itemsApi';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-type Listing = {
-    listingId: number;
-    name: string;
-    description: string;
-    category: string;
-    price: number;
-    securityDeposit?: number;
-    location: string;
-    imageUrls: string;
-    userName: string;
-    userAvatar?: string;
-    userRating?: number;
-    isAvailable: boolean;
-};
-
-const MOCK_LISTINGS: Record<number, Listing> = {
-    101: {
-        listingId: 101,
-        name: 'Professional Drill Set',
-        description: 'High-quality cordless drill with 20+ attachments. Perfect for home improvement projects, furniture assembly, and light construction work. Includes carrying case, multiple drill bits, screwdriver heads, and two rechargeable batteries. Barely used, in excellent condition.',
-        category: 'TOOLS',
-        price: 45,
-        securityDeposit: 100,
-        location: 'San Francisco, CA',
-        imageUrls: 'https://images.unsplash.com/photo-1504198458649-3128b932f49e?w=800,https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=800,https://images.unsplash.com/photo-1581147036324-c17ac41f0a15?w=800',
-        userName: 'Mike Johnson',
-        userAvatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-        userRating: 4.8,
-        isAvailable: true,
-    }
-};
+const PLACEHOLDER_IMAGE = 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png';
 
 export default function ListingDetailScreen() {
     const router = useRouter();
@@ -64,12 +35,28 @@ export default function ListingDetailScreen() {
     const isDark = scheme === 'dark';
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
-    const listing = MOCK_LISTINGS[Number(listingId)] || MOCK_LISTINGS[101];
+    const [listing, setListing] = useState<Listing | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
+
+    useEffect(() => {
+        if (!listingId) return;
+        (async () => {
+            setLoading(true);
+            const result = await getListingById(Number(listingId));
+            if (result.success) {
+                setListing(result.data);
+            } else {
+                setLoadError(result.message);
+            }
+            setLoading(false);
+        })();
+    }, [listingId]);
 
     const images = useMemo(() => {
-        if (!listing.imageUrls) return [];
-        return listing.imageUrls.split(',').map(url => url.trim()).filter(Boolean);
-    }, [listing.imageUrls]);
+        if (!listing?.imageUrls || listing.imageUrls.length === 0) return [PLACEHOLDER_IMAGE];
+        return listing.imageUrls;
+    }, [listing]);
 
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [isFavorite, setIsFavorite] = useState(false);
@@ -87,8 +74,8 @@ export default function ListingDetailScreen() {
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     }, [startDate, endDate]);
 
-    const subtotal = listing.price * numberOfDays;
-    const deposit = listing.securityDeposit || 0;
+    const subtotal = (listing?.price ?? 0) * numberOfDays;
+    const deposit = listing?.securityDeposit ?? 0;
     const total = subtotal + deposit;
 
     const formatDate = (dateStr: string | null) => {
@@ -155,6 +142,7 @@ export default function ListingDetailScreen() {
     }, [startDate, endDate, colors]);
 
     const handleContactHost = () => {
+        if (!listing) return;
         router.push({
             pathname: '/chat',
             params: {
@@ -162,7 +150,7 @@ export default function ListingDetailScreen() {
                     id: listing.listingId,
                     name: listing.userName,
                     itemName: listing.name,
-                    avatar: listing.userAvatar || '',
+                    avatar: '',
                     isOnline: false,
                 }),
             },
@@ -170,6 +158,7 @@ export default function ListingDetailScreen() {
     };
 
     const handleBook = () => {
+        if (!listing) return;
         if (!startDate || !endDate) {
             Alert.alert('Select Dates', 'Please select your rental dates first.');
             return;
@@ -191,6 +180,7 @@ export default function ListingDetailScreen() {
     };
 
     const handleShare = async () => {
+        if (!listing) return;
         try {
             const appUrl = Linking.createURL('/item', {
                 queryParams: { listingId: listing.listingId.toString() },
@@ -213,6 +203,32 @@ export default function ListingDetailScreen() {
     };
 
     const today = new Date().toISOString().split('T')[0];
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <View style={styles.centered}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    if (loadError || !listing) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <View style={styles.centered}>
+                    <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
+                    <Text style={[styles.description, { marginTop: 12, textAlign: 'center' }]}>
+                        {loadError || 'Listing not found.'}
+                    </Text>
+                    <TouchableOpacity style={{ marginTop: 16 }} onPress={() => router.back()}>
+                        <Text style={{ color: colors.primary, fontWeight: '600' }}>Go Back</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -248,7 +264,6 @@ export default function ListingDetailScreen() {
                             />
                         ))}
                     </ScrollView>
-
 
                     <View style={styles.headerOverlay}>
                         <TouchableOpacity
@@ -293,14 +308,8 @@ export default function ListingDetailScreen() {
                 <View style={styles.contentContainer}>
                     <View style={styles.topInfoRow}>
                         <View style={styles.categoryBadge}>
-                            <Text style={styles.categoryText}>{listing.category}</Text>
+                            <Text style={styles.categoryText}>{listing.category?.toUpperCase()}</Text>
                         </View>
-                        {listing.userRating && (
-                            <View style={styles.ratingRow}>
-                                <Ionicons name="star" size={16} color={colors.rating} />
-                                <Text style={styles.ratingText}>{listing.userRating}</Text>
-                            </View>
-                        )}
                     </View>
 
                     <Text style={styles.title}>{listing.name}</Text>
@@ -318,7 +327,7 @@ export default function ListingDetailScreen() {
                     <View style={styles.divider} />
 
                     <Text style={styles.sectionTitle}>Description</Text>
-                    <Text style={styles.description}>{listing.description}</Text>
+                    <Text style={styles.description}>{listing.description || 'No description provided.'}</Text>
 
                     <View style={styles.divider} />
 
@@ -327,7 +336,7 @@ export default function ListingDetailScreen() {
                     <View style={styles.hostCard}>
                         <View style={styles.hostInfo}>
                             <Image
-                                source={{ uri: listing.userAvatar || 'https://i.pravatar.cc/150' }}
+                                source={{ uri: 'https://i.pravatar.cc/150?u=' + listing.userId }}
                                 style={styles.hostAvatar}
                             />
                             <View style={styles.hostTextContainer}>
@@ -359,16 +368,12 @@ export default function ListingDetailScreen() {
                     >
                         <View style={styles.dateColumn}>
                             <Text style={styles.dateLabel}>CHECK-IN</Text>
-                            <Text style={styles.dateValue}>
-                                {formatDate(startDate)}
-                            </Text>
+                            <Text style={styles.dateValue}>{formatDate(startDate)}</Text>
                         </View>
                         <View style={styles.dateDivider} />
                         <View style={styles.dateColumn}>
                             <Text style={styles.dateLabel}>CHECK-OUT</Text>
-                            <Text style={styles.dateValue}>
-                                {formatDate(endDate)}
-                            </Text>
+                            <Text style={styles.dateValue}>{formatDate(endDate)}</Text>
                         </View>
                         <Ionicons name="calendar-outline" size={22} color={colors.primary} style={{ marginLeft: 6 }} />
                     </TouchableOpacity>
@@ -405,7 +410,7 @@ export default function ListingDetailScreen() {
                 </View>
             </ScrollView>
 
-            {/* Usklađen i prostraniji Sticky Bottom Bar */}
+            {/* Sticky Bottom Bar */}
             <View style={styles.bottomBar}>
                 <View style={styles.bottomPriceInfo}>
                     <Text style={styles.bottomPrice}>${listing.price}</Text>
@@ -502,6 +507,12 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         flex: 1,
         backgroundColor: colors.background,
     },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+    },
     scrollContent: {
         paddingBottom: 20,
     },
@@ -594,16 +605,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontSize: 11,
         fontWeight: '700',
         letterSpacing: 0.5,
-    },
-    ratingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
-    ratingText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: colors.text,
     },
     title: {
         fontSize: 26,

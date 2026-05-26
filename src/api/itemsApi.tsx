@@ -46,8 +46,11 @@ type Listing = {
     name: string;
     category: string;
     description: string;
-    imageUrls: string;
+    imageUrls: string[];   // backend now returns a List<String>
+    securityDeposit?: number;
     userName: string;
+    userId?: number;
+    thingId?: number;
 };
 
 type CreateListingParams = {
@@ -61,7 +64,7 @@ type CreateThingParams = {
     name: string;
     category: string;
     description: string;
-    imageUrls: string;
+    imageUrls: string[];   // backend ThingDTO expects List<String>
 };
 
 // --- API CALLS ---
@@ -127,3 +130,13 @@ export const createThing = async (params: CreateThingParams): Promise<ApiResult<
         return { success: false, message: error.response?.data?.message || "Failed to create item." };
     }
 };
+export const getListingById = async (listingId: number): Promise<ApiResult<Listing>> => {
+    try {
+        const response = await api.get<Listing>(`/listings/${listingId}`);
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return { success: false, message: error.response?.data?.message || "Could not load listing." };
+    }
+};
+
+export type { Listing };

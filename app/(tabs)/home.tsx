@@ -39,7 +39,7 @@ type Listing = {
     name: string;
     category: string;
     description: string;
-    imageUrls: string;
+    imageUrls: string[];
     userName: string;
 };
 
@@ -99,10 +99,9 @@ export default function HomeScreen() {
         setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
     };
 
-    const getFirstImage = (imageUrls: string) => {
-        if (!imageUrls) return PLACEHOLDER_IMAGE;
-        const first = imageUrls.split(',')[0].trim();
-        return first || PLACEHOLDER_IMAGE;
+    const getFirstImage = (imageUrls: string[]) => {
+        if (!imageUrls || imageUrls.length === 0) return PLACEHOLDER_IMAGE;
+        return imageUrls[0] || PLACEHOLDER_IMAGE;
     };
 
     return (
