@@ -1,0 +1,32 @@
+name: React Native Frontend CI
+
+# Pipeline se pokreće na svaki push ili pull request na main ili master granu
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Korak: Preuzmi kod s repozitorija na GitHubov server
+      - name: Checkout koda
+        uses: actions/checkout@v4
+
+      # 2. Korak: Instaliraj Node.js okruženje (verzija 18 je stabilna za Expo)
+      - name: Postavljanje Node.js okruzenja
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      # 3. Korak: Instalacija svih paketa (clean install)
+      - name: Instalacija paketa (dependencies)
+        run: npm ci
+
+      # 4. Korak: Pokretanje TypeScript provjere koda
+      - name: Provjera TypeScript gresaka
+        run: npx tsc --noEmit
