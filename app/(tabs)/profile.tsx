@@ -36,7 +36,8 @@ type MenuItemProps = {
 };
 
 const MenuItem = ({ iconName, title, subtitle, onPress, colors, showSeparator = true }: MenuItemProps) => {
-    const styles = makeStyles(colors);
+    // Dodan useMemo za performanse kako se stilovi ne bi ponovno kreirali unutar liste
+    const styles = useMemo(() => makeStyles(colors), [colors]);
 
     return (
         <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
@@ -52,7 +53,6 @@ const MenuItem = ({ iconName, title, subtitle, onPress, colors, showSeparator = 
             <View style={styles.menuRightSide}>
                 <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </View>
-
 
             {showSeparator && <View style={styles.menuSeparator} />}
         </TouchableOpacity>
@@ -85,7 +85,6 @@ export default function ProfileScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
-
                 {/* 1. HERO HEADER  */}
                 <View style={styles.heroHeader}>
                     <Image source={{ uri: userData.profileImage }} style={styles.bigProfileImage} />
@@ -94,7 +93,7 @@ export default function ProfileScreen() {
                         <Text style={styles.userName} numberOfLines={2}>{userData.name}</Text>
 
                         <View style={styles.ratingRow}>
-                            <Ionicons name="star" size={16} color={colors.rating} />
+                            <Ionicons name="star" size={16} color={colors.rating || colors.primary} />
                             <Text style={styles.ratingText}>{userData.rating}</Text>
                             <Text style={styles.ratingCount}>({userData.reviews} reviews)</Text>
                         </View>
@@ -164,7 +163,6 @@ export default function ProfileScreen() {
                     <Ionicons name="log-out-outline" size={18} color={colors.danger} />
                     <Text style={styles.logoutText}>Sign Out</Text>
                 </TouchableOpacity>
-
             </ScrollView>
         </SafeAreaView>
     );
@@ -191,9 +189,9 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         width: 146,
         height: 146,
         borderRadius: 73,
-        borderWidth: 1.5,
+        borderWidth: 0.5,
         borderColor: colors.border,
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surface || colors.background,
     },
     heroDetails: {
         flex: 1,
@@ -224,7 +222,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     verifiedBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.success + '15',
+        backgroundColor: (colors.success || '#000') + '15',
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 10,
@@ -240,10 +238,10 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     statsRowContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surface || colors.background,
         paddingVertical: 18,
         borderRadius: 20,
-        borderWidth: 1,
+        borderWidth: 0.5,
         borderColor: colors.border,
         marginBottom: 40,
     },
@@ -265,7 +263,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         marginTop: 2,
     },
     statDivider: {
-        width: 1,
+        width: 0.5,
         height: 24,
         backgroundColor: colors.border,
     },
@@ -282,9 +280,9 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         paddingLeft: 4,
     },
     menuGroup: {
-        backgroundColor: colors.card,
+        backgroundColor: colors.card || colors.background,
         borderRadius: 20,
-        borderWidth: 1,
+        borderWidth: 0.5,
         borderColor: colors.border,
         overflow: 'hidden',
     },
@@ -329,18 +327,18 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         bottom: 0,
         left: 70,
         right: 16,
-        height: 1,
+        height: 0.5,
         backgroundColor: colors.border,
     },
     logoutButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.logoutBg,
-        borderWidth: 1,
-        borderColor: colors.logoutBorder,
+        backgroundColor: colors.logoutBg || colors.background,
+        borderWidth: 0.5,
+        borderColor: colors.logoutBorder || colors.border,
         paddingVertical: 16,
-        borderRadius: 20,
+        borderRadius: 28,
         gap: 8,
         marginTop: 'auto',
     },
