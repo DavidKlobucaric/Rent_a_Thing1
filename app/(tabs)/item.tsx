@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import * as Linking from 'expo-linking';
 import {
     View,
@@ -11,7 +11,8 @@ import {
     Dimensions,
     Share,
     Platform,
-    StatusBar
+    StatusBar,
+    ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,40 +22,12 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
+import { getListingById } from '@/src/api/itemsApi';
+import type { Listing } from '@/src/api/itemsApi';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-type Listing = {
-    listingId: number;
-    name: string;
-    description: string;
-    category: string;
-    price: number;
-    securityDeposit?: number;
-    location: string;
-    imageUrls: string;
-    userName: string;
-    userAvatar?: string;
-    userRating?: number;
-    isAvailable: boolean;
-};
-
-const MOCK_LISTINGS: Record<number, Listing> = {
-    101: {
-        listingId: 101,
-        name: 'Professional Drill Set',
-        description: 'High-quality cordless drill with 20+ attachments. Perfect for home improvement projects, furniture assembly, and light construction work. Includes carrying case, multiple drill bits, screwdriver heads, and two rechargeable batteries. Barely used, in excellent condition.',
-        category: 'TOOLS',
-        price: 45,
-        securityDeposit: 100,
-        location: 'San Francisco, CA',
-        imageUrls: 'https://images.unsplash.com/photo-1504198458649-3128b932f49e?w=800,https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=800,https://images.unsplash.com/photo-1581147036324-c17ac41f0a15?w=800',
-        userName: 'Mike Johnson',
-        userAvatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-        userRating: 4.8,
-        isAvailable: true,
-    }
-};
+const PLACEHOLDER_IMAGE = 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png';
 
 export default function ListingDetailScreen() {
     const router = useRouter();
@@ -66,12 +39,28 @@ export default function ListingDetailScreen() {
     const isDark = scheme === 'dark';
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
-    const listing = MOCK_LISTINGS[Number(listingId)] || MOCK_LISTINGS[101];
+    const [listing, setListing] = useState<Listing | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (!listingId) return;
+        (async () => {
+            setLoading(true);
+            const result = await getListingById(Number(listingId));
+            if (result.success) {
+                setListing(result.data);
+            } else {
+                setError(result.message);
+            }
+            setLoading(false);
+        })();
+    }, [listingId]);
 
     const images = useMemo(() => {
-        if (!listing.imageUrls) return [];
-        return listing.imageUrls.split(',').map(url => url.trim()).filter(Boolean);
-    }, [listing.imageUrls]);
+        if (!listing?.imageUrls || listing.imageUrls.length === 0) return [PLACEHOLDER_IMAGE];
+        return listing.imageUrls;
+    }, [listing?.imageUrls]);
 
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [isFavorite, setIsFavorite] = useState(false);
@@ -89,8 +78,8 @@ export default function ListingDetailScreen() {
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     }, [startDate, endDate]);
 
-    const subtotal = listing.price * numberOfDays;
-    const deposit = listing.securityDeposit || 0;
+    const subtotal = (listing?.price ?? 0) * numberOfDays;
+    const deposit = listing?.securityDeposit || 0;
     const total = subtotal + deposit;
 
     const formatDate = (dateStr: string | null) => {
@@ -157,6 +146,7 @@ export default function ListingDetailScreen() {
     }, [startDate, endDate, colors]);
 
     const handleContactHost = () => {
+        if (!listing) return;
         router.push({
             pathname: '/chat',
             params: {
@@ -164,7 +154,7 @@ export default function ListingDetailScreen() {
                     id: listing.listingId,
                     name: listing.userName,
                     itemName: listing.name,
-                    avatar: listing.userAvatar || '',
+                    avatar: '',
                     isOnline: false,
                 }),
             },
@@ -172,6 +162,7 @@ export default function ListingDetailScreen() {
     };
 
     const handleBook = () => {
+        if (!listing) return;
         if (!startDate || !endDate) {
             Alert.alert(t('listing', 'selectDates'), t('listing', 'selectDatesFirst'));
             return;
@@ -194,6 +185,7 @@ export default function ListingDetailScreen() {
     };
 
     const handleShare = async () => {
+        if (!listing) return;
         try {
             const appUrl = Linking.createURL('/item', {
                 queryParams: { listingId: listing.listingId.toString() },
@@ -216,6 +208,25 @@ export default function ListingDetailScreen() {
     };
 
     const today = new Date().toISOString().split('T')[0];
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <ActivityIndicator color={colors.primary} style={{ flex: 1 }} />
+            </SafeAreaView>
+        );
+    }
+
+    if (error || !listing) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                    <Ionicons name="arrow-back" size={22} color={colors.text} />
+                </TouchableOpacity>
+                <Text style={styles.errorText}>{error || 'Listing not found.'}</Text>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -297,12 +308,6 @@ export default function ListingDetailScreen() {
                         <View style={styles.categoryBadge}>
                             <Text style={styles.categoryText}>{listing.category}</Text>
                         </View>
-                        {listing.userRating && (
-                            <View style={styles.ratingRow}>
-                                <Ionicons name="star" size={16} color={colors.rating} />
-                                <Text style={styles.ratingText}>{listing.userRating}</Text>
-                            </View>
-                        )}
                     </View>
 
                     <Text style={styles.title}>{listing.name}</Text>
@@ -329,7 +334,7 @@ export default function ListingDetailScreen() {
                     <View style={styles.hostCard}>
                         <View style={styles.hostInfo}>
                             <Image
-                                source={{ uri: listing.userAvatar || 'https://i.pravatar.cc/150' }}
+                                source={{ uri: 'https://i.pravatar.cc/150' }}
                                 style={styles.hostAvatar}
                             />
                             <View style={styles.hostTextContainer}>
@@ -507,6 +512,23 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     scrollContent: {
         paddingBottom: 20,
     },
+    backButton: {
+        margin: 16,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: colors.card,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    errorText: {
+        textAlign: 'center',
+        color: colors.textMuted,
+        marginTop: 40,
+        fontSize: 15,
+    },
     imageGallery: {
         width: SCREEN_WIDTH,
         height: SCREEN_WIDTH * 0.85,
@@ -596,16 +618,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontSize: 11,
         fontWeight: '700',
         letterSpacing: 0.5,
-    },
-    ratingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
-    ratingText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: colors.text,
     },
     title: {
         fontSize: 26,

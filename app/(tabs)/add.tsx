@@ -44,7 +44,7 @@ export default function AddScreen() {
     const [modalVisible, setModalVisible] = useState(false);
     const [publishing, setPublishing] = useState(false);
 
-    // ───────── UČITAJ DRAFT na mount ─────────
+    // ───────── Load draft on mount ─────────
     useEffect(() => {
         (async () => {
             try {
@@ -65,7 +65,7 @@ export default function AddScreen() {
         })();
     }, []);
 
-    // ───────── SPREMI DRAFT s debounce-om (800ms) ─────────
+    // ───────── Save draft with debounce (800ms) ─────────
     useEffect(() => {
         const save = async () => {
             const hasData = title || description || dailyRate || location || images.length > 0;
@@ -127,21 +127,25 @@ export default function AddScreen() {
 
         setPublishing(true);
         try {
-            let imageUrlsCsv = '';
+            // Step 1: upload images → get back an array of CDN URLs
+            let imageUrls: string[] = [];
             if (images.length > 0) {
                 const uploadResult = await uploadImages(images);
                 if (!uploadResult.success) {
                     Alert.alert(t('common', 'error'), uploadResult.message);
                     return;
                 }
-                imageUrlsCsv = uploadResult.urls.join(',');
+                // FIX: uploadImages already returns string[]; pass it directly.
+                // The old code did `.join(',')` which turned the array into a CSV
+                // string — but CreateThingParams.imageUrls expects string[].
+                imageUrls = uploadResult.urls;
             }
 
             const thingPayload = {
                 name: title.trim(),
                 category: selectedCategory.toLowerCase(),
                 description: description.trim(),
-                imageUrls: imageUrlsCsv,
+                imageUrls, // FIX: string[] — not a CSV string
             };
             const thingResult = await createThing(thingPayload);
 
@@ -150,10 +154,12 @@ export default function AddScreen() {
                 return;
             }
 
+            const thingId: number = thingResult.data?.thingId ?? thingResult.data?.id;
+
             const listingPayload = {
-                thingId: thingResult.data.thingId,
+                thingId,
                 price: Number(dailyRate),
-                securityDeposit: securityDeposit ? Number(securityDeposit) : 0,
+                securityDeposit: Number(securityDeposit) || 0,
                 location: location.trim(),
             };
             const listingResult = await createListing(listingPayload);
@@ -163,19 +169,14 @@ export default function AddScreen() {
                 return;
             }
 
-            // ✅ Uspjeh - obriši draft i resetiraj formu
+            // Clear draft on success
             await AsyncStorage.removeItem(DRAFT_KEY);
-            setTitle(''); setDescription(''); setDailyRate('');
-            setSecurityDeposit(''); setLocation(''); setImages([]);
-            setSelectedCategory('Tools');
 
-            Alert.alert(
-                '🎉 ' + t('common', 'success'),
-                t('add', 'publishSuccess'),
-                [{ text: t('common', 'ok'), onPress: () => router.back() }]
-            );
+            Alert.alert('🎉', t('add', 'publishSuccess') || 'Your listing is live!', [
+                { text: t('common', 'ok') || 'OK', onPress: () => router.replace('/home') },
+            ]);
         } catch (e: any) {
-            Alert.alert(t('common', 'error'), 'Something went wrong: ' + e?.message);
+            Alert.alert(t('common', 'error'), e.message || 'Something went wrong.');
         } finally {
             setPublishing(false);
         }

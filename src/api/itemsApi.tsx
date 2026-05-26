@@ -46,7 +46,7 @@ type Listing = {
     name: string;
     category: string;
     description: string;
-    imageUrls: string[];   // backend now returns a List<String>
+    imageUrls: string[];
     securityDeposit?: number;
     userName: string;
     userId?: number;
@@ -64,7 +64,7 @@ type CreateThingParams = {
     name: string;
     category: string;
     description: string;
-    imageUrls: string[];   // backend ThingDTO expects List<String>
+    imageUrls: string[];
 };
 
 // --- API CALLS ---
