@@ -45,7 +45,7 @@ type Listing = {
 
 export default function HomeScreen() {
     const { token } = useAuth();
-    const { t } = useLanguage(); // ✅ Ispravljeno - unutar komponente
+    const { t } = useLanguage();
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);

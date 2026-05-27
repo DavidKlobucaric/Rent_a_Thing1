@@ -155,7 +155,7 @@ export default function SupportScreen() {
                             <View style={styles.contactIconBox}>
                                 <Ionicons
                                     name={option.icon}
-                                    size={22}
+                                    size={20}
                                     color={colors.primary}
                                 />
                             </View>
@@ -167,7 +167,7 @@ export default function SupportScreen() {
                             </View>
                             <Ionicons
                                 name="chevron-forward"
-                                size={20}
+                                size={18}
                                 color={colors.textMuted}
                             />
                         </TouchableOpacity>
@@ -209,6 +209,7 @@ const makeStyles = (colors: typeof Colors.light) =>
 
         scrollContent: {
             paddingBottom: 40,
+
         },
 
         header: {

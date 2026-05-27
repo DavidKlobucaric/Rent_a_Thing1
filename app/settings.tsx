@@ -1,17 +1,14 @@
-
 import React, { useState, useMemo } from 'react';
 import {
-    StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Alert,
+    StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Alert, Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
-
-import { Modal } from 'react-native';
 import { useLanguage, SUPPORTED_LANGUAGES } from '@/src/context/languageContext';
 import { LANGUAGE_NAMES, LANGUAGE_FLAGS } from '@/src/i18n/translations';
-
+import { useRouter } from "expo-router";
 
 type SettingItemProps = {
     iconName: string;
@@ -23,9 +20,10 @@ type SettingItemProps = {
     type: 'toggle' | 'link' | 'button';
     isDestructive?: boolean;
     colors: typeof Colors.light;
+    isLast?: boolean;
 };
 
-
+// ───────── COMPONENT: SETTING ITEM ─────────
 const SettingItem = ({
                          iconName,
                          title,
@@ -36,8 +34,8 @@ const SettingItem = ({
                          type,
                          isDestructive = false,
                          colors,
+                         isLast = false,
                      }: SettingItemProps) => {
-
     const styles = makeStyles(colors);
 
     const handlePress = () => {
@@ -48,23 +46,17 @@ const SettingItem = ({
         }
     };
 
-
-
     return (
-
-
         <TouchableOpacity
             style={[
                 styles.settingItem,
                 isDestructive && styles.destructiveItem,
+                isLast && { borderBottomWidth: 0 }
             ]}
             onPress={handlePress}
-            activeOpacity={type === 'toggle' ? 1 : 0.7}
-            disabled={type === 'toggle'}
-
+            activeOpacity={0.7} // Svi elementi sada blicaju jednako na dodir za konzistentan osjećaj
         >
             <View style={styles.settingLeft}>
-
                 <View style={[
                     styles.iconBox,
                     isDestructive && styles.destructiveIconBox,
@@ -72,7 +64,7 @@ const SettingItem = ({
                     <Ionicons
                         name={iconName as any}
                         size={20}
-                        color={isDestructive ? colors.danger : colors.iconColor}
+                        color={isDestructive ? colors.danger : colors.primary}
                     />
                 </View>
 
@@ -81,20 +73,19 @@ const SettingItem = ({
                         styles.settingTitle,
                         { color: colors.text },
                         isDestructive && { color: colors.danger }
-                    ]}>
+                    ]} numberOfLines={1}>
                         {title}
                     </Text>
-                    <Text style={styles.settingDescription}>
+                    <Text style={styles.settingDescription} numberOfLines={2}>
                         {description}
                     </Text>
                 </View>
             </View>
 
-
             {type === 'toggle' ? (
                 <Switch
                     value={typeof value === 'boolean' ? value : false}
-                    onValueChange={onToggle}
+                    onValueChange={onToggle} // Omogućuje i direktan klik na sam Switch s animacijom
                     trackColor={{ false: colors.border, true: colors.primary }}
                     thumbColor={value ? colors.iconColorInverse : colors.textMuted}
                     style={styles.switch}
@@ -102,7 +93,7 @@ const SettingItem = ({
             ) : (
                 <Ionicons
                     name="chevron-forward"
-                    size={16} // Malo suptilnija strelica
+                    size={18}
                     color={colors.textSecondary}
                 />
             )}
@@ -110,11 +101,12 @@ const SettingItem = ({
     );
 };
 
-// ───────── MAIN COMPONENT ─────────
+// ───────── MAIN SCREEN COMPONENT ─────────
 export default function SettingsScreen() {
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
+    const router = useRouter();
 
     const { language, setLanguage, t } = useLanguage();
     const [langModalVisible, setLangModalVisible] = useState(false);
@@ -122,9 +114,7 @@ export default function SettingsScreen() {
     // ───────── STATE ─────────
     const [notifications, setNotifications] = useState({
         pushEnabled: true,
-        emailEnabled: true,
         newMessages: true,
-        bookingRequests: true,
         reminders: true,
         promotions: false,
     });
@@ -132,7 +122,6 @@ export default function SettingsScreen() {
     const [privacy, setPrivacy] = useState({
         profileVisibility: 'Public',
         showPhoneNumber: false,
-        showEmail: false,
         locationSharing: true,
     });
 
@@ -169,10 +158,7 @@ export default function SettingsScreen() {
         );
     };
 
-
     return (
-
-
         <SafeAreaView style={styles.container} edges={['left', 'right']}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
@@ -180,67 +166,21 @@ export default function SettingsScreen() {
                 <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: 20 }]}>
                     {t('settings', 'notifications')}
                 </Text>
-
                 <View style={styles.settingContainer}>
-                    <SettingItem
-                        colors={colors}
-                        iconName="notifications"
-                        title={t('settings', 'push')}
-                        description={t('settings', 'pushDesc')}
-                        type="toggle"
-                        value={notifications.pushEnabled}
-                        onToggle={() => toggleNotification('pushEnabled')}
-                    />
-                    <SettingItem
-                        colors={colors}
-                        iconName="chatbubbles"
-                        title={t('settings', 'newMessages')}
-                        description={t('settings', 'newMessagesDesc')}
-                        type="toggle"
-                        value={notifications.newMessages}
-                        onToggle={() => toggleNotification('newMessages')}
-                    />
-                    <SettingItem
-                        colors={colors}
-                        iconName="time"
-                        title={t('settings', 'reminders')}
-                        description={t('settings', 'remindersDesc')}
-                        type="toggle"
-                        value={notifications.reminders}
-                        onToggle={() => toggleNotification('reminders')}
-                    />
-                    <SettingItem
-                        colors={colors}
-                        iconName="pricetag"
-                        title={t('settings', 'promotions')}
-                        description={t('settings', 'promotionsDesc')}
-                        type="toggle"
-                        value={notifications.promotions}
-                        onToggle={() => toggleNotification('promotions')}
-                    />
+                    <SettingItem colors={colors} iconName="notifications-outline" title={t('settings', 'push')} description={t('settings', 'pushDesc')} type="toggle" value={notifications.pushEnabled} onToggle={() => toggleNotification('pushEnabled')} />
+                    <SettingItem colors={colors} iconName="chatbubbles-outline" title={t('settings', 'newMessages')} description={t('settings', 'newMessagesDesc')} type="toggle" value={notifications.newMessages} onToggle={() => toggleNotification('newMessages')} />
+                    <SettingItem colors={colors} iconName="time-outline" title={t('settings', 'reminders')} description={t('settings', 'remindersDesc')} type="toggle" value={notifications.reminders} onToggle={() => toggleNotification('reminders')} />
+                    <SettingItem colors={colors} iconName="pricetag-outline" title={t('settings', 'promotions')} description={t('settings', 'promotionsDesc')} type="toggle" value={notifications.promotions} onToggle={() => toggleNotification('promotions')} isLast />
                 </View>
 
                 {/* Privacy */}
                 <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
                     {t('settings', 'privacy')}
                 </Text>
-
-
                 <View style={styles.settingContainer}>
-                    <SettingItem colors={colors} iconName="eye"
-                                 title={t('settings', 'profileVisibility')}
-                                 description={`${t('settings', 'currently')}: ${privacy.profileVisibility}`}
-                                 type="link" onPress={() => handleLinkPress('Profile Visibility')} />
-                    <SettingItem colors={colors} iconName="call"
-                                 title={t('settings', 'showPhone')}
-                                 description={t('settings', 'showPhoneDesc')}
-                                 type="toggle" value={privacy.showPhoneNumber}
-                                 onToggle={() => togglePrivacy('showPhoneNumber')} />
-                    <SettingItem colors={colors} iconName="location"
-                                 title={t('settings', 'locationSharing')}
-                                 description={t('settings', 'locationSharingDesc')}
-                                 type="toggle" value={privacy.locationSharing}
-                                 onToggle={() => togglePrivacy('locationSharing')} />
+                    <SettingItem colors={colors} iconName="eye-outline" title={t('settings', 'profileVisibility')} description={`${t('settings', 'currently')}: ${privacy.profileVisibility}`} type="link" onPress={() => handleLinkPress('Profile Visibility')} />
+                    <SettingItem colors={colors} iconName="call-outline" title={t('settings', 'showPhone')} description={t('settings', 'showPhoneDesc')} type="toggle" value={privacy.showPhoneNumber} onToggle={() => togglePrivacy('showPhoneNumber')} />
+                    <SettingItem colors={colors} iconName="location-outline" title={t('settings', 'locationSharing')} description={t('settings', 'locationSharingDesc')} type="toggle" value={privacy.locationSharing} onToggle={() => togglePrivacy('locationSharing')} isLast />
                 </View>
 
                 {/* Account */}
@@ -248,24 +188,10 @@ export default function SettingsScreen() {
                     {t('settings', 'account')}
                 </Text>
                 <View style={styles.settingContainer}>
-                    <SettingItem colors={colors} iconName="mail"
-                                 title={t('settings', 'emailAddress')}
-                                 description={accountInfo.email} type="link" onPress={() => handleLinkPress('Email')} />
-                    <SettingItem colors={colors} iconName="call"
-                                 title={t('settings', 'phoneNumber')}
-                                 description={accountInfo.phone} type="link" onPress={() => handleLinkPress('Phone')} />
-                    <SettingItem colors={colors} iconName="lock-closed"
-                                 title={t('settings', 'changePassword')}
-                                 description={t('settings', 'changePasswordDesc')}
-                                 type="link" onPress={() => handleLinkPress('Password')} />
-                    <SettingItem colors={colors} iconName="card"
-                                 title={t('settings', 'paymentMethods')}
-                                 description={t('settings', 'paymentMethodsDesc')}
-                                 type="link" onPress={() => handleLinkPress('Payment')} />
-                    <SettingItem colors={colors} iconName="language"
-                                 title={t('settings', 'language')}
-                                 description={`${LANGUAGE_FLAGS[language]} ${LANGUAGE_NAMES[language]}`}
-                                 type="link" onPress={() => setLangModalVisible(true)} />
+                    <SettingItem colors={colors} iconName="mail-outline" title={t('settings', 'emailAddress')} description={accountInfo.email} type="link" onPress={() => handleLinkPress('Email')} />
+                    <SettingItem colors={colors} iconName="call-outline" title={t('settings', 'phoneNumber')} description={accountInfo.phone} type="link" onPress={() => handleLinkPress('Phone')} />
+                    <SettingItem colors={colors} iconName="lock-closed-outline" title={t('settings', 'changePassword')} description={t('settings', 'changePasswordDesc')} type="link" onPress={() => handleLinkPress('Password')} />
+                    <SettingItem colors={colors} iconName="card-outline" title={t('settings', 'paymentMethods')} description={t('settings', 'paymentMethodsDesc')} type="link" onPress={() => handleLinkPress('Payment')} isLast />
                 </View>
 
                 {/* Legal */}
@@ -273,14 +199,8 @@ export default function SettingsScreen() {
                     {t('settings', 'legal')}
                 </Text>
                 <View style={styles.settingContainer}>
-                    <SettingItem colors={colors} iconName="document-text"
-                                 title={t('settings', 'terms')}
-                                 description={t('settings', 'termsDesc')}
-                                 type="link" onPress={() => handleLinkPress('Terms')} />
-                    <SettingItem colors={colors} iconName="shield-checkmark"
-                                 title={t('settings', 'privacyPolicy')}
-                                 description={t('settings', 'privacyPolicyDesc')}
-                                 type="link" onPress={() => handleLinkPress('Privacy')} />
+                    <SettingItem colors={colors} iconName="document-text-outline" title={t('settings', 'terms')} description={t('settings', 'termsDesc')} type="link" onPress={() => router.push('/terms')} />
+                    <SettingItem colors={colors} iconName="shield-checkmark-outline" title={t('settings', 'privacyPolicy')} description={t('settings', 'privacyPolicyDesc')} type="link" onPress={() => router.push('/privacy')} isLast />
                 </View>
 
                 {/* Danger Zone */}
@@ -288,52 +208,20 @@ export default function SettingsScreen() {
                     {t('settings', 'dangerZone')}
                 </Text>
                 <View style={[styles.settingContainer, { borderColor: colors.borderLight }]}>
-                    <SettingItem
-                        colors={colors} iconName="trash"
-                        title={t('settings', 'deleteAccount')}
-                        description={t('settings', 'deleteAccountDesc')}
-                        type="button" isDestructive
-                        onPress={handleDeleteAccount}
-                    />
+                    <SettingItem colors={colors} iconName="trash-outline" title={t('settings', 'deleteAccount')} description={t('settings', 'deleteAccountDesc')} type="button" isDestructive onPress={handleDeleteAccount} isLast />
                 </View>
+
                 <Text style={[styles.versionText, { color: colors.textMuted }]}>
                     {t('settings', 'version')} 1.0.0
                 </Text>
 
-
+                {/* Language Modal */}
                 <Modal visible={langModalVisible} transparent animationType="fade">
-                    <TouchableOpacity
-                        style={{
-                            flex: 1,
-                            backgroundColor: 'rgba(0,0,0,0.5)',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                        }}
-                        activeOpacity={1}
-                        onPress={() => setLangModalVisible(false)}
-                    >
-                        <TouchableOpacity
-                            activeOpacity={1}
-                            style={{
-                                width: '85%',
-                                backgroundColor: colors.card,
-                                borderRadius: 20,
-                                overflow: 'hidden',
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 4 },
-                                shadowOpacity: 0.15,
-                                shadowRadius: 12,
-                                elevation: 8,
-                            }}
-                        >
-                            <View style={{
-                                padding: 20,
-                                borderBottomWidth: 1,
-                                borderBottomColor: colors.border,
-                                alignItems: 'center',
-                            }}>
-                                <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text }}>
-                                    🌍 {t('settings', 'selectLanguage')}
+                    <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setLangModalVisible(false)}>
+                        <TouchableOpacity activeOpacity={1} style={[styles.modalContent, { backgroundColor: colors.card }]}>
+                            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+                                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                                    {t('settings', 'selectLanguage')}
                                 </Text>
                             </View>
 
@@ -343,29 +231,22 @@ export default function SettingsScreen() {
                                     return (
                                         <TouchableOpacity
                                             key={lang}
-                                            style={{
-                                                paddingVertical: 16,
-                                                paddingHorizontal: 20,
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
-                                                borderBottomWidth: idx < SUPPORTED_LANGUAGES.length - 1 ? 1 : 0,
-                                                borderBottomColor: colors.border,
-                                                backgroundColor: isActive ? colors.primary + '15' : 'transparent',
-                                            }}
+                                            style={[
+                                                styles.langRow,
+                                                {
+                                                    borderBottomColor: colors.border,
+                                                    borderBottomWidth: idx < SUPPORTED_LANGUAGES.length - 1 ? 1 : 0,
+                                                    backgroundColor: isActive ? colors.primary + '15' : 'transparent',
+                                                }
+                                            ]}
                                             onPress={() => {
                                                 setLanguage(lang);
                                                 setLangModalVisible(false);
                                             }}
                                         >
-                                            <Text style={{ fontSize: 26, marginRight: 14 }}>
-                                                {LANGUAGE_FLAGS[lang]}
-                                            </Text>
+                                            <Text style={styles.langFlag}>{LANGUAGE_FLAGS[lang]}</Text>
                                             <View style={{ flex: 1 }}>
-                                                <Text style={{
-                                                    fontSize: 16,
-                                                    color: colors.text,
-                                                    fontWeight: isActive ? '700' : '500',
-                                                }}>
+                                                <Text style={[styles.langName, { color: colors.text, fontWeight: isActive ? '700' : '500' }]}>
                                                     {LANGUAGE_NAMES[lang]}
                                                 </Text>
                                                 <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>
@@ -373,15 +254,8 @@ export default function SettingsScreen() {
                                                 </Text>
                                             </View>
                                             {isActive && (
-                                                <View style={{
-                                                    width: 28,
-                                                    height: 28,
-                                                    borderRadius: 14,
-                                                    backgroundColor: colors.primary,
-                                                    justifyContent: 'center',
-                                                    alignItems: 'center',
-                                                }}>
-                                                    <Ionicons name="checkmark" size={20} color="white" />
+                                                <View style={[styles.checkCircle, { backgroundColor: colors.primary }]}>
+                                                    <Ionicons name="checkmark" size={22} color="white" />
                                                 </View>
                                             )}
                                         </TouchableOpacity>
@@ -389,15 +263,7 @@ export default function SettingsScreen() {
                                 })}
                             </ScrollView>
 
-                            <TouchableOpacity
-                                style={{
-                                    paddingVertical: 16,
-                                    borderTopWidth: 1,
-                                    borderTopColor: colors.border,
-                                    alignItems: 'center',
-                                }}
-                                onPress={() => setLangModalVisible(false)}
-                            >
+                            <TouchableOpacity style={[styles.modalCloseBtn, { borderTopColor: colors.border }]} onPress={() => setLangModalVisible(false)}>
                                 <Text style={{ fontSize: 15, fontWeight: '600', color: colors.textMuted }}>
                                     {t('common', 'cancel')}
                                 </Text>
@@ -406,105 +272,136 @@ export default function SettingsScreen() {
                     </TouchableOpacity>
                 </Modal>
 
-
             </ScrollView>
-
-
         </SafeAreaView>
-
     );
 }
 
-
+// ───────── STYLES ─────────
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
     },
-
     scrollContent: {
         paddingVertical: 10,
         paddingHorizontal: 16,
     },
-
     sectionTitle: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: '600',
         textTransform: 'uppercase',
         letterSpacing: 0.8,
         paddingHorizontal: 4,
         marginBottom: 8,
     },
-
     settingContainer: {
-        borderRadius: 12,
+        borderRadius: 14,
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: colors.border,
         marginBottom: 20,
     },
-
     settingItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 14,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
         backgroundColor: colors.card,
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: colors.border,
     },
-
     destructiveItem: {
         backgroundColor: colors.logoutBg,
-        borderBottomWidth: 0,
     },
-
     settingLeft: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
     },
-
     iconBox: {
-        width: 36,
-        height: 36,
+        width: 38,
+        height: 38,
         borderRadius: 10,
-        backgroundColor: colors.surface,
+        backgroundColor: colors.primary + '12',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
-
+        marginRight: 14,
     },
-
     destructiveIconBox: {
         backgroundColor: colors.logoutBg,
     },
-
     textContainer: {
         flex: 1,
         paddingRight: 8,
     },
-
     settingTitle: {
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: '500',
         marginBottom: 2,
     },
-
     settingDescription: {
-        fontSize: 12,
+        fontSize: 13,
         color: colors.textMuted,
-        lineHeight: 16,
+        lineHeight: 17,
     },
-
     switch: {
-        transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }],
+        transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }],
     },
-
     versionText: {
         textAlign: 'center',
-        fontSize: 12,
+        fontSize: 13,
         marginTop: 10,
         marginBottom: 30,
     },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        width: '85%',
+        borderRadius: 20,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 8,
+    },
+    modalHeader: {
+        padding: 20,
+        borderBottomWidth: 1,
+        alignItems: 'center',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    langRow: {
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    langFlag: {
+        fontSize: 26,
+        marginRight: 14,
+    },
+    langName: {
+        fontSize: 16,
+    },
+    checkCircle: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalCloseBtn: {
+        paddingVertical: 16,
+        borderTopWidth: 1,
+        alignItems: 'center',
+    }
 });

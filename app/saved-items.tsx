@@ -1,4 +1,3 @@
-
 import { Image } from 'expo-image';
 import React, { useMemo, useState } from 'react';
 import {
@@ -9,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
+import { useRouter } from 'expo-router';
 
 const MOCK_SAVED_ITEMS = [
     {
@@ -85,15 +85,14 @@ type Listing = {
 type SavedItemsScreenProps = {
     favorites?: number[];
     onRemoveFavorite?: (id: number) => void;
-    onSelectItem?: (item: Listing) => void;
 };
 
 export default function SavedItemsScreen({
                                              favorites = [],
                                              onRemoveFavorite,
-                                             onSelectItem
                                          }: SavedItemsScreenProps) {
 
+    const router = useRouter();
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -122,6 +121,13 @@ export default function SavedItemsScreen({
                 }
             ]
         );
+    };
+
+    const handleItemPress = (item: Listing) => {
+        router.push({
+            pathname: '/item',
+            params: { listingId: item.listingId.toString() }
+        });
     };
 
     const getFirstImage = (imageUrls: string) => {
@@ -160,7 +166,7 @@ export default function SavedItemsScreen({
                 renderItem={({ item }) => (
                     <TouchableOpacity
                         style={styles.card}
-                        onPress={() => onSelectItem?.(item)}
+                        onPress={() => handleItemPress(item)}
                         activeOpacity={0.85}
                     >
                         {/* SLIKA */}
