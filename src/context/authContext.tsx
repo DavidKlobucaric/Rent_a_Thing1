@@ -1,17 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getAuthToken, getStoredUser, clearAuth } from '@/src/storage/storageTokens';
+import { getAuthToken, getStoredUser, clearAuth, AuthUser } from '@/src/storage/storageTokens';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 const BASE_URL = API_BASE_URL;
 
-type User = {
-    userId: number;
-    username: string;
-    email: string;
-};
-
 type AuthContextType = {
-    user: User | null;
+    user: AuthUser | null;
     token: string | null;
     isLoading: boolean;
     isLoggedIn: boolean;
@@ -29,7 +23,7 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<AuthUser | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 

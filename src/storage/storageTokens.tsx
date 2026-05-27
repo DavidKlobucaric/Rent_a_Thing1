@@ -6,10 +6,9 @@ const KEYS = {
 } as const;
 
 export interface AuthUser {
-    id: string | number;
-    email?: string;
-    name?: string;
-    [key: string]: unknown;
+    userId: number | string;
+    username: string;
+    email: string;
 }
 
 export const saveAuthData = async (

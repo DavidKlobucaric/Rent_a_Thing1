@@ -1,5 +1,5 @@
 import axios from "axios";
-import { saveAuthData } from "@/src/storage/storageTokens";
+import { saveAuthData, AuthUser } from "@/src/storage/storageTokens";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 const BASE_URL = API_BASE_URL;
@@ -12,7 +12,7 @@ const api = axios.create({
     timeout: 10000,
 });
 
-// ── Response types ────────────────────────────────────────────────────────────
+// Response types
 
 interface AuthSuccess<T = undefined> {
     success: true;
@@ -29,19 +29,11 @@ type AuthResult<T = undefined> = AuthSuccess<T> | AuthFailure;
 
 interface LoginData {
     token: string;
-    user: {
-        userId: number;
-        username: string;
-        email: string;
-    };
+    user: AuthUser;
 }
 
-// ── Endpoints ─────────────────────────────────────────────────────────────────
+// Endpoints
 
-/**
- * Registers a new user and triggers a verification email.
- * Called when the user taps "Sign Up".
- */
 export const registerUser = async (
     username: string,
     email: string,
@@ -63,10 +55,6 @@ export const registerUser = async (
     }
 };
 
-/**
- * Submits the email verification code.
- * Called when the user taps "Verify Code" on the verification screen.
- */
 export const verifyCode = async (
     email: string,
     code: string
@@ -88,10 +76,6 @@ export const verifyCode = async (
     }
 };
 
-/**
- * Authenticates the user and stores the JWT token.
- * Called when the user taps "Log In".
- */
 export const loginUser = async (
     email: string,
     password: string
@@ -118,9 +102,6 @@ export const loginUser = async (
     }
 };
 
-/**
- * Requests a new verification code to be sent to the given email.
- */
 export const resendCode = async (email: string): Promise<AuthResult> => {
     try {
         const response = await api.post(

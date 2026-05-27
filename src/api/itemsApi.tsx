@@ -67,6 +67,19 @@ type CreateThingParams = {
     imageUrls: string[];
 };
 
+export type MapMarker = {
+    listingId: number;
+    location: string;
+    name: string;
+    category: string;
+    price: number;
+    thumbnailUrl: string | null;
+    isAvailable: boolean;
+
+    latitude?: number;
+    longitude?: number;
+};
+
 // --- API CALLS ---
 
 export const uploadImages = async (uris: string[]): Promise<UploadResult> => {
@@ -140,3 +153,63 @@ export const getListingById = async (listingId: number): Promise<ApiResult<Listi
 };
 
 export type { Listing };
+
+export const getMapMarkers = async (
+    category?: string
+): Promise<ApiResult<MapMarker[]>> => {
+    try {
+        const params: Record<string, string> = {};
+        if (category) params.category = category;
+
+        const response = await api.get<MapMarker[]>('/listings/map-markers', { params });
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error.response?.data?.message || 'Could not load map markers.',
+        };
+    }
+};
+
+export const resolveMarkerCoordinates = async (
+    markers: MapMarker[]
+): Promise<MapMarker[]> => {
+    // Deduplicate locations so we don't geocode the same city 20 times
+    const uniqueLocations = [...new Set(markers.map((m) => m.location))];
+
+    const cache: Record<string, { latitude: number; longitude: number } | null> = {};
+
+    await Promise.all(
+        uniqueLocations.map(async (location) => {
+            try {
+                const url =
+                    `https://nominatim.openstreetmap.org/search` +
+                    `?format=json&q=${encodeURIComponent(location)}&limit=1`;
+
+                const res = await fetch(url, {
+                    headers: { 'User-Agent': 'RentAThing/1.0' },
+                });
+                const data = await res.json();
+
+                if (data?.length > 0) {
+                    cache[location] = {
+                        latitude: parseFloat(data[0].lat),
+                        longitude: parseFloat(data[0].lon),
+                    };
+                } else {
+                    cache[location] = null;
+                }
+            } catch {
+                cache[location] = null;
+            }
+        })
+    );
+
+
+    return markers
+        .map((m) => ({ ...m, ...(cache[m.location] ?? {}) }))
+        .filter((m): m is MapMarker & { latitude: number; longitude: number } =>
+            m.latitude !== undefined && m.longitude !== undefined
+        );
+};
+
