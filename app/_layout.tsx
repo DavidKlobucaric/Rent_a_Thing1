@@ -23,14 +23,16 @@ export default function RootLayout() {
                         <Stack>
                             <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade', animationDuration: 1050 }} />
                             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-                            <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
-                            <Stack.Screen name="sign-in" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
-                            <Stack.Screen name="log-in" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
-                            <Stack.Screen name="verification" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
-                            <Stack.Screen name="saved-items" options={{ title: 'Saved Items', animation: 'fade', animationDuration: 550 }} />
-                            <Stack.Screen name="settings" options={{ title: 'Settings', animation: 'fade', animationDuration: 550 }} />
-                            <Stack.Screen name="chat" options={{ headerShown: false, animation: 'fade', animationDuration: 550 }} />
-                            <Stack.Screen name="support" options={{ title: 'Support', animation: 'fade', animationDuration: 550 }} />
+                            <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade', animationDuration: 450 }} />
+                            <Stack.Screen name="sign-in" options={{ headerShown: false, animation: 'fade', animationDuration: 450 }} />
+                            <Stack.Screen name="log-in" options={{ headerShown: false, animation: 'fade', animationDuration: 450 }} />
+                            <Stack.Screen name="verification" options={{ headerShown: false, animation: 'fade', animationDuration: 450 }} />
+                            <Stack.Screen name="saved-items" options={{ title: 'Saved Items', animation: 'fade', animationDuration: 450 }} />
+                            <Stack.Screen name="settings" options={{ title: 'Settings', animation: 'fade', animationDuration: 450 }} />
+                            <Stack.Screen name="chat" options={{ headerShown: false, animation: 'fade', animationDuration: 450 }} />
+                            <Stack.Screen name="support" options={{ title: 'Support', animation: 'fade', animationDuration: 450 }} />
+                            <Stack.Screen name="terms" options={{ headerShown: false, animation: 'slide_from_right', animationDuration: 450  }} />
+                            <Stack.Screen name="privacy" options={{ headerShown: false, animation: 'slide_from_right', animationDuration: 450 }} />
                         </Stack>
                         <StatusBar style="auto" />
                     </ThemeProvider>

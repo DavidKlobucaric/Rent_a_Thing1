@@ -43,7 +43,7 @@ const MenuItem = ({ iconName, title, subtitle, onPress, colors, showSeparator = 
         <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
             <View style={styles.menuLeft}>
                 <View style={styles.iconBox}>
-                    <Ionicons name={iconName} size={20} color={colors.primary} />
+                    <Ionicons name={iconName} size={22} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
                     <Text style={styles.menuTitle}>{title}</Text>
@@ -161,7 +161,7 @@ export default function ProfileScreen() {
 
                 {/* 4. SIGN OUT  */}
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
-                    <Ionicons name="log-out-outline" size={18} color={colors.danger} />
+                    <Ionicons name="log-out-outline" size={20} color={colors.danger} />
                     <Text style={styles.logoutText}>{t('profile', 'signOut')}</Text>
                 </TouchableOpacity>
             </ScrollView>

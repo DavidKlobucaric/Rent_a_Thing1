@@ -171,10 +171,33 @@ export const translations = {
             startConv: 'Start the conversation! 👋',
             autoReply: "Thanks! I'll get back to you soon. 👍",
         },
-
         modal: {
             title: 'This is a modal',
             goHome: 'Go to home screen',
+        },
+        legal: {
+            termsTitle: 'Terms of Service',
+            privacyTitle: 'Privacy Policy',
+            lastUpdated: 'Last updated',
+            contactUsAt: 'Contact us at',
+            terms1Title: '1. Acceptance of Terms',
+            terms1Text: 'By downloading, accessing, or using the Rent-a-Thing application, you agree to be bound by these Terms of Service. If you do not agree, please do not use the app.',
+            terms2Title: '2. User Accounts',
+            terms2Text: 'You must provide accurate information when creating an account. You are responsible for maintaining the confidentiality of your credentials and for all activities under your account.',
+            terms3Title: '3. Rentals & Transactions',
+            terms3Text: 'Rent-a-Thing acts as a platform connecting renters and owners. We are not a party to rental agreements. Users are responsible for the condition, return, and payment of rented items.',
+            terms4Title: '4. Prohibited Activities',
+            terms4Text: 'You agree not to: misrepresent your identity, list illegal items, damage rented property, use the platform for commercial purposes without authorization, or harass other users.',
+            terms5Title: '5. Limitation of Liability',
+            terms5Text: 'Rent-a-Thing is provided "as is" without warranties. We are not liable for damages arising from your use of the app, rentals, or interactions with other users.',
+            privacy1Title: '1. Information We Collect',
+            privacy1Text: 'We collect information you provide directly: name, email, phone number, profile photo, and location data when using the app. We also collect usage data and device information automatically.',
+            privacy2Title: '2. How We Use Your Data',
+            privacy2Text: 'Your data is used to: provide and improve our services, process rentals, communicate with you, personalize your experience, ensure security, and comply with legal obligations.',
+            privacy3Title: '3. Data Sharing',
+            privacy3Text: 'We share data with: other users during active rentals (name, contact info), service providers who help us operate the app, and law enforcement when legally required. We never sell your data.',
+            privacy4Title: '4. Your Rights',
+            privacy4Text: 'You have the right to: access your data, correct inaccuracies, delete your account, export your data, and opt out of marketing communications. Contact us to exercise these rights.',
         },
     },
 
@@ -341,10 +364,33 @@ export const translations = {
             startConv: 'Započni razgovor! 👋',
             autoReply: 'Hvala! Javit ću se uskoro. 👍',
         },
-
         modal: {
             title: 'Ovo je modalni prozor',
             goHome: 'Idi na početni zaslon',
+        },
+        legal: {
+            termsTitle: 'Uvjeti korištenja',
+            privacyTitle: 'Politika privatnosti',
+            lastUpdated: 'Zadnje ažurirano',
+            contactUsAt: 'Kontaktirajte nas na',
+            terms1Title: '1. Prihvaćanje uvjeta',
+            terms1Text: 'Preuzimanjem, pristupom ili korištenjem Rent-a-Thing aplikacije, slažete se s ovim Uvjetima korištenja. Ako se ne slažete, molimo ne koristite aplikaciju.',
+            terms2Title: '2. Korisnički računi',
+            terms2Text: 'Morate pružiti točne podatke pri kreiranju računa. Odgovorni ste za čuvanje tajnosti svojih pristupnih podataka i za sve aktivnosti pod vašim računom.',
+            terms3Title: '3. Najmovi i transakcije',
+            terms3Text: 'Rent-a-Thing djeluje kao platforma koja povezuje unajmljivače i vlasnike. Nismo strana ugovora o najmu. Korisnici su odgovorni za stanje, povrat i plaćanje unajmljenih predmeta.',
+            terms4Title: '4. Zabranjene aktivnosti',
+            terms4Text: 'Slažete se da nećete: lažno se predstavljati, objavljivati ilegalne predmete, oštetiti unajmljenu imovinu, koristiti platformu u komercijalne svrhe bez ovlaštenja ili uznemiravati druge korisnike.',
+            terms5Title: '5. Ograničenje odgovornosti',
+            terms5Text: 'Rent-a-Thing se pruža "kakav jest" bez jamstava. Nismo odgovorni za štetu nastalu korištenjem aplikacije, najmovima ili interakcijama s drugim korisnicima.',
+            privacy1Title: '1. Podaci koje prikupljamo',
+            privacy1Text: 'Prikupljamo podatke koje izravno pružate: ime, email, broj telefona, profilnu fotografiju i lokacijske podatke. Također automatski prikupljamo podatke o korištenju i uređaju.',
+            privacy2Title: '2. Kako koristimo vaše podatke',
+            privacy2Text: 'Vaši podaci se koriste za: pružanje i poboljšanje usluga, obradu najma, komunikaciju s vama, personalizaciju iskustva, osiguravanje sigurnosti i ispunjavanje zakonskih obveza.',
+            privacy3Title: '3. Dijeljenje podataka',
+            privacy3Text: 'Podatke dijelimo s: drugim korisnicima tijekom aktivnih najma, pružateljima usluga koji nam pomažu u radu aplikacije, i tijelima za provedbu zakona kada je zakonski potrebno. Nikada ne prodajemo vaše podatke.',
+            privacy4Title: '4. Vaša prava',
+            privacy4Text: 'Imate pravo na: pristup svojim podacima, ispravak netočnosti, brisanje računa, izvoz podataka i odustajanje od marketinških komunikacija. Kontaktirajte nas za ostvarivanje ovih prava.',
         },
     },
 
@@ -509,16 +555,36 @@ export const translations = {
             startConv: 'Starte die Unterhaltung! 👋',
             autoReply: 'Danke! Ich melde mich bald. 👍',
         },
-
         modal: {
             title: 'Dies ist ein Modal',
             goHome: 'Zurück zum Startbildschirm',
         },
+        legal: {
+            termsTitle: 'Nutzungsbedingungen',
+            privacyTitle: 'Datenschutzerklärung',
+            lastUpdated: 'Zuletzt aktualisiert',
+            contactUsAt: 'Kontaktieren Sie uns unter',
+            terms1Title: '1. Annahme der Bedingungen',
+            terms1Text: 'Durch das Herunterladen, den Zugriff oder die Nutzung der Rent-a-Thing-Anwendung stimmen Sie diesen Nutzungsbedingungen zu. Wenn Sie nicht zustimmen, verwenden Sie die App bitte nicht.',
+            terms2Title: '2. Benutzerkonten',
+            terms2Text: 'Sie müssen bei der Kontoerstellung genaue Angaben machen. Sie sind für die Geheimhaltung Ihrer Zugangsdaten und alle Aktivitäten unter Ihrem Konto verantwortlich.',
+            terms3Title: '3. Mieten & Transaktionen',
+            terms3Text: 'Rent-a-Thing fungiert als Plattform, die Mieter und Eigentümer verbindet. Wir sind keine Partei von Mietverträgen. Benutzer sind für Zustand, Rückgabe und Bezahlung gemieteter Artikel verantwortlich.',
+            terms4Title: '4. Verbotene Aktivitäten',
+            terms4Text: 'Sie verpflichten sich, nicht: Ihre Identität falsch darzustellen, illegale Artikel einzustellen, gemietetes Eigentum zu beschädigen, die Plattform ohne Genehmigung kommerziell zu nutzen oder andere Benutzer zu belästigen.',
+            terms5Title: '5. Haftungsbeschränkung',
+            terms5Text: 'Rent-a-Thing wird "wie besehen" ohne Garantien bereitgestellt. Wir haften nicht für Schäden, die aus Ihrer Nutzung der App, Mieten oder Interaktionen mit anderen Benutzern entstehen.',
+            privacy1Title: '1. Informationen, die wir sammeln',
+            privacy1Text: 'Wir sammeln Informationen, die Sie direkt bereitstellen: Name, E-Mail, Telefonnummer, Profilfoto und Standortdaten bei der Nutzung der App. Wir sammeln auch automatisch Nutzungsdaten und Geräteinformationen.',
+            privacy2Title: '2. Wie wir Ihre Daten verwenden',
+            privacy2Text: 'Ihre Daten werden verwendet, um: unsere Dienste bereitzustellen und zu verbessern, Mieten zu verarbeiten, mit Ihnen zu kommunizieren, Ihre Erfahrung zu personalisieren, Sicherheit zu gewährleisten und gesetzliche Pflichten zu erfüllen.',
+            privacy3Title: '3. Datenweitergabe',
+            privacy3Text: 'Wir teilen Daten mit: anderen Benutzern während aktiver Mieten (Name, Kontaktinfo), Dienstleistern, die uns beim Betrieb der App helfen, und Strafverfolgungsbehörden, wenn gesetzlich erforderlich. Wir verkaufen Ihre Daten niemals.',
+            privacy4Title: '4. Ihre Rechte',
+            privacy4Text: 'Sie haben das Recht auf: Zugriff auf Ihre Daten, Berichtigung von Ungenauigkeiten, Löschung Ihres Kontos, Export Ihrer Daten und Abmeldung von Marketingkommunikation. Kontaktieren Sie uns, um diese Rechte auszuüben.',
+        },
     },
 
-    // ═══════════════════════════════════════
-    // 🇨🇳 KINESKI (简体中文)
-    // ═══════════════════════════════════════
     zh: {
         common: {
             cancel: '取消', save: '保存', delete: '删除', remove: '移除',
@@ -670,16 +736,36 @@ export const translations = {
             startConv: '开始对话! 👋',
             autoReply: '谢谢!我很快回复你。 👍',
         },
-
         modal: {
             title: '这是一个模态框',
             goHome: '返回主屏幕',
         },
+        legal: {
+            termsTitle: '服务条款',
+            privacyTitle: '隐私政策',
+            lastUpdated: '最后更新',
+            contactUsAt: '联系我们',
+            terms1Title: '1. 接受条款',
+            terms1Text: '通过下载、访问或使用 Rent-a-Thing 应用程序,您同意受这些服务条款的约束。如果您不同意,请不要使用该应用。',
+            terms2Title: '2. 用户账户',
+            terms2Text: '创建账户时您必须提供准确信息。您负责维护凭证的机密性以及您账户下的所有活动。',
+            terms3Title: '3. 租赁与交易',
+            terms3Text: 'Rent-a-Thing 作为连接租户和所有者的平台。我们不是租赁协议的当事方。用户负责租赁物品的状况、归还和付款。',
+            terms4Title: '4. 禁止活动',
+            terms4Text: '您同意不:歪曲您的身份、列出非法物品、损坏租赁财产、未经授权将平台用于商业目的或骚扰其他用户。',
+            terms5Title: '5. 责任限制',
+            terms5Text: 'Rent-a-Thing 按"原样"提供,不提供任何保证。对于因您使用应用、租赁或与其他用户互动而产生的损害,我们不承担责任。',
+            privacy1Title: '1. 我们收集的信息',
+            privacy1Text: '我们收集您直接提供的信息:姓名、电子邮件、电话号码、个人资料照片和使用应用时的位置数据。我们还自动收集使用数据和设备信息。',
+            privacy2Title: '2. 我们如何使用您的数据',
+            privacy2Text: '您的数据用于:提供和改进我们的服务、处理租赁、与您沟通、个性化您的体验、确保安全并遵守法律义务。',
+            privacy3Title: '3. 数据共享',
+            privacy3Text: '我们与以下方共享数据:活跃租赁期间的其他用户(姓名、联系信息)、帮助我们运营应用的服务提供商,以及法律要求时的执法部门。我们绝不出售您的数据。',
+            privacy4Title: '4. 您的权利',
+            privacy4Text: '您有权:访问您的数据、更正不准确之处、删除您的账户、导出您的数据以及选择退出营销通讯。联系我们以行使这些权利。',
+        },
     },
 
-    // ═══════════════════════════════════════
-    // 🇪🇸 ŠPANJOLSKI (Español)
-    // ═══════════════════════════════════════
     es: {
         common: {
             cancel: 'Cancelar', save: 'Guardar', delete: 'Eliminar', remove: 'Quitar',
@@ -839,16 +925,36 @@ export const translations = {
             startConv: '¡Inicia la conversación! 👋',
             autoReply: '¡Gracias! Te responderé pronto. 👍',
         },
-
         modal: {
             title: 'Este es un modal',
             goHome: 'Ir a la pantalla de inicio',
         },
+        legal: {
+            termsTitle: 'Términos de Servicio',
+            privacyTitle: 'Política de Privacidad',
+            lastUpdated: 'Última actualización',
+            contactUsAt: 'Contáctanos en',
+            terms1Title: '1. Aceptación de Términos',
+            terms1Text: 'Al descargar, acceder o usar la aplicación Rent-a-Thing, aceptas estar sujeto a estos Términos de Servicio. Si no estás de acuerdo, por favor no uses la aplicación.',
+            terms2Title: '2. Cuentas de Usuario',
+            terms2Text: 'Debes proporcionar información precisa al crear una cuenta. Eres responsable de mantener la confidencialidad de tus credenciales y de todas las actividades bajo tu cuenta.',
+            terms3Title: '3. Alquileres y Transacciones',
+            terms3Text: 'Rent-a-Thing actúa como plataforma que conecta arrendatarios y propietarios. No somos parte de los acuerdos de alquiler. Los usuarios son responsables del estado, devolución y pago de los artículos alquilados.',
+            terms4Title: '4. Actividades Prohibidas',
+            terms4Text: 'Aceptas no: falsear tu identidad, listar artículos ilegales, dañar propiedad alquilada, usar la plataforma con fines comerciales sin autorización, o acosar a otros usuarios.',
+            terms5Title: '5. Limitación de Responsabilidad',
+            terms5Text: 'Rent-a-Thing se proporciona "tal cual" sin garantías. No somos responsables de daños que surjan de tu uso de la aplicación, alquileres o interacciones con otros usuarios.',
+            privacy1Title: '1. Información que Recopilamos',
+            privacy1Text: 'Recopilamos información que proporcionas directamente: nombre, correo electrónico, número de teléfono, foto de perfil y datos de ubicación al usar la aplicación. También recopilamos datos de uso e información del dispositivo automáticamente.',
+            privacy2Title: '2. Cómo Usamos tus Datos',
+            privacy2Text: 'Tus datos se utilizan para: proporcionar y mejorar nuestros servicios, procesar alquileres, comunicarnos contigo, personalizar tu experiencia, garantizar la seguridad y cumplir con obligaciones legales.',
+            privacy3Title: '3. Compartir Datos',
+            privacy3Text: 'Compartimos datos con: otros usuarios durante alquileres activos (nombre, información de contacto), proveedores de servicios que nos ayudan a operar la aplicación, y fuerzas del orden cuando sea legalmente requerido. Nunca vendemos tus datos.',
+            privacy4Title: '4. Tus Derechos',
+            privacy4Text: 'Tienes derecho a: acceder a tus datos, corregir inexactitudes, eliminar tu cuenta, exportar tus datos y optar por no recibir comunicaciones de marketing. Contáctanos para ejercer estos derechos.',
+        },
     },
 
-    // ═══════════════════════════════════════
-    // 🇫🇷 FRANCUSKI (Français)
-    // ═══════════════════════════════════════
     fr: {
         common: {
             cancel: 'Annuler', save: 'Enregistrer', delete: 'Supprimer', remove: 'Retirer',
@@ -950,7 +1056,7 @@ export const translations = {
             accountSettings: 'Paramètres du compte', savedItems: 'Articles sauvegardés',
             savedItemsSub: 'Articles que vous voulez louer plus tard',
             settings: 'Paramètres', settingsSub: 'Confidentialité, notifications et compte',
-            support: 'Support', supportSub: 'FAQs et centre d\'aide',
+            support: 'Support', supportSub: "FAQs et centre d'aide",
             signOut: 'Se déconnecter', verifiedMember: 'Membre vérifié',
             rentals: 'Locations', response: 'Réponse', reviews: 'Avis',
         },
@@ -1012,16 +1118,36 @@ export const translations = {
             startConv: 'Commencez la conversation! 👋',
             autoReply: 'Merci! Je vous répondrai bientôt. 👍',
         },
-
         modal: {
             title: 'Ceci est une fenêtre modale',
             goHome: "Aller à l'écran d'accueil",
         },
+        legal: {
+            termsTitle: "Conditions d'Utilisation",
+            privacyTitle: 'Politique de Confidentialité',
+            lastUpdated: 'Dernière mise à jour',
+            contactUsAt: 'Contactez-nous à',
+            terms1Title: '1. Acceptation des Conditions',
+            terms1Text: "En téléchargeant, accédant ou utilisant l'application Rent-a-Thing, vous acceptez d'être lié par ces Conditions d'Utilisation. Si vous n'êtes pas d'accord, veuillez ne pas utiliser l'application.",
+            terms2Title: '2. Comptes Utilisateur',
+            terms2Text: 'Vous devez fournir des informations exactes lors de la création d\'un compte. Vous êtes responsable de maintenir la confidentialité de vos identifiants et de toutes les activités sous votre compte.',
+            terms3Title: '3. Locations et Transactions',
+            terms3Text: "Rent-a-Thing agit comme une plateforme connectant locataires et propriétaires. Nous ne sommes pas partie aux accords de location. Les utilisateurs sont responsables de l'état, du retour et du paiement des articles loués.",
+            terms4Title: '4. Activités Interdites',
+            terms4Text: "Vous acceptez de ne pas : usurper votre identité, lister des articles illégaux, endommager des biens loués, utiliser la plateforme à des fins commerciales sans autorisation, ou harceler d'autres utilisateurs.",
+            terms5Title: '5. Limitation de Responsabilité',
+            terms5Text: 'Rent-a-Thing est fourni "tel quel" sans garanties. Nous ne sommes pas responsables des dommages résultant de votre utilisation de l\'application, des locations ou des interactions avec d\'autres utilisateurs.',
+            privacy1Title: '1. Informations que Nous Collectons',
+            privacy1Text: "Nous collectons les informations que vous fournissez directement : nom, email, numéro de téléphone, photo de profil et données de localisation lors de l'utilisation de l'application. Nous collectons également automatiquement des données d'utilisation et des informations sur l'appareil.",
+            privacy2Title: '2. Comment Nous Utilisons Vos Données',
+            privacy2Text: 'Vos données sont utilisées pour : fournir et améliorer nos services, traiter les locations, communiquer avec vous, personnaliser votre expérience, assurer la sécurité et respecter les obligations légales.',
+            privacy3Title: '3. Partage de Données',
+            privacy3Text: "Nous partageons des données avec : d'autres utilisateurs pendant les locations actives (nom, coordonnées), des fournisseurs de services qui nous aident à exploiter l'application, et les forces de l'ordre lorsque légalement requis. Nous ne vendons jamais vos données.",
+            privacy4Title: '4. Vos Droits',
+            privacy4Text: "Vous avez le droit : d'accéder à vos données, de corriger les inexactitudes, de supprimer votre compte, d'exporter vos données et de vous désinscrire des communications marketing. Contactez-nous pour exercer ces droits.",
+        },
     },
 
-    // ═══════════════════════════════════════
-    // 🇮🇹 TALIJANSKI (Italiano)
-    // ═══════════════════════════════════════
     it: {
         common: {
             cancel: 'Annulla', save: 'Salva', delete: 'Elimina', remove: 'Rimuovi',
@@ -1187,10 +1313,33 @@ export const translations = {
             startConv: 'Inizia la conversazione! 👋',
             autoReply: 'Grazie! Ti risponderò presto. 👍',
         },
-
         modal: {
             title: 'Questo è un modal',
             goHome: 'Vai alla schermata principale',
+        },
+        legal: {
+            termsTitle: 'Termini di Servizio',
+            privacyTitle: 'Politica sulla Privacy',
+            lastUpdated: 'Ultimo aggiornamento',
+            contactUsAt: 'Contattaci a',
+            terms1Title: '1. Accettazione dei Termini',
+            terms1Text: "Scaricando, accedendo o utilizzando l'applicazione Rent-a-Thing, accetti di essere vincolato da questi Termini di Servizio. Se non sei d'accordo, ti preghiamo di non utilizzare l'app.",
+            terms2Title: '2. Account Utente',
+            terms2Text: 'Devi fornire informazioni accurate durante la creazione di un account. Sei responsabile di mantenere la riservatezza delle tue credenziali e di tutte le attività sotto il tuo account.',
+            terms3Title: '3. Noleggi e Transazioni',
+            terms3Text: 'Rent-a-Thing funge da piattaforma che collega affittuari e proprietari. Non siamo parte degli accordi di noleggio. Gli utenti sono responsabili delle condizioni, del ritorno e del pagamento degli articoli noleggiati.',
+            terms4Title: '4. Attività Proibite',
+            terms4Text: "Accetti di non: travisare la tua identità, elencare articoli illegali, danneggiare proprietà in affitto, utilizzare la piattaforma per scopi commerciali senza autorizzazione, o molestare altri utenti.",
+            terms5Title: '5. Limitazione di Responsabilità',
+            terms5Text: 'Rent-a-Thing è fornito "così com\'è" senza garanzie. Non siamo responsabili per danni derivanti dal tuo utilizzo dell\'app, dei noleggi o delle interazioni con altri utenti.',
+            privacy1Title: '1. Informazioni che Raccogliamo',
+            privacy1Text: "Raccogliamo informazioni che fornisci direttamente: nome, email, numero di telefono, foto del profilo e dati sulla posizione durante l'utilizzo dell'app. Raccogliamo anche automaticamente dati di utilizzo e informazioni sul dispositivo.",
+            privacy2Title: '2. Come Utilizziamo i Tuoi Dati',
+            privacy2Text: 'I tuoi dati vengono utilizzati per: fornire e migliorare i nostri servizi, elaborare noleggi, comunicare con te, personalizzare la tua esperienza, garantire la sicurezza e rispettare gli obblighi legali.',
+            privacy3Title: '3. Condivisione dei Dati',
+            privacy3Text: "Condividiamo dati con: altri utenti durante i noleggi attivi (nome, informazioni di contatto), fornitori di servizi che ci aiutano a gestire l'app e forze dell'ordine quando legalmente richiesto. Non vendiamo mai i tuoi dati.",
+            privacy4Title: '4. I Tuoi Diritti',
+            privacy4Text: "Hai il diritto di: accedere ai tuoi dati, correggere inesattezze, eliminare il tuo account, esportare i tuoi dati e rinunciare alle comunicazioni di marketing. Contattaci per esercitare questi diritti.",
         },
     },
 } as const;
