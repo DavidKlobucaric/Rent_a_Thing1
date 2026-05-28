@@ -22,7 +22,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
-import { getListingById } from '@/src/api/itemsApi';
+import { getListingById, addFavourite, removeFavourite, checkFavourite } from '@/src/api/itemsApi';
 import type { Listing } from '@/src/api/itemsApi';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -64,6 +64,22 @@ export default function ListingDetailScreen() {
 
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [isFavorite, setIsFavorite] = useState(false);
+
+    // Sync favourite state with backend on load
+    useEffect(() => {
+        if (!listingId) return;
+        checkFavourite(Number(listingId)).then(setIsFavorite);
+    }, [listingId]);
+
+    const handleToggleFavourite = async () => {
+        const next = !isFavorite;
+        setIsFavorite(next);
+        if (next) {
+            await addFavourite(Number(listingId));
+        } else {
+            await removeFavourite(Number(listingId));
+        }
+    };
 
     const [calendarVisible, setCalendarVisible] = useState(false);
     const [startDate, setStartDate] = useState<string | null>(null);
@@ -276,7 +292,7 @@ export default function ListingDetailScreen() {
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={styles.headerButton}
-                                onPress={() => setIsFavorite(!isFavorite)}
+                                onPress={handleToggleFavourite}
                             >
                                 <Ionicons
                                     name={isFavorite ? 'heart' : 'heart-outline'}

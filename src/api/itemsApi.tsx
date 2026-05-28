@@ -213,3 +213,61 @@ export const resolveMarkerCoordinates = async (
         );
 };
 
+
+// ── User profile ──────────────────────────────────────────────────────────────
+
+export type UserProfile = {
+    id: number;
+    username: string;
+    email: string;
+    rating: number;
+    ratingCount: number;
+    favouriteCount: number;
+};
+
+export const getMyProfile = async (): Promise<ApiResult<UserProfile>> => {
+    try {
+        const response = await api.get<UserProfile>('/users/me');
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return { success: false, message: error.response?.data?.message || 'Could not load profile.' };
+    }
+};
+
+// ── Favourites ────────────────────────────────────────────────────────────────
+
+export const getFavourites = async (): Promise<ApiResult<Listing[]>> => {
+    try {
+        const response = await api.get<Listing[]>('/users/me/favourites');
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return { success: false, message: error.response?.data?.message || 'Could not load favourites.' };
+    }
+};
+
+export const addFavourite = async (listingId: number): Promise<ApiResult<void>> => {
+    try {
+        await api.post(`/users/me/favourites/${listingId}`);
+        return { success: true, data: undefined };
+    } catch (error: any) {
+        return { success: false, message: error.response?.data?.message || 'Could not add favourite.' };
+    }
+};
+
+export const removeFavourite = async (listingId: number): Promise<ApiResult<void>> => {
+    try {
+        await api.delete(`/users/me/favourites/${listingId}`);
+        return { success: true, data: undefined };
+    } catch (error: any) {
+        return { success: false, message: error.response?.data?.message || 'Could not remove favourite.' };
+    }
+};
+
+export const checkFavourite = async (listingId: number): Promise<boolean> => {
+    try {
+        const response = await api.get<{ isFavourite: boolean }>(`/users/me/favourites/${listingId}/check`);
+        return response.data.isFavourite;
+    } catch {
+        return false;
+    }
+};

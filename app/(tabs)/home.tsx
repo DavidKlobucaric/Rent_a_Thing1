@@ -1,16 +1,16 @@
 import { Image } from 'expo-image';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     StyleSheet, Text, View, TextInput,
     ScrollView, TouchableOpacity, FlatList, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Fontisto, Ionicons } from '@expo/vector-icons';
-import { searchListings, getRecommendedListings } from '@/src/api/itemsApi';
+import { searchListings, getRecommendedListings, addFavourite, removeFavourite, getFavourites } from '@/src/api/itemsApi';
 import { useAuth } from '@/src/context/authContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
-import { router } from "expo-router";
+import { router, useFocusEffect } from 'expo-router';
 import { useLanguage } from '@/src/context/languageContext';
 
 type Category = {
@@ -45,14 +45,16 @@ type Listing = {
 
 export default function HomeScreen() {
     const { token } = useAuth();
-    const { t } = useLanguage(); // ✅ Ispravljeno - unutar komponente
+    const { t } = useLanguage();
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
     const [searchText, setSearchText] = useState('');
     const [activeCategory, setActiveCategory] = useState('tools');
-    const [favorites, setFavorites] = useState<number[]>([]);
+
+    // favouriteIds is the source of truth — a Set of listingIds the user has saved
+    const [favouriteIds, setFavouriteIds] = useState<Set<number>>(new Set());
 
     const [searchResults, setSearchResults] = useState<Listing[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
@@ -61,6 +63,7 @@ export default function HomeScreen() {
     const [recommended, setRecommended] = useState<Listing[]>([]);
     const [recLoading, setRecLoading] = useState(true);
 
+    // Load recommended listings once on mount
     useEffect(() => {
         (async () => {
             setRecLoading(true);
@@ -72,6 +75,21 @@ export default function HomeScreen() {
         })();
     }, [token]);
 
+    // Re-sync favourite IDs from backend every time this screen comes into focus
+    // This keeps the hearts in sync after visiting item detail or saved-items
+    useFocusEffect(
+        useCallback(() => {
+            (async () => {
+                const result = await getFavourites();
+                if (result.success) {
+                    const ids = new Set(result.data.map((l: Listing) => l.listingId));
+                    setFavouriteIds(ids);
+                }
+            })();
+        }, [])
+    );
+
+    // Search debounce
     useEffect(() => {
         const query = searchText.trim() || activeCategory;
         const timeout = setTimeout(async () => {
@@ -96,8 +114,26 @@ export default function HomeScreen() {
         return () => clearTimeout(timeout);
     }, [searchText, activeCategory]);
 
-    const toggleFavorite = (id: number) => {
-        setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
+    const toggleFavourite = async (id: number) => {
+        const isCurrentlyFav = favouriteIds.has(id);
+
+        // Optimistic update
+        setFavouriteIds(prev => {
+            const next = new Set(prev);
+            if (isCurrentlyFav) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+
+        // Persist to backend
+        if (isCurrentlyFav) {
+            await removeFavourite(id);
+        } else {
+            await addFavourite(id);
+        }
     };
 
     const getFirstImage = (imageUrls: string[]) => {
@@ -232,11 +268,17 @@ export default function HomeScreen() {
                                 </View>
                             </View>
                             <View style={styles.actions}>
-                                <TouchableOpacity onPress={() => toggleFavorite(item.listingId)}>
+                                <TouchableOpacity
+                                    onPress={(e) => {
+                                        e.stopPropagation();
+                                        toggleFavourite(item.listingId);
+                                    }}
+                                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                                >
                                     <Ionicons
-                                        name={favorites.includes(item.listingId) ? 'heart' : 'heart-outline'}
+                                        name={favouriteIds.has(item.listingId) ? 'heart' : 'heart-outline'}
                                         size={24}
-                                        color={favorites.includes(item.listingId) ? colors.danger : colors.border}
+                                        color={favouriteIds.has(item.listingId) ? colors.danger : colors.border}
                                     />
                                 </TouchableOpacity>
                             </View>
@@ -254,7 +296,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         flex: 1,
         backgroundColor: colors.background,
     },
-
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -268,43 +309,36 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         borderColor: colors.border,
         borderRadius: 14,
     },
-
     searchIcon: {
         fontSize: 18,
         marginRight: 10,
     },
-
     searchInput: {
         flex: 1,
         height: 44,
         fontSize: 15,
         color: colors.text,
     },
-
     clearBtn: {
         fontSize: 20,
         fontWeight: '600',
         padding: 4,
     },
-
     locationText: {
         fontSize: 12,
         color: colors.textMuted,
         paddingTop: 2,
     },
-
     tabsContainer: {
         paddingHorizontal: 12,
         paddingVertical: 10,
         gap: 8,
     },
-
     tab: {
         alignItems: 'center',
         minWidth: 60,
         paddingHorizontal: 6,
     },
-
     iconCircle: {
         width: 52,
         height: 52,
@@ -315,12 +349,10 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-
     iconCircleActive: {
         backgroundColor: colors.primary,
         borderColor: colors.primary,
     },
-
     tabLabel: {
         fontSize: 11,
         paddingTop: 6,
@@ -329,17 +361,14 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontWeight: '500',
         letterSpacing: 0.3,
     },
-
     tabLabelActive: {
         color: colors.primary,
         fontWeight: '600',
     },
-
     listContainer: {
         marginTop: 4,
         marginBottom: 8,
     },
-
     itemCard: {
         backgroundColor: colors.card,
         padding: 12,
@@ -352,14 +381,12 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         borderColor: colors.border,
         width: 180,
     },
-
     itemName: {
         fontWeight: '600',
         fontSize: 15,
         paddingTop: 10,
         color: colors.text,
     },
-
     emptyText: {
         textAlign: 'center',
         color: colors.textMuted,
@@ -367,7 +394,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontSize: 14,
         marginHorizontal: 20,
     },
-
     sectionTitle: {
         marginTop: 28,
         marginLeft: 20,
@@ -377,7 +403,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         color: colors.text,
         letterSpacing: -0.3,
     },
-
     card: {
         flexDirection: 'row',
         backgroundColor: colors.card,
@@ -389,48 +414,40 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.border,
     },
-
     thumbnail: {
         width: 64,
         height: 64,
         borderRadius: 12,
         backgroundColor: colors.border,
     },
-
     cardContent: {
         flex: 1,
         paddingHorizontal: 16,
         gap: 4,
     },
-
     itemTitle: {
         fontWeight: '600',
         fontSize: 15,
         color: colors.text,
     },
-
     distanceText: {
         fontSize: 12,
         color: colors.textMuted,
     },
-
     price: {
         fontWeight: '600',
         color: colors.primary,
         fontSize: 15,
     },
-
     perDay: {
         color: colors.textMuted,
         marginLeft: 4,
         fontSize: 13,
     },
-
     actions: {
         alignItems: 'flex-end',
         gap: 4,
     },
-
     itemImage: {
         width: 160,
         height: 160,

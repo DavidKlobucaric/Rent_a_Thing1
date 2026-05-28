@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     View,
     Text,
@@ -6,6 +6,7 @@ import {
     ScrollView,
     TouchableOpacity,
     StatusBar,
+    ActivityIndicator,
 } from 'react-native';
 
 import { Image } from 'expo-image';
@@ -13,19 +14,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '@/src/context/authContext';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
-
-const userData = {
-    name: 'Alex Neighbor',
-    rating: 4.7,
-    rentals: 12,
-    reviews: 48,
-    responseRate: 94,
-    profileImage: 'https://i.pravatar.cc/300',
-};
+import { getMyProfile, UserProfile } from '@/src/api/itemsApi';
+import { useCallback } from 'react';
 
 type MenuItemProps = {
     iconName: React.ComponentProps<typeof Ionicons>['name'];
@@ -60,20 +54,44 @@ const MenuItem = ({ iconName, title, subtitle, onPress, colors, showSeparator = 
 };
 
 export default function ProfileScreen() {
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
     const router = useRouter();
     const { t } = useLanguage();
 
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const isDark = scheme === 'dark';
-
     const styles = useMemo(() => makeStyles(colors), [colors]);
+
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    // Re-fetch every time the profile tab comes into focus
+    // so saved-items count and rating stay up to date
+    useFocusEffect(
+        useCallback(() => {
+            let active = true;
+            (async () => {
+                setLoading(true);
+                const result = await getMyProfile();
+                if (active && result.success) {
+                    setProfile(result.data);
+                }
+                if (active) setLoading(false);
+            })();
+            return () => { active = false; };
+        }, [])
+    );
 
     const handleLogout = async () => {
         await logout();
         router.replace('/');
     };
+
+    const displayName = profile?.username ?? user?.username ?? '—';
+    const rating = profile?.rating ?? 0;
+    const ratingCount = profile?.ratingCount ?? 0;
+    const favouriteCount = profile?.favouriteCount ?? 0;
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -86,49 +104,63 @@ export default function ProfileScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
-                {/* 1. HERO HEADER  */}
+                {/* 1. HERO HEADER */}
                 <View style={styles.heroHeader}>
-                    <Image source={{ uri: userData.profileImage }} style={styles.bigProfileImage} />
+                    <View style={styles.avatarPlaceholder}>
+                        <Ionicons name="person" size={56} color={colors.textMuted} />
+                    </View>
 
                     <View style={styles.heroDetails}>
-                        <Text style={styles.userName} numberOfLines={2}>{userData.name}</Text>
+                        {loading ? (
+                            <ActivityIndicator color={colors.primary} />
+                        ) : (
+                            <>
+                                <Text style={styles.userName} numberOfLines={2}>{displayName}</Text>
 
-                        <View style={styles.ratingRow}>
-                            <Ionicons name="star" size={16} color={colors.rating || colors.primary} />
-                            <Text style={styles.ratingText}>{userData.rating}</Text>
-                            <Text style={styles.ratingCount}>({userData.reviews} {t('profile', 'reviews').toLowerCase()})</Text>
-                        </View>
+                                <View style={styles.ratingRow}>
+                                    <Ionicons name="star" size={16} color={colors.rating || colors.primary} />
+                                    <Text style={styles.ratingText}>
+                                        {ratingCount === 0 ? '—' : rating.toFixed(1)}
+                                    </Text>
+                                    <Text style={styles.ratingCount}>
+                                        ({ratingCount} {t('profile', 'reviews').toLowerCase()})
+                                    </Text>
+                                </View>
 
-                        <View style={styles.verifiedBadge}>
-                            <Ionicons name="checkmark-circle-outline" size={14} color={colors.success} />
-                            <Text style={styles.verifiedText}>{t('profile', 'verifiedMember')}</Text>
-                        </View>
+                                <View style={styles.verifiedBadge}>
+                                    <Ionicons name="checkmark-circle-outline" size={14} color={colors.success} />
+                                    <Text style={styles.verifiedText}>{t('profile', 'verifiedMember')}</Text>
+                                </View>
+                            </>
+                        )}
                     </View>
                 </View>
 
                 {/* 2. STATS ROW */}
                 <View style={styles.statsRowContainer}>
                     <View style={styles.statBox}>
-                        <Text style={styles.statValue}>{userData.rentals}</Text>
-                        <Text style={styles.statLabel}>{t('profile', 'rentals')}</Text>
+                        <Text style={styles.statValue}>{favouriteCount}</Text>
+                        <Text style={styles.statLabel}>{t('profile', 'savedItems')}</Text>
                     </View>
 
                     <View style={styles.statDivider} />
 
                     <View style={styles.statBox}>
-                        <Text style={styles.statValue}>{userData.responseRate}%</Text>
-                        <Text style={styles.statLabel}>{t('profile', 'response')}</Text>
-                    </View>
-
-                    <View style={styles.statDivider} />
-
-                    <View style={styles.statBox}>
-                        <Text style={styles.statValue}>{userData.reviews}</Text>
+                        <Text style={styles.statValue}>
+                            {ratingCount === 0 ? '—' : `${rating.toFixed(1)}★`}
+                        </Text>
                         <Text style={styles.statLabel}>{t('profile', 'reviews')}</Text>
+                    </View>
+
+                    <View style={styles.statDivider} />
+
+                    <View style={styles.statBox}>
+                        <Text style={styles.statValue}>{ratingCount}</Text>
+                        <Text style={styles.statLabel}>{t('profile', 'rentals')}</Text>
                     </View>
                 </View>
 
-                {/* 3. POSTAVKE  */}
+                {/* 3. ACCOUNT SETTINGS */}
                 <View style={styles.menuSection}>
                     <Text style={styles.sectionTitle}>{t('profile', 'accountSettings')}</Text>
                     <View style={styles.menuGroup}>
@@ -159,7 +191,7 @@ export default function ProfileScreen() {
                     </View>
                 </View>
 
-                {/* 4. SIGN OUT  */}
+                {/* 4. SIGN OUT */}
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
                     <Ionicons name="log-out-outline" size={18} color={colors.danger} />
                     <Text style={styles.logoutText}>{t('profile', 'signOut')}</Text>
@@ -186,13 +218,15 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         paddingBottom: 32,
         gap: 20,
     },
-    bigProfileImage: {
-        width: 146,
-        height: 146,
-        borderRadius: 73,
+    avatarPlaceholder: {
+        width: 106,
+        height: 106,
+        borderRadius: 53,
         borderWidth: 0.5,
         borderColor: colors.border,
         backgroundColor: colors.surface || colors.background,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     heroDetails: {
         flex: 1,
