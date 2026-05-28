@@ -10,6 +10,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
 import { getMapMarkers, resolveMarkerCoordinates, MapMarker } from '@/src/api/itemsApi';
+import { useAuth } from '@/src/context/authContext';
 import { useRouter } from 'expo-router';
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '');
@@ -48,6 +49,7 @@ const getCategoryColor = (category: string, fallback: string): string => {
 
 export default function MapScreen() {
     const { t } = useLanguage();
+    const { user } = useAuth();
     const router = useRouter();
     const cameraRef = useRef<Camera>(null);
 
@@ -70,7 +72,7 @@ export default function MapScreen() {
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
-    // ── Load markers whenever the active category changes ────────────────────
+    //Load markers whenever the active category changes
 
     const loadMarkers = useCallback(async (category: string | null) => {
         setMarkersLoading(true);
@@ -83,7 +85,6 @@ export default function MapScreen() {
             return;
         }
 
-        // Geocode the plain-text locations to lat/lon
         const resolved = await resolveMarkerCoordinates(result.data);
         setMarkers(resolved);
         setMarkersLoading(false);
@@ -93,7 +94,6 @@ export default function MapScreen() {
         loadMarkers(activeCategory);
     }, [activeCategory, loadMarkers]);
 
-    // ── Search bar logic (unchanged from original) ────────────────────────────
 
     const performSearch = async () => {
         if (!searchText.trim()) return;
@@ -137,13 +137,10 @@ export default function MapScreen() {
         setSearchMarker(null);
     };
 
-    // ── Category filter ───────────────────────────────────────────────────────
 
     const handleCategorySelect = (categoryName: string) => {
         setActiveCategory((prev) => (prev === categoryName ? null : categoryName));
     };
-
-    // ── Render ────────────────────────────────────────────────────────────────
 
     return (
         <View style={styles.container}>
@@ -253,6 +250,20 @@ export default function MapScreen() {
                             <Text style={styles.calloutPrice}>
                                 €{Number(selectedMarker.price).toFixed(2)} / day
                             </Text>
+                            <View style={styles.calloutPoster}>
+                                <Ionicons name="person-circle-outline" size={13} color={colors.textMuted} />
+                                <Text style={styles.calloutPosterName} numberOfLines={1}>
+                                    {selectedMarker.userName ?? '—'}
+                                </Text>
+                                {(selectedMarker.userRating ?? 0) > 0 && (
+                                    <>
+                                        <Ionicons name="star" size={11} color={colors.rating || '#F59E0B'} />
+                                        <Text style={styles.calloutPosterRating}>
+                                            {selectedMarker.userRating!.toFixed(1)}
+                                        </Text>
+                                    </>
+                                )}
+                            </View>
                         </View>
 
                         <Ionicons
@@ -354,8 +365,6 @@ export default function MapScreen() {
     );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 const makeStyles = (colors: typeof Colors.light) =>
     StyleSheet.create({
         container: {
@@ -367,7 +376,7 @@ const makeStyles = (colors: typeof Colors.light) =>
             flex: 1,
         },
 
-        // ── Search pin (existing style, renamed) ──────────────────────────────
+        // ── Search pin  ───────────────────────────────────────────────────────────
         searchPin: {
             width: 32,
             height: 32,
@@ -475,6 +484,23 @@ const makeStyles = (colors: typeof Colors.light) =>
             fontWeight: '600',
             color: colors.primary,
         },
+        calloutPoster: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginTop: 4,
+            gap: 3,
+        },
+        calloutPosterName: {
+            fontSize: 11,
+            color: colors.textMuted,
+            fontWeight: '500',
+            flex: 1,
+        },
+        calloutPosterRating: {
+            fontSize: 11,
+            color: colors.textMuted,
+            fontWeight: '600',
+        },
         calloutChevron: {
             marginLeft: 8,
         },
@@ -534,7 +560,7 @@ const makeStyles = (colors: typeof Colors.light) =>
             opacity: 0.6,
         },
 
-        // ── Category chips (unchanged layout, colour logic moved inline) ──────
+        // ── Category chips ──────────────────────────────────────────────────────────────────────────────────────────────────────
         categoryContainer: {
             position: 'absolute',
             top: 120,

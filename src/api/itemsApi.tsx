@@ -76,6 +76,10 @@ export type MapMarker = {
     thumbnailUrl: string | null;
     isAvailable: boolean;
 
+    userId?: number;
+    userName?: string;
+    userRating?: number;
+
     latitude?: number;
     longitude?: number;
 };
@@ -223,6 +227,7 @@ export type UserProfile = {
     rating: number;
     ratingCount: number;
     favouriteCount: number;
+    listingCount: number;
 };
 
 export const getMyProfile = async (): Promise<ApiResult<UserProfile>> => {

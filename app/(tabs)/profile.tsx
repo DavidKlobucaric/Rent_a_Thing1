@@ -66,8 +66,6 @@ export default function ProfileScreen() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Re-fetch every time the profile tab comes into focus
-    // so saved-items count and rating stay up to date
     useFocusEffect(
         useCallback(() => {
             let active = true;
@@ -92,6 +90,7 @@ export default function ProfileScreen() {
     const rating = profile?.rating ?? 0;
     const ratingCount = profile?.ratingCount ?? 0;
     const favouriteCount = profile?.favouriteCount ?? 0;
+    const listingCount = profile?.listingCount ?? 0;
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -155,7 +154,7 @@ export default function ProfileScreen() {
                     <View style={styles.statDivider} />
 
                     <View style={styles.statBox}>
-                        <Text style={styles.statValue}>{ratingCount}</Text>
+                        <Text style={styles.statValue}>{listingCount}</Text>
                         <Text style={styles.statLabel}>{t('profile', 'rentals')}</Text>
                     </View>
                 </View>
