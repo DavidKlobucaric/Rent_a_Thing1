@@ -1,25 +1,19 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    StatusBar,
-    ActivityIndicator,
+    View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar,
 } from 'react-native';
-
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-
+import  ShimmerPlaceholder  from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/src/context/authContext';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
 import { getMyProfile, UserProfile } from '@/src/api/itemsApi';
-import { useCallback } from 'react';
+import * as Haptics from 'expo-haptics';
 
 type MenuItemProps = {
     iconName: React.ComponentProps<typeof Ionicons>['name'];
@@ -30,11 +24,21 @@ type MenuItemProps = {
     showSeparator?: boolean;
 };
 
-const MenuItem = ({ iconName, title, subtitle, onPress, colors, showSeparator = true }: MenuItemProps) => {
+// ✅ Memoizirana MenuItem komponenta - ne re-rendera se nepotrebno
+const MenuItem = React.memo(({ iconName, title, subtitle, onPress, colors, showSeparator = true }: MenuItemProps) => {
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
+    const handlePress = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
+    }, [onPress]);
+
     return (
-        <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
+        <TouchableOpacity
+            style={styles.menuItem}
+            onPress={handlePress}
+            activeOpacity={0.7}
+        >
             <View style={styles.menuLeft}>
                 <View style={styles.iconBox}>
                     <Ionicons name={iconName} size={20} color={colors.primary} />
@@ -47,21 +51,28 @@ const MenuItem = ({ iconName, title, subtitle, onPress, colors, showSeparator = 
             <View style={styles.menuRightSide}>
                 <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </View>
-
             {showSeparator && <View style={styles.menuSeparator} />}
         </TouchableOpacity>
     );
-};
+});
 
 export default function ProfileScreen() {
     const { user, logout } = useAuth();
     const router = useRouter();
     const { t } = useLanguage();
-
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const isDark = scheme === 'dark';
-    const styles = useMemo(() => makeStyles(colors), [colors]);
+
+    // ✅ Stabilan styles - ovisi o scheme (primitive), ne o colors objektu
+    const styles = useMemo(() => makeStyles(colors), [scheme]);
+
+    // ✅ Shimmer boje ovisno o temi
+    const shimmerColors = useMemo(() =>
+            scheme === 'dark'
+                ? ['#2A2A2A', '#3A3A3A', '#2A2A2A']
+                : ['#E0E0E0', '#F5F5F5', '#E0E0E0'],
+        [scheme]);
 
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -81,10 +92,17 @@ export default function ProfileScreen() {
         }, [])
     );
 
-    const handleLogout = async () => {
+    // ✅ Memoiziran handleLogout
+    const handleLogout = useCallback(async () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         await logout();
         router.replace('/');
-    };
+    }, [logout, router]);
+
+    // ✅ Memoizirani router handleri za MenuItem
+    const handleSavedItemsPress = useCallback(() => router.push('/saved-items'), [router]);
+    const handleSettingsPress = useCallback(() => router.push('/settings'), [router]);
+    const handleSupportPress = useCallback(() => router.push('/support'), [router]);
 
     const displayName = profile?.username ?? user?.username ?? '—';
     const rating = profile?.rating ?? 0;
@@ -92,74 +110,177 @@ export default function ProfileScreen() {
     const favouriteCount = profile?.favouriteCount ?? 0;
     const listingCount = profile?.listingCount ?? 0;
 
+    // ═══════════════════════════════════════════════════════════════
+    // ✨ SHIMMER LOADING STATE - premium UX
+    // ═══════════════════════════════════════════════════════════════
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+                <StatusBar
+                    barStyle={isDark ? 'light-content' : 'dark-content'}
+                    backgroundColor={colors.background}
+                />
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                    {/* Hero Header Skeleton */}
+                    <View style={styles.heroHeader}>
+                        <ShimmerPlaceholder
+                            LinearGradient={LinearGradient}
+                            style={styles.avatarPlaceholder}
+                            shimmerColors={shimmerColors}
+                        />
+                        <View style={styles.heroDetails}>
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ width: '70%', height: 28, borderRadius: 8, marginBottom: 8 }}
+                                shimmerColors={shimmerColors}
+                            />
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ width: '50%', height: 16, borderRadius: 6, marginBottom: 6 }}
+                                shimmerColors={shimmerColors}
+                            />
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ width: '40%', height: 20, borderRadius: 10 }}
+                                shimmerColors={shimmerColors}
+                            />
+                        </View>
+                    </View>
+
+                    {/* Stats Row Skeleton */}
+                    <View style={styles.statsRowContainer}>
+                        <View style={styles.statBox}>
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ width: 40, height: 22, borderRadius: 6, marginBottom: 4 }}
+                                shimmerColors={shimmerColors}
+                            />
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ width: 60, height: 12, borderRadius: 4 }}
+                                shimmerColors={shimmerColors}
+                            />
+                        </View>
+                        <View style={styles.statDivider} />
+                        <View style={styles.statBox}>
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ width: 40, height: 22, borderRadius: 6, marginBottom: 4 }}
+                                shimmerColors={shimmerColors}
+                            />
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ width: 60, height: 12, borderRadius: 4 }}
+                                shimmerColors={shimmerColors}
+                            />
+                        </View>
+                        <View style={styles.statDivider} />
+                        <View style={styles.statBox}>
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ width: 40, height: 22, borderRadius: 6, marginBottom: 4 }}
+                                shimmerColors={shimmerColors}
+                            />
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ width: 60, height: 12, borderRadius: 4 }}
+                                shimmerColors={shimmerColors}
+                            />
+                        </View>
+                    </View>
+
+                    {/* Menu Items Skeleton */}
+                    <View style={styles.menuSection}>
+                        <ShimmerPlaceholder
+                            LinearGradient={LinearGradient}
+                            style={{ width: '30%', height: 14, borderRadius: 4, marginBottom: 12 }}
+                            shimmerColors={shimmerColors}
+                        />
+                        <View style={styles.menuGroup}>
+                            {[1, 2, 3].map((i) => (
+                                <View key={i} style={styles.menuItem}>
+                                    <View style={styles.menuLeft}>
+                                        <ShimmerPlaceholder
+                                            LinearGradient={LinearGradient}
+                                            style={styles.iconBox}
+                                            shimmerColors={shimmerColors}
+                                        />
+                                        <View style={{ flex: 1 }}>
+                                            <ShimmerPlaceholder
+                                                LinearGradient={LinearGradient}
+                                                style={{ width: '60%', height: 16, borderRadius: 4, marginBottom: 4 }}
+                                                shimmerColors={shimmerColors}
+                                            />
+                                            <ShimmerPlaceholder
+                                                LinearGradient={LinearGradient}
+                                                style={{ width: '40%', height: 12, borderRadius: 4 }}
+                                                shimmerColors={shimmerColors}
+                                            />
+                                        </View>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
             <StatusBar
                 barStyle={isDark ? 'light-content' : 'dark-content'}
                 backgroundColor={colors.background}
             />
-
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
-                {/* 1. HERO HEADER */}
+                {/* HERO HEADER */}
                 <View style={styles.heroHeader}>
                     <View style={styles.avatarPlaceholder}>
                         <Ionicons name="person" size={56} color={colors.textMuted} />
                     </View>
-
                     <View style={styles.heroDetails}>
-                        {loading ? (
-                            <ActivityIndicator color={colors.primary} />
-                        ) : (
-                            <>
-                                <Text style={styles.userName} numberOfLines={2}>{displayName}</Text>
-
-                                <View style={styles.ratingRow}>
-                                    <Ionicons name="star" size={16} color={colors.rating || colors.primary} />
-                                    <Text style={styles.ratingText}>
-                                        {ratingCount === 0 ? '—' : rating.toFixed(1)}
-                                    </Text>
-                                    <Text style={styles.ratingCount}>
-                                        ({ratingCount} {t('profile', 'reviews').toLowerCase()})
-                                    </Text>
-                                </View>
-
-                                <View style={styles.verifiedBadge}>
-                                    <Ionicons name="checkmark-circle-outline" size={14} color={colors.success} />
-                                    <Text style={styles.verifiedText}>{t('profile', 'verifiedMember')}</Text>
-                                </View>
-                            </>
-                        )}
+                        <Text style={styles.userName} numberOfLines={2}>{displayName}</Text>
+                        <View style={styles.ratingRow}>
+                            <Ionicons name="star" size={16} color={colors.rating || colors.primary} />
+                            <Text style={styles.ratingText}>
+                                {ratingCount === 0 ? '—' : rating.toFixed(1)}
+                            </Text>
+                            <Text style={styles.ratingCount}>
+                                ({ratingCount} {t('profile', 'reviews').toLowerCase()})
+                            </Text>
+                        </View>
+                        <View style={styles.verifiedBadge}>
+                            <Ionicons name="checkmark-circle-outline" size={14} color={colors.success} />
+                            <Text style={styles.verifiedText}>{t('profile', 'verifiedMember')}</Text>
+                        </View>
                     </View>
                 </View>
 
-                {/* 2. STATS ROW */}
+                {/* STATS ROW */}
                 <View style={styles.statsRowContainer}>
                     <View style={styles.statBox}>
                         <Text style={styles.statValue}>{favouriteCount}</Text>
                         <Text style={styles.statLabel}>{t('profile', 'savedItems')}</Text>
                     </View>
-
                     <View style={styles.statDivider} />
-
                     <View style={styles.statBox}>
                         <Text style={styles.statValue}>
                             {ratingCount === 0 ? '—' : `${rating.toFixed(1)}★`}
                         </Text>
                         <Text style={styles.statLabel}>{t('profile', 'reviews')}</Text>
                     </View>
-
                     <View style={styles.statDivider} />
-
                     <View style={styles.statBox}>
                         <Text style={styles.statValue}>{listingCount}</Text>
                         <Text style={styles.statLabel}>{t('profile', 'rentals')}</Text>
                     </View>
                 </View>
 
-                {/* 3. ACCOUNT SETTINGS */}
+                {/* ACCOUNT SETTINGS */}
                 <View style={styles.menuSection}>
                     <Text style={styles.sectionTitle}>{t('profile', 'accountSettings')}</Text>
                     <View style={styles.menuGroup}>
@@ -168,30 +289,32 @@ export default function ProfileScreen() {
                             iconName="heart-outline"
                             title={t('profile', 'savedItems')}
                             subtitle={t('profile', 'savedItemsSub')}
-                            onPress={() => router.push('/saved-items')}
+                            onPress={handleSavedItemsPress}
                         />
-
                         <MenuItem
                             colors={colors}
                             iconName="settings-outline"
                             title={t('profile', 'settings')}
                             subtitle={t('profile', 'settingsSub')}
-                            onPress={() => router.push('/settings')}
+                            onPress={handleSettingsPress}
                         />
-
                         <MenuItem
                             colors={colors}
                             iconName="help-circle-outline"
                             title={t('profile', 'support')}
                             subtitle={t('profile', 'supportSub')}
-                            onPress={() => router.push('/support')}
+                            onPress={handleSupportPress}
                             showSeparator={false}
                         />
                     </View>
                 </View>
 
-                {/* 4. SIGN OUT */}
-                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
+                {/* SIGN OUT */}
+                <TouchableOpacity
+                    style={styles.logoutButton}
+                    onPress={handleLogout}
+                    activeOpacity={0.7}
+                >
                     <Ionicons name="log-out-outline" size={18} color={colors.danger} />
                     <Text style={styles.logoutText}>{t('profile', 'signOut')}</Text>
                 </TouchableOpacity>
@@ -201,184 +324,32 @@ export default function ProfileScreen() {
 }
 
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-    },
-    scrollContent: {
-        flexGrow: 1,
-        paddingBottom: 40,
-        paddingHorizontal: 16,
-    },
-    heroHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingTop: 32,
-        paddingBottom: 32,
-        gap: 20,
-    },
-    avatarPlaceholder: {
-        width: 106,
-        height: 106,
-        borderRadius: 53,
-        borderWidth: 0.5,
-        borderColor: colors.border,
-        backgroundColor: colors.surface || colors.background,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    heroDetails: {
-        flex: 1,
-        gap: 6,
-    },
-    userName: {
-        fontSize: 28,
-        fontWeight: '900',
-        color: colors.text,
-        letterSpacing: -0.8,
-        lineHeight: 34,
-    },
-    ratingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 5,
-    },
-    ratingText: {
-        fontSize: 16,
-        fontWeight: '800',
-        color: colors.text,
-    },
-    ratingCount: {
-        fontSize: 13,
-        color: colors.textMuted,
-        fontWeight: '500',
-    },
-    verifiedBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: (colors.success || '#000') + '15',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 10,
-        alignSelf: 'flex-start',
-        gap: 5,
-        marginTop: 2,
-    },
-    verifiedText: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: colors.success,
-    },
-    statsRowContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.surface || colors.background,
-        paddingVertical: 18,
-        borderRadius: 20,
-        borderWidth: 0.5,
-        borderColor: colors.border,
-        marginBottom: 40,
-    },
-    statBox: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    statValue: {
-        fontSize: 22,
-        fontWeight: '800',
-        color: colors.text,
-        letterSpacing: -0.3,
-    },
-    statLabel: {
-        fontSize: 11,
-        color: colors.textMuted,
-        fontWeight: '600',
-        marginTop: 2,
-    },
-    statDivider: {
-        width: 0.5,
-        height: 24,
-        backgroundColor: colors.border,
-    },
-    menuSection: {
-        marginBottom: 40,
-    },
-    sectionTitle: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: colors.textMuted,
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-        marginBottom: 12,
-        paddingLeft: 4,
-    },
-    menuGroup: {
-        backgroundColor: colors.card || colors.background,
-        borderRadius: 20,
-        borderWidth: 0.5,
-        borderColor: colors.border,
-        overflow: 'hidden',
-    },
-    menuItem: {
-        paddingHorizontal: 16,
-        paddingVertical: 18,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'relative',
-    },
-    menuLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    iconBox: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: colors.primary + '10',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 14,
-    },
-    menuTitle: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: colors.text,
-        marginBottom: 2,
-    },
-    menuSubtitle: {
-        fontSize: 13,
-        color: colors.textMuted,
-    },
-    menuRightSide: {
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    menuSeparator: {
-        position: 'absolute',
-        bottom: 0,
-        left: 70,
-        right: 16,
-        height: 0.5,
-        backgroundColor: colors.border,
-    },
-    logoutButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: colors.logoutBg || colors.background,
-        borderWidth: 0.5,
-        borderColor: colors.logoutBorder || colors.border,
-        paddingVertical: 16,
-        borderRadius: 28,
-        gap: 8,
-        marginTop: 'auto',
-    },
-    logoutText: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: colors.danger,
-    },
+    container: { flex: 1, backgroundColor: colors.background },
+    scrollContent: { flexGrow: 1, paddingBottom: 40, paddingHorizontal: 16 },
+    heroHeader: { flexDirection: 'row', alignItems: 'center', paddingTop: 32, paddingBottom: 32, gap: 20 },
+    avatarPlaceholder: { width: 106, height: 106, borderRadius: 53, borderWidth: 0.5, borderColor: colors.border, backgroundColor: colors.surface || colors.background, justifyContent: 'center', alignItems: 'center' },
+    heroDetails: { flex: 1, gap: 6 },
+    userName: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -0.8, lineHeight: 34 },
+    ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    ratingText: { fontSize: 16, fontWeight: '800', color: colors.text },
+    ratingCount: { fontSize: 13, color: colors.textMuted, fontWeight: '500' },
+    verifiedBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: (colors.success || '#000') + '15', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, alignSelf: 'flex-start', gap: 5, marginTop: 2 },
+    verifiedText: { fontSize: 12, fontWeight: '700', color: colors.success },
+    statsRowContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface || colors.background, paddingVertical: 18, borderRadius: 20, borderWidth: 0.5, borderColor: colors.border, marginBottom: 40 },
+    statBox: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    statValue: { fontSize: 22, fontWeight: '800', color: colors.text, letterSpacing: -0.3 },
+    statLabel: { fontSize: 11, color: colors.textMuted, fontWeight: '600', marginTop: 2 },
+    statDivider: { width: 0.5, height: 24, backgroundColor: colors.border },
+    menuSection: { marginBottom: 40 },
+    sectionTitle: { fontSize: 12, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, paddingLeft: 4 },
+    menuGroup: { backgroundColor: colors.card || colors.background, borderRadius: 20, borderWidth: 0.5, borderColor: colors.border, overflow: 'hidden' },
+    menuItem: { paddingHorizontal: 16, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', position: 'relative' },
+    menuLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+    iconBox: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.primary + '10', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+    menuTitle: { fontSize: 15, fontWeight: '600', color: colors.text, marginBottom: 2 },
+    menuSubtitle: { fontSize: 13, color: colors.textMuted },
+    menuRightSide: { justifyContent: 'center', alignItems: 'center' },
+    menuSeparator: { position: 'absolute', bottom: 0, left: 70, right: 16, height: 0.5, backgroundColor: colors.border },
+    logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.logoutBg || colors.background, borderWidth: 0.5, borderColor: colors.logoutBorder || colors.border, paddingVertical: 16, borderRadius: 28, gap: 8, marginTop: 'auto' },
+    logoutText: { fontSize: 15, fontWeight: '600', color: colors.danger },
 });

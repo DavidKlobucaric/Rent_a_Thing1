@@ -9,12 +9,26 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Rent-a-Thing needs camera access to take photos of your items for listing.",
+        "NSPhotoLibraryUsageDescription": "Rent-a-Thing needs photo library access to upload images of your items.",
+        "NSLocationWhenInUseUsageDescription": "Rent-a-Thing uses your location to show nearby rentals on the map.",
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      }
     },
     "android": {
       "permissions": [
         "INTERNET",
-        "ACCESS_NETWORK_STATE"
+        "ACCESS_NETWORK_STATE",
+        "VIBRATE",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -27,11 +41,7 @@
       "package": "com.anonymous.Rent_a_Thing",
       "config": {
         "usesCleartextTraffic": true
-      },
-
-
-
-
+      }
     },
     "web": {
       "output": "static",
@@ -39,6 +49,13 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Rent-a-Thing needs access to your photos to upload item images.",
+          "cameraPermission": "Rent-a-Thing needs camera access to take photos of your items."
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -55,7 +72,6 @@
         "@rnmapbox/maps",
         {
           "RNMapboxMapsVersion": "11.20.1"
-
         }
       ]
     ],

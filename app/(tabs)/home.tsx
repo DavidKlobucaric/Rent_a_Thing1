@@ -2,16 +2,25 @@ import { Image } from 'expo-image';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     StyleSheet, Text, View, TextInput,
-    ScrollView, TouchableOpacity, FlatList, ActivityIndicator,
+    ScrollView, TouchableOpacity, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Fontisto, Ionicons } from '@expo/vector-icons';
+
+
+import { LinearGradient } from 'expo-linear-gradient';
+
 import { searchListings, getRecommendedListings, addFavourite, removeFavourite, getFavourites } from '@/src/api/itemsApi';
 import { useAuth } from '@/src/context/authContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { router, useFocusEffect } from 'expo-router';
 import { useLanguage } from '@/src/context/languageContext';
+import * as Haptics from 'expo-haptics';
+import ShimmerPlaceholder from "react-native-shimmer-placeholder";
+
+
+
 
 type Category = {
     id: string;
@@ -50,20 +59,19 @@ export default function HomeScreen() {
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
+    const shimmerColors = scheme === 'dark'
+        ? ['#2A2A2A', '#3A3A3A', '#2A2A2A']
+        : ['#E0E0E0', '#F5F5F5', '#E0E0E0'];
+
     const [searchText, setSearchText] = useState('');
     const [activeCategory, setActiveCategory] = useState('tools');
-
-    // favouriteIds is the source of truth — a Set of listingIds the user has saved
     const [favouriteIds, setFavouriteIds] = useState<Set<number>>(new Set());
-
     const [searchResults, setSearchResults] = useState<Listing[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchError, setSearchError] = useState('');
-
     const [recommended, setRecommended] = useState<Listing[]>([]);
     const [recLoading, setRecLoading] = useState(true);
 
-    // Load recommended listings once on mount
     useEffect(() => {
         (async () => {
             setRecLoading(true);
@@ -75,8 +83,6 @@ export default function HomeScreen() {
         })();
     }, [token]);
 
-    // Re-sync favourite IDs from backend every time this screen comes into focus
-    // This keeps the hearts in sync after visiting item detail or saved-items
     useFocusEffect(
         useCallback(() => {
             (async () => {
@@ -89,7 +95,6 @@ export default function HomeScreen() {
         }, [])
     );
 
-    // Search debounce
     useEffect(() => {
         const query = searchText.trim() || activeCategory;
         const timeout = setTimeout(async () => {
@@ -116,24 +121,19 @@ export default function HomeScreen() {
 
     const toggleFavourite = async (id: number) => {
         const isCurrentlyFav = favouriteIds.has(id);
-
-        // Optimistic update
+        if (isCurrentlyFav) {
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        } else {
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }
         setFavouriteIds(prev => {
             const next = new Set(prev);
-            if (isCurrentlyFav) {
-                next.delete(id);
-            } else {
-                next.add(id);
-            }
+            if (isCurrentlyFav) next.delete(id);
+            else next.add(id);
             return next;
         });
-
-        // Persist to backend
-        if (isCurrentlyFav) {
-            await removeFavourite(id);
-        } else {
-            await addFavourite(id);
-        }
+        if (isCurrentlyFav) await removeFavourite(id);
+        else await addFavourite(id);
     };
 
     const getFirstImage = (imageUrls: string[]) => {
@@ -141,10 +141,40 @@ export default function HomeScreen() {
         return imageUrls[0] || PLACEHOLDER_IMAGE;
     };
 
+    const renderSearchItem = useCallback(({ item }: { item: Listing }) => {
+        const itemStyles = makeStyles(colors);
+        return (
+            <TouchableOpacity
+                style={itemStyles.itemCard}
+                onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push({
+                        pathname: '/item',
+                        params: { listingId: item.listingId.toString() }
+                    });
+                }}
+            >
+                <Image
+                    source={{ uri: getFirstImage(item.imageUrls) }}
+                    style={itemStyles.itemImage}
+                    cachePolicy="memory-disk"
+                    transition={200}
+                />
+                <Text style={itemStyles.itemName} numberOfLines={1}>{item.name}</Text>
+                <Text style={itemStyles.locationText} numberOfLines={1}>📍 {item.location}</Text>
+                <View style={{ flexDirection: 'row' }}>
+                    <Text style={itemStyles.price}>${item.price}</Text>
+                    <Text style={itemStyles.perDay}>{t('home', 'perDay')}</Text>
+                </View>
+            </TouchableOpacity>
+        );
+    }, [router, t, colors]);
+
+    const keyExtractor = useCallback((item: Listing) => item.listingId.toString(), []);
+
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
             <ScrollView showsVerticalScrollIndicator={false}>
-
                 {/* SEARCH BAR */}
                 <View style={styles.searchBar}>
                     <Fontisto name="search" style={[styles.searchIcon, { color: colors.primarySecondary }]} />
@@ -156,7 +186,10 @@ export default function HomeScreen() {
                         onChangeText={setSearchText}
                     />
                     {searchText.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearchText('')}>
+                        <TouchableOpacity onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setSearchText('');
+                        }}>
                             <Text style={[styles.clearBtn, { color: colors.textMuted }]}>✕</Text>
                         </TouchableOpacity>
                     )}
@@ -175,7 +208,11 @@ export default function HomeScreen() {
                             <TouchableOpacity
                                 key={cat.id}
                                 style={styles.tab}
-                                onPress={() => { setActiveCategory(cat.id); setSearchText(''); }}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setActiveCategory(cat.id);
+                                    setSearchText('');
+                                }}
                             >
                                 <View style={[styles.iconCircle, isActive && styles.iconCircleActive]}>
                                     <Ionicons
@@ -201,7 +238,24 @@ export default function HomeScreen() {
                 >
                     <View style={styles.listContainer}>
                         {searchLoading ? (
-                            <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                {[1, 2, 3].map((i) => (
+                                    <ShimmerPlaceholder
+                                        key={i}
+                                        LinearGradient={LinearGradient}
+                                        style={{
+                                            width: 180,
+                                            height: 220,
+                                            borderRadius: 14,
+                                            marginTop: 8,
+                                            marginBottom: 8,
+                                            marginRight: 12,
+                                            marginLeft: 10,
+                                        }}
+                                        shimmerColors={shimmerColors}
+                                    />
+                                ))}
+                            </ScrollView>
                         ) : searchError ? (
                             <Text style={styles.emptyText}>{searchError}</Text>
                         ) : searchResults.length === 0 ? (
@@ -213,31 +267,15 @@ export default function HomeScreen() {
                         ) : (
                             <FlatList
                                 data={searchResults}
-                                keyExtractor={(item) => item.listingId.toString()}
+                                keyExtractor={keyExtractor}
                                 scrollEnabled={false}
                                 horizontal={true}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ paddingHorizontal: 10 }}
-                                renderItem={({ item }) => (
-                                    <TouchableOpacity
-                                        style={styles.itemCard}
-                                        onPress={() => router.push({
-                                            pathname: '/item',
-                                            params: { listingId: item.listingId.toString() }
-                                        })}
-                                    >
-                                        <Image
-                                            source={{ uri: getFirstImage(item.imageUrls) }}
-                                            style={styles.itemImage}
-                                        />
-                                        <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                                        <Text style={styles.locationText} numberOfLines={1}>📍 {item.location}</Text>
-                                        <View style={{ flexDirection: 'row' }}>
-                                            <Text style={styles.price}>${item.price}</Text>
-                                            <Text style={styles.perDay}>{t('home', 'perDay')}</Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                )}
+                                renderItem={renderSearchItem}
+                                removeClippedSubviews={true}
+                                maxToRenderPerBatch={5}
+                                windowSize={5}
                             />
                         )}
                     </View>
@@ -245,9 +283,17 @@ export default function HomeScreen() {
 
                 {/* RECOMMENDED */}
                 <Text style={styles.sectionTitle}>{t('home', 'recommended')}</Text>
-
                 {recLoading ? (
-                    <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />
+                    <View style={{ paddingHorizontal: 20, gap: 12 }}>
+                        {[1, 2, 3].map((i) => (
+                            <ShimmerPlaceholder
+                                key={i}
+                                LinearGradient={LinearGradient}
+                                style={{ height: 96, borderRadius: 16 }}
+                                shimmerColors={shimmerColors}
+                            />
+                        ))}
+                    </View>
                 ) : recommended.length === 0 ? (
                     <Text style={[styles.emptyText, { marginHorizontal: 20 }]}>
                         {t('home', 'noRecommendations')}
@@ -257,14 +303,19 @@ export default function HomeScreen() {
                         <TouchableOpacity
                             key={item.listingId}
                             style={styles.card}
-                            onPress={() => router.push({
-                                pathname: '/item',
-                                params: { listingId: item.listingId.toString() }
-                            })}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                router.push({
+                                    pathname: '/item',
+                                    params: { listingId: item.listingId.toString() }
+                                });
+                            }}
                         >
                             <Image
                                 source={{ uri: getFirstImage(item.imageUrls) }}
                                 style={styles.thumbnail}
+                                cachePolicy="memory-disk"
+                                transition={200}
                             />
                             <View style={styles.cardContent}>
                                 <Text style={styles.itemTitle} numberOfLines={1}>{item.name}</Text>
@@ -292,173 +343,36 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                     ))
                 )}
-
             </ScrollView>
         </SafeAreaView>
     );
 }
 
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-    },
-    searchBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginHorizontal: 12,
-        marginTop: 12,
-        marginBottom: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 6,
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 14,
-    },
-    searchIcon: {
-        fontSize: 18,
-        marginRight: 10,
-    },
-    searchInput: {
-        flex: 1,
-        height: 44,
-        fontSize: 15,
-        color: colors.text,
-    },
-    clearBtn: {
-        fontSize: 20,
-        fontWeight: '600',
-        padding: 4,
-    },
-    locationText: {
-        fontSize: 12,
-        color: colors.textMuted,
-        paddingTop: 2,
-    },
-    tabsContainer: {
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        gap: 8,
-    },
-    tab: {
-        alignItems: 'center',
-        minWidth: 60,
-        paddingHorizontal: 6,
-    },
-    iconCircle: {
-        width: 52,
-        height: 52,
-        borderRadius: 20,
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.borderLight,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    iconCircleActive: {
-        backgroundColor: colors.primary,
-        borderColor: colors.primary,
-    },
-    tabLabel: {
-        fontSize: 11,
-        paddingTop: 6,
-        color: colors.textMuted,
-        textAlign: 'center',
-        fontWeight: '500',
-        letterSpacing: 0.3,
-    },
-    tabLabelActive: {
-        color: colors.primary,
-        fontWeight: '600',
-    },
-    listContainer: {
-        marginTop: 4,
-        marginBottom: 8,
-    },
-    itemCard: {
-        backgroundColor: colors.card,
-        padding: 12,
-        borderRadius: 14,
-        marginTop: 8,
-        marginBottom: 8,
-        marginRight: 12,
-        marginLeft: 10,
-        borderWidth: 1,
-        borderColor: colors.border,
-        width: 180,
-    },
-    itemName: {
-        fontWeight: '600',
-        fontSize: 15,
-        paddingTop: 10,
-        color: colors.text,
-    },
-    emptyText: {
-        textAlign: 'center',
-        color: colors.textMuted,
-        paddingVertical: 24,
-        fontSize: 14,
-        marginHorizontal: 20,
-    },
-    sectionTitle: {
-        marginTop: 28,
-        marginLeft: 20,
-        marginBottom: 14,
-        fontSize: 17,
-        fontWeight: '600',
-        color: colors.text,
-        letterSpacing: -0.3,
-    },
-    card: {
-        flexDirection: 'row',
-        backgroundColor: colors.card,
-        marginHorizontal: 20,
-        marginVertical: 8,
-        padding: 16,
-        borderRadius: 16,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: colors.border,
-    },
-    thumbnail: {
-        width: 64,
-        height: 64,
-        borderRadius: 12,
-        backgroundColor: colors.border,
-    },
-    cardContent: {
-        flex: 1,
-        paddingHorizontal: 16,
-        gap: 4,
-    },
-    itemTitle: {
-        fontWeight: '600',
-        fontSize: 15,
-        color: colors.text,
-    },
-    distanceText: {
-        fontSize: 12,
-        color: colors.textMuted,
-    },
-    price: {
-        fontWeight: '600',
-        color: colors.primarySecondary,
-        fontSize: 15,
-    },
-    perDay: {
-        color: colors.textMuted,
-        marginLeft: 4,
-        fontSize: 13,
-    },
-    actions: {
-        alignItems: 'flex-end',
-        gap: 4,
-    },
-    itemImage: {
-        width: 160,
-        height: 160,
-        borderRadius: 12,
-        backgroundColor: colors.border,
-    },
+    container: { flex: 1, backgroundColor: colors.background },
+    searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 12, marginTop: 12, marginBottom: 8, paddingHorizontal: 16, paddingVertical: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 14 },
+    searchIcon: { fontSize: 18, marginRight: 10 },
+    searchInput: { flex: 1, height: 44, fontSize: 15, color: colors.text },
+    clearBtn: { fontSize: 20, fontWeight: '600', padding: 4 },
+    locationText: { fontSize: 12, color: colors.textMuted, paddingTop: 2 },
+    tabsContainer: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
+    tab: { alignItems: 'center', minWidth: 60, paddingHorizontal: 6 },
+    iconCircle: { width: 52, height: 52, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderLight, justifyContent: 'center', alignItems: 'center' },
+    iconCircleActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    tabLabel: { fontSize: 11, paddingTop: 6, color: colors.textMuted, textAlign: 'center', fontWeight: '500', letterSpacing: 0.3 },
+    tabLabelActive: { color: colors.primary, fontWeight: '600' },
+    listContainer: { marginTop: 4, marginBottom: 8 },
+    itemCard: { backgroundColor: colors.card, padding: 12, borderRadius: 14, marginTop: 8, marginBottom: 8, marginRight: 12, marginLeft: 10, borderWidth: 1, borderColor: colors.border, width: 180 },
+    itemName: { fontWeight: '600', fontSize: 15, paddingTop: 10, color: colors.text },
+    emptyText: { textAlign: 'center', color: colors.textMuted, paddingVertical: 24, fontSize: 14, marginHorizontal: 20 },
+    sectionTitle: { marginTop: 28, marginLeft: 20, marginBottom: 14, fontSize: 17, fontWeight: '600', color: colors.text, letterSpacing: -0.3 },
+    card: { flexDirection: 'row', backgroundColor: colors.card, marginHorizontal: 20, marginVertical: 8, padding: 16, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+    thumbnail: { width: 64, height: 64, borderRadius: 12, backgroundColor: colors.border },
+    cardContent: { flex: 1, paddingHorizontal: 16, gap: 4 },
+    itemTitle: { fontWeight: '600', fontSize: 15, color: colors.text },
+    distanceText: { fontSize: 12, color: colors.textMuted },
+    price: { fontWeight: '600', color: colors.primarySecondary, fontSize: 15 },
+    perDay: { color: colors.textMuted, marginLeft: 4, fontSize: 13 },
+    actions: { alignItems: 'flex-end', gap: 4 },
+    itemImage: { width: 160, height: 160, borderRadius: 12, backgroundColor: colors.border },
 });

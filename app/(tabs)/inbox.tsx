@@ -1,15 +1,17 @@
 import {
     View, Text, TextInput, TouchableOpacity,
-    StyleSheet, ScrollView, Image, Alert
+    StyleSheet, ScrollView, Alert
 } from 'react-native';
+import { Image } from 'expo-image'; // ✅ expo-image umjesto RN Image (brže, s cachingom)
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Fontisto, Ionicons } from "@expo/vector-icons";
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useCallback } from "react";
 import { router } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useLanguage } from '@/src/context/languageContext';
+import * as Haptics from 'expo-haptics';
 
 type Conversation = {
     id: number;
@@ -40,32 +42,39 @@ export default function Inbox() {
 
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
-    const styles = useMemo(() => makeStyles(colors), [colors]);
 
+    // ✅ Stabilan styles - ovisi o scheme (primitive), ne o colors objektu
+    const styles = useMemo(() => makeStyles(colors), [scheme]);
+
+    // ✅ useMemo za counts - ne računaj pri svakom renderu
     const unreadCount = useMemo(
         () => conversations.filter(c => c.isUnread && !c.isArchived).length,
         [conversations]
     );
-
     const archivedCount = useMemo(
         () => conversations.filter(c => c.isArchived).length,
         [conversations]
     );
 
-    const filteredConversations = conversations.filter((conv) => {
-        const matchesSearch =
-            conv.name.toLowerCase().includes(searchText.toLowerCase()) ||
-            conv.itemName.toLowerCase().includes(searchText.toLowerCase()) ||
-            conv.lastMessage.toLowerCase().includes(searchText.toLowerCase());
+    // ✅ KRITIČNO: useMemo za filteredConversations
+    // Inače se filter vrti na svakom scrollu ili renderu!
+    const filteredConversations = useMemo(() => {
+        const lowerSearch = searchText.toLowerCase();
+        return conversations.filter((conv) => {
+            const matchesSearch =
+                conv.name.toLowerCase().includes(lowerSearch) ||
+                conv.itemName.toLowerCase().includes(lowerSearch) ||
+                conv.lastMessage.toLowerCase().includes(lowerSearch);
+            if (activeCategory === 'Unread') return conv.isUnread && !conv.isArchived && matchesSearch;
+            if (activeCategory === 'Archived') return conv.isArchived && matchesSearch;
+            return !conv.isArchived && matchesSearch;
+        });
+    }, [conversations, searchText, activeCategory]);
 
-        if (activeCategory === 'Unread') return conv.isUnread && !conv.isArchived && matchesSearch;
-        if (activeCategory === 'Archived') return conv.isArchived && matchesSearch;
-        return !conv.isArchived && matchesSearch;
-    });
-
-    const openChat = (conv: Conversation) => {
+    // ✅ Memoizirani handleri - stabilne reference za child komponente
+    const openChat = useCallback((conv: Conversation) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         swipeableRefs.current[conv.id]?.close();
-
         setConversations(prev =>
             prev.map(c => c.id === conv.id ? { ...c, isUnread: false } : c)
         );
@@ -81,21 +90,24 @@ export default function Inbox() {
                 }),
             },
         });
-    };
+    }, []);
 
-    const archiveConversation = (id: number) => {
+    const archiveConversation = useCallback((id: number) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         setConversations(prev =>
             prev.map(c => c.id === id ? { ...c, isArchived: true, isUnread: false } : c)
         );
-    };
+    }, []);
 
-    const unarchiveConversation = (id: number) => {
+    const unarchiveConversation = useCallback((id: number) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         setConversations(prev =>
             prev.map(c => c.id === id ? { ...c, isArchived: false } : c)
         );
-    };
+    }, []);
 
-    const deleteConversation = (id: number) => {
+    const deleteConversation = useCallback((id: number) => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         Alert.alert(
             t('inbox', 'deleteConversation'),
             t('inbox', 'cannotUndo'),
@@ -105,14 +117,35 @@ export default function Inbox() {
                     text: t('common', 'delete'),
                     style: 'destructive',
                     onPress: () => {
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                         setConversations(prev => prev.filter(c => c.id !== id));
                     }
                 }
             ]
         );
-    };
+    }, [t]);
 
-    const renderRightActions = (conv: Conversation) => (
+    const clearSearch = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setSearchText('');
+    }, []);
+
+    const handleCategoryPress = useCallback((name: string) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setActiveCategory(name);
+    }, []);
+
+    // ✅ Memoiziran Swipeable handler
+    const handleSwipeableWillOpen = useCallback((convId: number) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Object.entries(swipeableRefs.current).forEach(([id, ref]) => {
+            if (Number(id) !== convId && ref) {
+                ref.close();
+            }
+        });
+    }, []);
+
+    const renderRightActions = useCallback((conv: Conversation) => (
         <View style={styles.swipeActions}>
             {!conv.isArchived ? (
                 <TouchableOpacity
@@ -145,9 +178,8 @@ export default function Inbox() {
                 <Ionicons name="trash-outline" size={22} color={colors.iconColorInverse} />
             </TouchableOpacity>
         </View>
-    );
+    ), [archiveConversation, unarchiveConversation, deleteConversation, colors, styles]);
 
-    // Prijevodi za filtere
     const filterLabels: Record<string, string> = {
         'All': t('inbox', 'all'),
         'Unread': t('inbox', 'unread'),
@@ -168,7 +200,7 @@ export default function Inbox() {
                         onChangeText={setSearchText}
                     />
                     {searchText.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearchText('')}>
+                        <TouchableOpacity onPress={clearSearch}>
                             <Ionicons name="close-circle" size={20} color={colors.textMuted} />
                         </TouchableOpacity>
                     )}
@@ -179,7 +211,6 @@ export default function Inbox() {
                     {(['All', 'Unread', 'Archived'] as string[]).map((name) => {
                         const isActive = activeCategory === name;
                         const count = name === 'Unread' ? unreadCount : name === 'Archived' ? archivedCount : 0;
-
                         return (
                             <TouchableOpacity
                                 key={name}
@@ -187,7 +218,7 @@ export default function Inbox() {
                                     styles.CategoryButton,
                                     isActive && styles.CategoryButtonActive
                                 ]}
-                                onPress={() => setActiveCategory(name)}
+                                onPress={() => handleCategoryPress(name)}
                             >
                                 <Text style={[
                                     styles.categoryText,
@@ -252,13 +283,7 @@ export default function Inbox() {
                                     friction={1.5}
                                     rightThreshold={40}
                                     overshootFriction={5}
-                                    onSwipeableWillOpen={() => {
-                                        Object.entries(swipeableRefs.current).forEach(([id, ref]) => {
-                                            if (Number(id) !== conv.id && ref) {
-                                                ref.close();
-                                            }
-                                        });
-                                    }}
+                                    onSwipeableWillOpen={() => handleSwipeableWillOpen(conv.id)}
                                 >
                                     <TouchableOpacity
                                         style={[
@@ -269,7 +294,13 @@ export default function Inbox() {
                                         onPress={() => openChat(conv)}
                                     >
                                         <View style={styles.avatarWrapper}>
-                                            <Image source={{ uri: conv.avatar }} style={styles.avatar} />
+                                            {/* ✅ expo-image s cachePolicy za instant učitavanje avatara */}
+                                            <Image
+                                                source={{ uri: conv.avatar }}
+                                                style={styles.avatar}
+                                                cachePolicy="memory-disk"
+                                                transition={200}
+                                            />
                                             {conv.isOnline && <View style={styles.onlineDot} />}
                                         </View>
                                         <View style={styles.convContent}>
@@ -320,232 +351,39 @@ export default function Inbox() {
 }
 
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-    },
-
-    scrollContent: {
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-    },
-
-    searchBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 10,
-        marginBottom: 16,
-        paddingHorizontal: 15,
-        paddingVertical: 5,
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 12,
-    },
-
-    searchIcon: {
-        fontSize: 16,
-        color: colors.textMuted,
-        marginRight: 8,
-    },
-
-    searchInput: {
-        flex: 1,
-        height: 45,
-        fontSize: 16,
-        color: colors.text,
-    },
-
-    categoryContent: {
-        gap: 8,
-        alignItems: 'center',
-        marginTop: 5,
-        marginBottom: 16,
-    },
-
-    CategoryButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 20,
-        borderRadius: 9999,
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.border,
-    },
-
-    CategoryButtonActive: {
-        backgroundColor: colors.primary,
-        borderColor: colors.primary,
-    },
-
-    categoryText: {
-        fontSize: 14,
-        color: colors.text,
-        fontWeight: '500',
-    },
-
-    categoryTextActive: {
-        color: colors.activeTabText,
-        fontWeight: '600',
-    },
-
+    container: { flex: 1, backgroundColor: colors.background },
+    scrollContent: { paddingHorizontal: 16, paddingVertical: 16 },
+    searchBar: { flexDirection: 'row', alignItems: 'center', marginTop: 10, marginBottom: 16, paddingHorizontal: 15, paddingVertical: 5, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12 },
+    searchIcon: { fontSize: 16, color: colors.textMuted, marginRight: 8 },
+    searchInput: { flex: 1, height: 45, fontSize: 16, color: colors.text },
+    categoryContent: { gap: 8, alignItems: 'center', marginTop: 5, marginBottom: 16 },
+    CategoryButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 20, borderRadius: 9999, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+    CategoryButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    categoryText: { fontSize: 14, color: colors.text, fontWeight: '500' },
+    categoryTextActive: { color: colors.activeTabText, fontWeight: '600' },
     conversationList: {},
-
-    swipeWrapper: {
-        borderRadius: 14,
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: colors.border,
-        marginBottom: 10,
-    },
-
-    swipeWrapperUnread: {
-        borderColor: colors.primary + '30',
-    },
-
-    conversationItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        backgroundColor: colors.card,
-        borderLeftWidth: 0,
-        borderLeftColor: 'transparent',
-    },
-
-    conversationItemUnread: {
-        backgroundColor: colors.card,
-        borderLeftWidth: 4,
-        borderLeftColor: colors.primary,
-    },
-
-    avatarWrapper: {
-        position: 'relative',
-        marginRight: 12,
-    },
-
-    avatar: {
-        width: 50,
-        height: 50,
-        borderRadius: 9999,
-        backgroundColor: colors.border,
-    },
-
-    onlineDot: {
-        position: 'absolute',
-        bottom: 2,
-        right: 2,
-        width: 12,
-        height: 12,
-        borderRadius: 14,
-        backgroundColor: colors.success,
-        borderWidth: 2,
-        borderColor: colors.card,
-    },
-
-    convContent: {
-        flex: 1,
-        gap: 3,
-    },
-
-    convHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-
-    convName: {
-        fontSize: 15,
-        fontWeight: '500',
-        color: colors.text,
-        flex: 1,
-        marginRight: 8,
-    },
-
-    convNameUnread: {
-        fontWeight: '700',
-    },
-
-    timeAgo: {
-        fontSize: 12,
-        color: colors.textMuted,
-        fontWeight: '500',
-    },
-
-    timeAgoUnread: {
-        color: colors.primary,
-        fontWeight: '600',
-    },
-
-    messageRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        gap: 4,
-    },
-
-    itemName: {
-        fontSize: 11,
-        fontWeight: '600',
-        color: colors.primary,
-        letterSpacing: 0.4,
-        flex: 1,
-    },
-
-    lastMessage: {
-        fontSize: 13,
-        color: colors.textSecondary,
-        marginTop: 1,
-    },
-
-    lastMessageUnread: {
-        color: colors.text,
-        fontWeight: '500',
-    },
-
-    emptyContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 60,
-        gap: 8,
-    },
-
-    emptyTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: colors.text,
-        marginTop: 8,
-    },
-
-    emptySubtitle: {
-        fontSize: 13,
-        color: colors.textMuted,
-        textAlign: 'center',
-    },
-
-    swipeActions: {
-        flexDirection: 'row',
-        alignItems: 'stretch',
-        justifyContent: 'flex-end',
-    },
-    archiveBtn: {
-        width: 75,
-        backgroundColor: colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    unarchiveBtn: {
-        width: 75,
-        backgroundColor: colors.success,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    deleteBtn: {
-        width: 75,
-        backgroundColor: colors.danger,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+    swipeWrapper: { borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: colors.border, marginBottom: 10 },
+    swipeWrapperUnread: { borderColor: colors.primary + '30' },
+    conversationItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, backgroundColor: colors.card, borderLeftWidth: 0, borderLeftColor: 'transparent' },
+    conversationItemUnread: { backgroundColor: colors.card, borderLeftWidth: 4, borderLeftColor: colors.primary },
+    avatarWrapper: { position: 'relative', marginRight: 12 },
+    avatar: { width: 50, height: 50, borderRadius: 9999, backgroundColor: colors.border },
+    onlineDot: { position: 'absolute', bottom: 2, right: 2, width: 12, height: 12, borderRadius: 14, backgroundColor: colors.success, borderWidth: 2, borderColor: colors.card },
+    convContent: { flex: 1, gap: 3 },
+    convHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    convName: { fontSize: 15, fontWeight: '500', color: colors.text, flex: 1, marginRight: 8 },
+    convNameUnread: { fontWeight: '700' },
+    timeAgo: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
+    timeAgoUnread: { color: colors.primary, fontWeight: '600' },
+    messageRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 4 },
+    itemName: { fontSize: 11, fontWeight: '600', color: colors.primary, letterSpacing: 0.4, flex: 1 },
+    lastMessage: { fontSize: 13, color: colors.textSecondary, marginTop: 1 },
+    lastMessageUnread: { color: colors.text, fontWeight: '500' },
+    emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 8 },
+    emptyTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginTop: 8 },
+    emptySubtitle: { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
+    swipeActions: { flexDirection: 'row', alignItems: 'stretch', justifyContent: 'flex-end' },
+    archiveBtn: { width: 75, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
+    unarchiveBtn: { width: 75, backgroundColor: colors.success, justifyContent: 'center', alignItems: 'center' },
+    deleteBtn: { width: 75, backgroundColor: colors.danger, justifyContent: 'center', alignItems: 'center' },
 });

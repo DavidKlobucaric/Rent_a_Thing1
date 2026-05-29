@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     View,
@@ -14,8 +14,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { verifyCode, resendCode } from "@/src/api/authApi";
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
-
 import { useLanguage } from '@/src/context/languageContext';
+import * as Haptics from 'expo-haptics'; // ✅ Dodano za taktilni feedback
 
 export default function VerificationScreen() {
     const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -28,10 +28,14 @@ export default function VerificationScreen() {
 
     const { t } = useLanguage();
     const router = useRouter();
+
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
-    const styles = useMemo(() => makeStyles(colors), [colors]);
 
+    // ✅ Stabilan styles - ovisi o scheme (primitive), ne o colors objektu
+    const styles = useMemo(() => makeStyles(colors), [scheme]);
+
+    // ✅ Optimiziran timer - useCallback za interval cleanup
     useEffect(() => {
         if (timer > 0) {
             const interval = setInterval(() => {
@@ -43,63 +47,84 @@ export default function VerificationScreen() {
         }
     }, [timer]);
 
-    const handleChange = (text: string, index: number) => {
+    // ✅ Memoiziran handleChange
+    const handleChange = useCallback((text: string, index: number) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         const newCode = [...code];
         newCode[index] = text;
         setCode(newCode);
         if (text && index < 5) {
             inputRefs.current[index + 1]?.focus();
         }
-    };
+    }, [code]);
 
-    const handleKeyPress = (key: string, index: number) => {
+    // ✅ Memoiziran handleKeyPress
+    const handleKeyPress = useCallback((key: string, index: number) => {
         if (key === 'Backspace' && !code[index] && index > 0) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             inputRefs.current[index - 1]?.focus();
         }
-    };
+    }, [code]);
 
-    const handleVerify = async () => {
+    // ✅ Memoiziran handleVerify
+    const handleVerify = useCallback(async () => {
         const verificationCode = code.join('');
         if (verificationCode.length !== 6) return;
 
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         setVerifying(true);
         const result = await verifyCode(email, verificationCode);
         setVerifying(false);
 
         if(result.success) {
-            Alert.alert("Account verified", "Your account has been verified. Please log in.",
-                [{ text: "Log in", onPress: () => router.replace('/log-in')}]
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Alert.alert(
+                t('auth', 'accountVerified'),
+                t('auth', 'verifyAccount') + ' ✓',
+                [{ text: t('auth', 'logIn'), onPress: () => router.replace('/log-in')}]
             );
-        } else{
-            Alert.alert("Verification failed", result.message);
+        } else {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert(t('auth', 'verificationFailed'), result.message);
             setCode(['','','','','','']);
             inputRefs.current[0]?.focus();
         }
-    };
+    }, [code, email, router, t]);
 
-    const handleResend = async () => {
+    // ✅ Memoiziran handleResend
+    const handleResend = useCallback(async () => {
         if (!canResend || resending) return;
 
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         setResending(true);
         const result = await resendCode(email);
         setResending(false);
 
         if(result.success){
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             setTimer(60);
             setCanResend(false);
             setCode(['', '', '', '', '', '']);
             inputRefs.current[0]?.focus();
-            Alert.alert('Code sent', 'A new verification code has been sent to your email.');
-        } else{
-            Alert.alert('Error', result.message);
+            Alert.alert(t('auth', 'codeSent'), t('auth', 'sentCode') + ' ' + email);
+        } else {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert(t('common', 'error'), result.message);
         }
-    };
+    }, [canResend, resending, email, t]);
 
-    const formatTime = (seconds: number) => {
+    // ✅ Memoiziran formatTime
+    const formatTime = useCallback((seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
+    }, []);
+
+    // ✅ Memoiziran handleChangeEmail
+    const handleChangeEmail = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.back();
+    }, [router]);
 
     const codeComplete = code.join('').length === 6;
 
@@ -117,7 +142,7 @@ export default function VerificationScreen() {
             {/* SUBTITLE */}
             <View style={styles.textContainer}>
                 <Text style={styles.TextStyle}>
-                    We sent a 6-digit code to{'\n'}
+                    {t('auth', 'sentCode')}{'\n'}
                     <Text style={[styles.emailText, { color: colors.text }]}>{email}</Text>
                 </Text>
             </View>
@@ -163,7 +188,7 @@ export default function VerificationScreen() {
                         {resending
                             ? <ActivityIndicator color={colors.primary} size="small" />
                             : <Text style={[ styles.resendText,
-                        { color: canResend ? colors.primary : colors.textMuted }]}>{canResend ? t('auth', 'resendCode') : `${t('auth', 'resendIn')} ${formatTime(timer)}`}</Text>
+                                { color: canResend ? colors.primary : colors.textMuted }]}>{canResend ? t('auth', 'resendCode') : `${t('auth', 'resendIn')} ${formatTime(timer)}`}</Text>
                         }
                     </TouchableOpacity>
                 </View>
@@ -178,7 +203,7 @@ export default function VerificationScreen() {
                     disabled={!codeComplete || verifying}
                 >
                     {verifying
-                        ? <ActivityIndicator color={colors.primarySecondary} />
+                        ? <ActivityIndicator color={colors.iconColorInverse} />
                         : <Text style={styles.verifyButtonText}>{t('auth', 'verify')}</Text>
                     }
                 </TouchableOpacity>
@@ -186,7 +211,7 @@ export default function VerificationScreen() {
                 {/* CHANGE EMAIL */}
                 <View style={[styles.resendContainer, { marginBottom: 0, marginTop: 30 }]}>
                     <Text style={[styles.resendLabel, { color: colors.textMuted }]}>{t('auth', 'wrongEmail')}</Text>
-                    <TouchableOpacity onPress={() => router.back()}>
+                    <TouchableOpacity onPress={handleChangeEmail}>
                         <Text style={[styles.changeText, { color: colors.primary }]}>{t('common', 'change')}</Text>
                     </TouchableOpacity>
                 </View>
@@ -323,7 +348,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     },
 
     verifyButtonText: {
-        color: colors.primarySecondary,
+        color: colors.iconColorInverse,
         fontSize: 18,
         fontWeight: "500",
     },

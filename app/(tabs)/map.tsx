@@ -1,19 +1,23 @@
-import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback, memo } from 'react';
 import {
     StyleSheet, View, Text, TextInput, TouchableOpacity,
-    ActivityIndicator, Keyboard, ScrollView, Alert, Image,
+    Keyboard, ScrollView, Alert,
 } from 'react-native';
-
+import { Image } from 'expo-image';
 import Mapbox, { MapView, Camera, PointAnnotation, MarkerView } from '@rnmapbox/maps';
 import { Fontisto, Ionicons } from '@expo/vector-icons';
+import ShimmerPlaceholder from "react-native-shimmer-placeholder";
+import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
 import { getMapMarkers, resolveMarkerCoordinates, MapMarker } from '@/src/api/itemsApi';
 import { useAuth } from '@/src/context/authContext';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '');
+
 const LIGHT_MAP_STYLE = 'mapbox://styles/mapbox/streets-v12';
 const DARK_MAP_STYLE = 'mapbox://styles/mapbox/dark-v11';
 
@@ -24,67 +28,119 @@ interface Coordinate {
     longitude: number;
 }
 
-// Category config — icon names and colours used for each pin
 const CATEGORIES: {
     name: string;
     icon: IoniconName;
     iconActive: IoniconName;
-    pinColor: string;
 }[] = [
-    { name: 'Tools',   icon: 'hammer-outline',          iconActive: 'hammer',          pinColor: '#F59E0B' },
-    { name: 'Camping', icon: 'bonfire-outline',          iconActive: 'bonfire',         pinColor: '#10B981' },
-    { name: 'Tech',    icon: 'laptop-outline',           iconActive: 'laptop',          pinColor: '#3B82F6' },
-    { name: 'Sports',  icon: 'football-outline',         iconActive: 'football',        pinColor: '#EF4444' },
-    { name: 'Games',   icon: 'game-controller-outline',  iconActive: 'game-controller', pinColor: '#8B5CF6' },
+    { name: 'Tools',   icon: 'hammer-outline',          iconActive: 'hammer' },
+    { name: 'Camping', icon: 'bonfire-outline',          iconActive: 'bonfire' },
+    { name: 'Tech',    icon: 'laptop-outline',           iconActive: 'laptop' },
+    { name: 'Sports',  icon: 'football-outline',         iconActive: 'football' },
+    { name: 'Games',   icon: 'game-controller-outline',  iconActive: 'game-controller' },
 ];
 
-const getCategoryColor = (category: string, fallback: string): string => {
-    const found = CATEGORIES.find(
-        (c) => c.name.toLowerCase() === category.toLowerCase()
-    );
-    return found ? found.pinColor : fallback;
+const CATEGORY_ICON_MAP: Record<string, { icon: IoniconName; iconActive: IoniconName }> = {
+    'tools': { icon: 'hammer-outline', iconActive: 'hammer' },
+    'camping': { icon: 'bonfire-outline', iconActive: 'bonfire' },
+    'tech': { icon: 'laptop-outline', iconActive: 'laptop' },
+    'sports': { icon: 'football-outline', iconActive: 'football' },
+    'games': { icon: 'game-controller-outline', iconActive: 'game-controller' },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+const getCategoryIcon = (category: string): IoniconName => {
+    const cat = category.toLowerCase();
+    return CATEGORY_ICON_MAP[cat]?.iconActive ?? 'pricetag';
+};
 
+// ═══════════════════════════════════════════════════════════════
+// ✅ MEMOIZIRANA MARKER KOMPONENTA
+// ═══════════════════════════════════════════════════════════════
+interface MapPinProps {
+    marker: MapMarker;
+    isSelected: boolean;
+    primaryColor: string;
+    onPress: (marker: MapMarker) => void;
+    styles: ReturnType<typeof makeStyles>;
+}
+
+const MapPin = memo(({ marker, isSelected, primaryColor, onPress, styles }: MapPinProps) => {
+    const handlePress = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress(marker);
+    }, [marker, onPress]);
+
+    const categoryIcon = getCategoryIcon(marker.category);
+
+    return (
+        <MarkerView
+            key={`marker-${marker.listingId}`}
+            coordinate={[marker.longitude!, marker.latitude!]}
+        >
+            <TouchableOpacity
+                onPress={handlePress}
+                activeOpacity={0.85}
+            >
+                <View
+                    style={[
+                        styles.pin,
+                        { backgroundColor: primaryColor },
+                        isSelected && styles.pinSelected,
+                    ]}
+                >
+                    <View style={styles.pinContent}>
+                        <Ionicons name={categoryIcon} size={12} color="#FFFFFF" />
+                        <Text style={styles.pinPrice}>
+                            €{Number(marker.price).toFixed(0)}
+                        </Text>
+                    </View>
+                </View>
+                <View style={[styles.pinTail, { borderTopColor: primaryColor }]} />
+            </TouchableOpacity>
+        </MarkerView>
+    );
+}, (prevProps, nextProps) => {
+    return (
+        prevProps.isSelected === nextProps.isSelected &&
+        prevProps.marker.listingId === nextProps.marker.listingId &&
+        prevProps.marker.price === nextProps.marker.price
+    );
+});
+
+// ═══════════════════════════════════════════════════════════════
 export default function MapScreen() {
     const { t } = useLanguage();
-    const { user } = useAuth();
+    useAuth();
     const router = useRouter();
     const cameraRef = useRef<Camera>(null);
 
-    // Search state
     const [searchText, setSearchText] = useState('');
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchMarker, setSearchMarker] = useState<Coordinate & { title: string } | null>(null);
-
-    // Listing markers state
     const [markers, setMarkers] = useState<MapMarker[]>([]);
     const [markersLoading, setMarkersLoading] = useState(false);
-
-    // Selected marker callout
     const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null);
-
-    // Category filter
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
-    const styles = useMemo(() => makeStyles(colors), [colors]);
+    const styles = useMemo(() => makeStyles(colors), [scheme]);
 
-    //Load markers whenever the active category changes
+    // Shimmer boje ovisno o temi
+    const shimmerColors = useMemo(() =>
+            scheme === 'dark'
+                ? ['#2A2A2A', '#3A3A3A', '#2A2A2A']
+                : ['#E0E0E0', '#F5F5F5', '#E0E0E0'],
+        [scheme]);
 
     const loadMarkers = useCallback(async (category: string | null) => {
         setMarkersLoading(true);
         setSelectedMarker(null);
-
         const result = await getMapMarkers(category ?? undefined);
-
         if (!result.success) {
             setMarkersLoading(false);
             return;
         }
-
         const resolved = await resolveMarkerCoordinates(result.data);
         setMarkers(resolved);
         setMarkersLoading(false);
@@ -94,58 +150,87 @@ export default function MapScreen() {
         loadMarkers(activeCategory);
     }, [activeCategory, loadMarkers]);
 
+    const handleMarkerPress = useCallback((marker: MapMarker) => {
+        setSelectedMarker((prev) =>
+            prev?.listingId === marker.listingId ? null : marker
+        );
+    }, []);
 
-    const performSearch = async () => {
+    const performSearch = useCallback(async () => {
         if (!searchText.trim()) return;
         Keyboard.dismiss();
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         setSearchLoading(true);
-
         try {
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchText)}&limit=1`,
                 { headers: { 'User-Agent': 'RentAThing/1.0' } }
             );
             const data = await response.json();
-
             if (data?.length > 0) {
                 const { lat, lon, display_name } = data[0];
                 const shortName = display_name.split(',')[0];
                 const latitude = parseFloat(lat);
                 const longitude = parseFloat(lon);
-
                 cameraRef.current?.setCamera({
                     centerCoordinate: [longitude, latitude],
                     zoomLevel: 13,
                     animationDuration: 1000,
                 });
-
                 setSearchMarker({ latitude, longitude, title: shortName });
                 setSearchText(shortName);
             } else {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                 Alert.alert(t('common', 'error'), t('map', 'locationNotFound'));
             }
         } catch (error) {
             console.error('Search error:', error);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(t('common', 'error'), t('map', 'searchError'));
         } finally {
             setSearchLoading(false);
         }
-    };
+    }, [searchText, t]);
 
-    const clearSearch = () => {
+    const clearSearch = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setSearchText('');
         setSearchMarker(null);
-    };
+    }, []);
 
-
-    const handleCategorySelect = (categoryName: string) => {
+    const handleCategorySelect = useCallback((categoryName: string) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setActiveCategory((prev) => (prev === categoryName ? null : categoryName));
-    };
+    }, []);
+
+    const handleMapPress = useCallback(() => {
+        setSelectedMarker(null);
+    }, []);
+
+    const handleCalloutPress = useCallback(() => {
+        if (!selectedMarker) return;
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push({
+            pathname: '/(tabs)/item',
+            params: { listingId: String(selectedMarker.listingId) },
+        });
+    }, [selectedMarker, router]);
+
+    const handleCloseCallout = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setSelectedMarker(null);
+    }, []);
+
+    const markersWithState = useMemo(() =>
+            markers.map(marker => ({
+                marker,
+                isSelected: selectedMarker?.listingId === marker.listingId,
+            })),
+        [markers, selectedMarker?.listingId]
+    );
 
     return (
         <View style={styles.container}>
-
-            {/* MAP */}
             <MapView
                 key={scheme}
                 style={styles.map}
@@ -157,15 +242,13 @@ export default function MapScreen() {
                 logoEnabled={false}
                 attributionEnabled={false}
                 scaleBarEnabled={false}
-                onPress={() => setSelectedMarker(null)}
+                onPress={handleMapPress}
             >
                 <Camera
                     ref={cameraRef}
                     centerCoordinate={[15.9819, 45.8150]}
                     zoomLevel={12}
                 />
-
-                {/* Search result pin */}
                 {searchMarker && (
                     <PointAnnotation
                         id="searched-location"
@@ -177,69 +260,75 @@ export default function MapScreen() {
                         </View>
                     </PointAnnotation>
                 )}
-
-                {/* Listing markers */}
-                {markers.map((marker) => {
-                    const pinColor = getCategoryColor(marker.category, colors.primary);
-                    const isSelected = selectedMarker?.listingId === marker.listingId;
-
-                    return (
-                        <MarkerView
-                            key={`marker-${marker.listingId}`}
-                            coordinate={[marker.longitude!, marker.latitude!]}
-                        >
-                            <TouchableOpacity
-                                onPress={() =>
-                                    setSelectedMarker((prev) =>
-                                        prev?.listingId === marker.listingId ? null : marker
-                                    )
-                                }
-                                activeOpacity={0.85}
-                            >
-                                <View
-                                    style={[
-                                        styles.pin,
-                                        { backgroundColor: pinColor },
-                                        isSelected && styles.pinSelected,
-                                    ]}
-                                >
-                                    <Text style={styles.pinPrice}>
-                                        €{Number(marker.price).toFixed(0)}
-                                    </Text>
-                                </View>
-                                {/* Downward triangle tail */}
-                                <View style={[styles.pinTail, { borderTopColor: pinColor }]} />
-                            </TouchableOpacity>
-                        </MarkerView>
-                    );
-                })}
+                {markersWithState.map(({ marker, isSelected }) => (
+                    <MapPin
+                        key={`marker-${marker.listingId}`}
+                        marker={marker}
+                        isSelected={isSelected}
+                        primaryColor={colors.primary}
+                        onPress={handleMarkerPress}
+                        styles={styles}
+                    />
+                ))}
             </MapView>
 
-            {/* CALLOUT CARD — shown above the map when a marker is tapped */}
-            {selectedMarker && (
+            {/* ✨ SHIMMER CALLOUT - prikazuje se dok se ne učita pravi callout ✨ */}
+            {markersLoading && selectedMarker === null && (
+                <View style={styles.callout} pointerEvents="box-none">
+                    <View style={styles.calloutInner}>
+                        <ShimmerPlaceholder
+                            LinearGradient={LinearGradient}
+                            style={styles.calloutImage}
+                            shimmerColors={shimmerColors}
+                        />
+                        <View style={styles.calloutText}>
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ height: 16, width: '70%', marginBottom: 6, borderRadius: 4 }}
+                                shimmerColors={shimmerColors}
+                            />
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ height: 12, width: '50%', marginBottom: 6, borderRadius: 4 }}
+                                shimmerColors={shimmerColors}
+                            />
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ height: 14, width: '40%', borderRadius: 4 }}
+                                shimmerColors={shimmerColors}
+                            />
+                        </View>
+                        <Ionicons
+                            name="chevron-forward"
+                            size={18}
+                            color={colors.textMuted}
+                            style={styles.calloutChevron}
+                        />
+                    </View>
+                </View>
+            )}
+
+            {/* PRAVI CALLOUT */}
+            {selectedMarker && !markersLoading && (
                 <View style={styles.callout} pointerEvents="box-none">
                     <TouchableOpacity
                         style={styles.calloutInner}
                         activeOpacity={0.92}
-                        onPress={() =>
-                            router.push({
-                                pathname: '/(tabs)/item',
-                                params: { listingId: String(selectedMarker.listingId) },
-                            })
-                        }
+                        onPress={handleCalloutPress}
                     >
                         {selectedMarker.thumbnailUrl ? (
                             <Image
                                 source={{ uri: selectedMarker.thumbnailUrl }}
                                 style={styles.calloutImage}
-                                resizeMode="cover"
+                                contentFit="cover"
+                                cachePolicy="memory-disk"
+                                transition={200}
                             />
                         ) : (
                             <View style={[styles.calloutImage, styles.calloutImagePlaceholder]}>
                                 <Ionicons name="image-outline" size={28} color={colors.textMuted} />
                             </View>
                         )}
-
                         <View style={styles.calloutText}>
                             <Text style={styles.calloutName} numberOfLines={1}>
                                 {selectedMarker.name}
@@ -265,7 +354,6 @@ export default function MapScreen() {
                                 )}
                             </View>
                         </View>
-
                         <Ionicons
                             name="chevron-forward"
                             size={18}
@@ -273,10 +361,9 @@ export default function MapScreen() {
                             style={styles.calloutChevron}
                         />
                     </TouchableOpacity>
-
                     <TouchableOpacity
                         style={styles.calloutClose}
-                        onPress={() => setSelectedMarker(null)}
+                        onPress={handleCloseCallout}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                         <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '600' }}>
@@ -286,7 +373,6 @@ export default function MapScreen() {
                 </View>
             )}
 
-            {/* SEARCH BAR */}
             <View style={styles.searchContainer}>
                 <View style={styles.inputWrapper}>
                     <TouchableOpacity
@@ -295,12 +381,15 @@ export default function MapScreen() {
                         disabled={searchLoading}
                     >
                         {searchLoading ? (
-                            <ActivityIndicator color={colors.textMuted} size="small" />
+                            <ShimmerPlaceholder
+                                LinearGradient={LinearGradient}
+                                style={{ width: 20, height: 20, borderRadius: 10 }}
+                                shimmerColors={shimmerColors}
+                            />
                         ) : (
                             <Fontisto name="search" style={[styles.searchIcon, { color: colors.primarySecondary }]} />
                         )}
                     </TouchableOpacity>
-
                     <TextInput
                         style={styles.input}
                         placeholder={t('map', 'searchPlaceholder')}
@@ -311,7 +400,6 @@ export default function MapScreen() {
                         returnKeyType="search"
                         autoCapitalize="words"
                     />
-
                     {searchText.length > 0 && (
                         <TouchableOpacity
                             style={styles.clearButton}
@@ -324,7 +412,6 @@ export default function MapScreen() {
                 </View>
             </View>
 
-            {/* CATEGORY CHIPS */}
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -338,14 +425,14 @@ export default function MapScreen() {
                             key={category.name}
                             style={[
                                 styles.CategoryButton,
-                                isActive && { backgroundColor: category.pinColor, borderColor: category.pinColor },
+                                isActive && styles.CategoryButtonActive,
                             ]}
                             onPress={() => handleCategorySelect(category.name)}
                         >
                             <Ionicons
                                 name={isActive ? category.iconActive : category.icon}
                                 size={20}
-                                color={isActive ? '#FFFFFF' : colors.primarySecondary}
+                                color={isActive ? colors.iconColorInverse : colors.primarySecondary}
                             />
                             <Text style={[styles.categoryText, isActive && styles.categoryTextActive]}>
                                 {category.name}
@@ -355,10 +442,22 @@ export default function MapScreen() {
                 })}
             </ScrollView>
 
-            {/* Markers loading spinner (small, bottom-right) */}
+            {/* ✨ SHIMMER LOADING BADGE - elegantna zamjena za ActivityIndicator ✨ */}
             {markersLoading && (
                 <View style={styles.markersLoadingBadge}>
-                    <ActivityIndicator size="small" color={colors.primary} />
+                    <View style={styles.shimmerRow}>
+                        <ShimmerPlaceholder
+                            LinearGradient={LinearGradient}
+                            style={styles.shimmerCircle}
+                            shimmerColors={shimmerColors}
+                            isReversed={true}
+                        />
+                        <ShimmerPlaceholder
+                            LinearGradient={LinearGradient}
+                            style={styles.shimmerLine}
+                            shimmerColors={shimmerColors}
+                        />
+                    </View>
                 </View>
             )}
         </View>
@@ -367,38 +466,13 @@ export default function MapScreen() {
 
 const makeStyles = (colors: typeof Colors.light) =>
     StyleSheet.create({
-        container: {
-            flex: 1,
-            backgroundColor: colors.background,
-        },
-
-        map: {
-            flex: 1,
-        },
-
-        // ── Search pin  ───────────────────────────────────────────────────────────
-        searchPin: {
-            width: 32,
-            height: 32,
-            borderRadius: 16,
-            backgroundColor: colors.primary + '30',
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderWidth: 1,
-            borderColor: colors.background,
-        },
-        searchPinDot: {
-            width: 14,
-            height: 14,
-            borderRadius: 7,
-            borderWidth: 1,
-            borderColor: colors.background,
-        },
-
-        // ── Price pin ─────────────────────────────────────────────────────────
+        container: { flex: 1, backgroundColor: colors.background },
+        map: { flex: 1 },
+        searchPin: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary + '30', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.background },
+        searchPinDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 1, borderColor: colors.background },
         pin: {
             paddingHorizontal: 10,
-            paddingVertical: 5,
+            paddingVertical: 6,
             borderRadius: 10,
             alignItems: 'center',
             justifyContent: 'center',
@@ -407,6 +481,11 @@ const makeStyles = (colors: typeof Colors.light) =>
             shadowOpacity: 0.22,
             shadowRadius: 3,
             elevation: 4,
+        },
+        pinContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
         },
         pinSelected: {
             transform: [{ scale: 1.12 }],
@@ -428,151 +507,29 @@ const makeStyles = (colors: typeof Colors.light) =>
             borderRightColor: 'transparent',
             marginTop: -1,
         },
-
-        // ── Callout card ──────────────────────────────────────────────────────
-        callout: {
-            position: 'absolute',
-            bottom: 185,
-            left: 16,
-            right: 16,
-            zIndex: 20,
-            flexDirection: 'row',
-            alignItems: 'center',
-        },
-        calloutInner: {
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: colors.surface,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: colors.border,
-            padding: 10,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.14,
-            shadowRadius: 6,
-            elevation: 5,
-        },
-        calloutImage: {
-            width: 56,
-            height: 56,
-            borderRadius: 10,
-            marginRight: 12,
-        },
-        calloutImagePlaceholder: {
-            backgroundColor: colors.iconCircleBg,
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        calloutText: {
-            flex: 1,
-        },
-        calloutName: {
-            fontSize: 14,
-            fontWeight: '700',
-            color: colors.text,
-            marginBottom: 2,
-        },
-        calloutLocation: {
-            fontSize: 12,
-            color: colors.textMuted,
-            marginBottom: 3,
-        },
-        calloutPrice: {
-            fontSize: 13,
-            fontWeight: '600',
-            color: colors.primary,
-        },
-        calloutPoster: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginTop: 4,
-            gap: 3,
-        },
-        calloutPosterName: {
-            fontSize: 11,
-            color: colors.textMuted,
-            fontWeight: '500',
-            flex: 1,
-        },
-        calloutPosterRating: {
-            fontSize: 11,
-            color: colors.textMuted,
-            fontWeight: '600',
-        },
-        calloutChevron: {
-            marginLeft: 8,
-        },
-        calloutClose: {
-            marginLeft: 10,
-            padding: 6,
-        },
-
-        // ── Search bar
-        searchContainer: {
-            position: 'absolute',
-            top: 55,
-            paddingHorizontal: 13,
-            alignSelf: 'center',
-            flexDirection: 'row',
-            alignItems: 'center',
-            zIndex: 10,
-            width: '100%',
-        },
-        inputWrapper: {
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 14,
-            paddingVertical: 6,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border,
-            borderRadius: 14,
-        },
-        searchIcon: {
-            fontSize: 18,
-            marginRight: 8,
-            alignSelf: 'center',
-        },
-        input: {
-            flex: 1,
-            height: 42,
-            fontSize: 15,
-            color: colors.text,
-            fontWeight: '400',
-        },
-        clearButton: {
-            padding: 6,
-            marginLeft: 4,
-        },
-        clearButtonText: {
-            fontSize: 18,
-            fontWeight: '600',
-        },
-        button: {
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingRight: 4,
-        },
-        buttonDisabled: {
-            opacity: 0.6,
-        },
-
-        // ── Category chips ──────────────────────────────────────────────────────────────────────────────────────────────────────
-        categoryContainer: {
-            position: 'absolute',
-            top: 120,
-            left: 0,
-            right: 0,
-            zIndex: 10,
-        },
-        categoryContent: {
-            paddingHorizontal: 12,
-            gap: 10,
-            alignItems: 'center',
-        },
+        callout: { position: 'absolute', bottom: 185, left: 16, right: 16, zIndex: 20, flexDirection: 'row', alignItems: 'center' },
+        calloutInner: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.14, shadowRadius: 6, elevation: 5 },
+        calloutImage: { width: 56, height: 56, borderRadius: 10, marginRight: 12 },
+        calloutImagePlaceholder: { backgroundColor: colors.iconCircleBg, alignItems: 'center', justifyContent: 'center' },
+        calloutText: { flex: 1 },
+        calloutName: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 2 },
+        calloutLocation: { fontSize: 12, color: colors.textMuted, marginBottom: 3 },
+        calloutPrice: { fontSize: 13, fontWeight: '600', color: colors.primary },
+        calloutPoster: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 3 },
+        calloutPosterName: { fontSize: 11, color: colors.textMuted, fontWeight: '500', flex: 1 },
+        calloutPosterRating: { fontSize: 11, color: colors.textMuted, fontWeight: '600' },
+        calloutChevron: { marginLeft: 8 },
+        calloutClose: { marginLeft: 10, padding: 6 },
+        searchContainer: { position: 'absolute', top: 55, paddingHorizontal: 13, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', zIndex: 10, width: '100%' },
+        inputWrapper: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 14 },
+        searchIcon: { fontSize: 18, marginRight: 8, alignSelf: 'center' },
+        input: { flex: 1, height: 42, fontSize: 15, color: colors.text, fontWeight: '400' },
+        clearButton: { padding: 6, marginLeft: 4 },
+        clearButtonText: { fontSize: 18, fontWeight: '600' },
+        button: { justifyContent: 'center', alignItems: 'center', paddingRight: 4 },
+        buttonDisabled: { opacity: 0.6 },
+        categoryContainer: { position: 'absolute', top: 120, left: 0, right: 0, zIndex: 10 },
+        categoryContent: { paddingHorizontal: 12, gap: 10, alignItems: 'center' },
         CategoryButton: {
             flexDirection: 'row',
             alignItems: 'center',
@@ -585,29 +542,41 @@ const makeStyles = (colors: typeof Colors.light) =>
             borderColor: colors.border,
             gap: 6,
         },
-        categoryText: {
-            fontSize: 13,
-            fontWeight: '500',
-            color: colors.textSecondary,
-            letterSpacing: 0.3,
+        CategoryButtonActive: {
+            backgroundColor: colors.primary,
+            borderColor: colors.primary,
         },
-        categoryTextActive: {
-            color: '#FFFFFF',
-            fontWeight: '600',
-        },
+        categoryText: { fontSize: 13, fontWeight: '500', color: colors.textSecondary, letterSpacing: 0.3 },
+        categoryTextActive: { color: colors.iconColorInverse, fontWeight: '600' },
 
-        // ── Markers loading indicator ─────────────────────────────────────────
+        // ✨ SHIMMER STILOVI ✨
         markersLoadingBadge: {
             position: 'absolute',
             bottom: 170,
             right: 16,
             backgroundColor: colors.surface,
             borderRadius: 20,
-            padding: 8,
+            padding: 12,
+            paddingHorizontal: 16,
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 3,
-            elevation: 3,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.12,
+            shadowRadius: 6,
+            elevation: 4,
+        },
+        shimmerRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+        },
+        shimmerCircle: {
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+        },
+        shimmerLine: {
+            width: 80,
+            height: 14,
+            borderRadius: 7,
         },
     });
