@@ -2,14 +2,18 @@ package org.example.rentathingproba.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "things")
 @Getter
 @Setter
+@NoArgsConstructor
 public class Thing {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,8 +32,14 @@ public class Thing {
     @Column(nullable = false)
     private String description;
 
-    @Column(name = "image_urls", columnDefinition = "TEXT")
-    private String imageUrls;
+    @OneToMany(
+            mappedBy = "thing",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @OrderBy("sortOrder ASC")
+    private List<ThingImage> images = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -40,12 +50,5 @@ public class Thing {
         this.createdAt = LocalDateTime.now();
     }
 
-    @Transient
-    public String getImageUrl(){
-        if(imageUrls == null || imageUrls.isBlank()){
-            return null;
-        }
-        return imageUrls.split(",")[0];
-    }
 }
 

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -14,7 +15,7 @@ public class ThingResponseDTO {
     private String name;
     private String category;
     private String description;
-    private String imageUrls;
+    private List<String> imageUrls;
     private LocalDateTime createdAt;
     private Long userId;
     private String ownerUsername;
