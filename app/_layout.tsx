@@ -33,6 +33,8 @@ export default function RootLayout() {
                                 <Stack.Screen name="support" options={{ title: 'Support', animation: 'fade', animationDuration: 350 }} />
                                 <Stack.Screen name="privacy" options={{ title: 'Privacy', animation: 'slide_from_right', animationDuration: 350 }} />
                                 <Stack.Screen name="terms" options={{ title: 'Terms', animation: "slide_from_right", animationDuration: 350 }} />
+                                <Stack.Screen name="item" options={{ headerShown: false, animation: "slide_from_right", animationDuration: 350 }} />
+
                             </Stack>
                             <StatusBar style="auto" />
                         </BottomSheetModalProvider>

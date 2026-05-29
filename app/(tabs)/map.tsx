@@ -211,7 +211,7 @@ export default function MapScreen() {
         if (!selectedMarker) return;
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push({
-            pathname: '/(tabs)/item',
+            pathname: '/item',
             params: { listingId: String(selectedMarker.listingId) },
         });
     }, [selectedMarker, router]);

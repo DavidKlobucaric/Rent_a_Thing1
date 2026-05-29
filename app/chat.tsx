@@ -1,389 +1,356 @@
 import {
-    View, Text, TextInput, TouchableOpacity,
-    StyleSheet, ScrollView, Alert
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+    ScrollView,
+    Keyboard,
+    Platform,
 } from 'react-native';
 import { Image } from 'expo-image'; // ✅ expo-image umjesto RN Image (brže, s cachingom)
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Fontisto, Ionicons } from "@expo/vector-icons";
-import React, { useState, useMemo, useRef, useCallback } from "react";
-import { router } from 'expo-router';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from "@expo/vector-icons";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { router, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
-import { Swipeable } from 'react-native-gesture-handler';
 import { useLanguage } from '@/src/context/languageContext';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from 'expo-haptics'; // ✅ Dodano za taktilni feedback
 
-type Conversation = {
+type Message = {
+    id: string;
+    text: string;
+    senderId: 'me' | 'them';
+    createdAt?: Date;
+};
+
+type ConversationParams = {
     id: number;
     name: string;
     itemName: string;
-    lastMessage: string;
-    timeAgo: string;
     avatar: string;
     isOnline?: boolean;
-    isUnread?: boolean;
-    isArchived?: boolean;
 };
 
-const MOCK_CONVERSATIONS: Conversation[] = [
-    { id: 1, name: 'Sarah Miller', itemName: 'Sony Alpha Camera', lastMessage: 'Is the camera still available for this weekend?', timeAgo: '2m ago', avatar: 'https://randomuser.me/api/portraits/women/44.jpg', isOnline: true, isUnread: true, isArchived: false },
-    { id: 2, name: 'James Davies', itemName: 'Mountain Bike Pro', lastMessage: 'Thanks again for the bike! It handles great', timeAgo: '1h ago', avatar: 'https://randomuser.me/api/portraits/men/32.jpg', isOnline: false, isUnread: true, isArchived: false },
-    { id: 3, name: 'Elena Lopez', itemName: 'KitchenAid Mixer', lastMessage: 'I noticed a small scratch on the side', timeAgo: '3h ago', avatar: 'https://randomuser.me/api/portraits/women/68.jpg', isOnline: false, isUnread: false, isArchived: false },
-    { id: 4, name: 'Marcus Thompson', itemName: 'Camping Tent 4-Person', lastMessage: 'The tent is all cleaned and packed', timeAgo: 'Yesterday', avatar: 'https://randomuser.me/api/portraits/men/75.jpg', isOnline: false, isUnread: false, isArchived: true },
-    { id: 5, name: 'Alice Wong', itemName: 'Electric Pressure Washer', lastMessage: 'Perfect! See you at 5 PM', timeAgo: '2d ago', avatar: 'https://randomuser.me/api/portraits/women/90.jpg', isOnline: false, isUnread: false, isArchived: true },
-];
+export default function Chat() {
+    const { conversation } = useLocalSearchParams();
+    const conv: ConversationParams = typeof conversation === 'string'
+        ? JSON.parse(conversation)
+        : { id: 1, name: 'User', itemName: 'Item', avatar: '', isOnline: false };
 
-export default function Inbox() {
     const { t } = useLanguage();
-    const [activeCategory, setActiveCategory] = useState<string>('All');
-    const [searchText, setSearchText] = useState('');
-    const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
-    const swipeableRefs = useRef<Record<number, Swipeable | null>>({});
+    const insets = useSafeAreaInsets();
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [input, setInput] = useState('');
+    const [keyboardOffset, setKeyboardOffset] = useState(0);
 
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
+
     // ✅ Stabilan styles - ovisi o scheme (primitive), ne o colors objektu
     const styles = useMemo(() => makeStyles(colors), [scheme]);
 
-    // ✅ useMemo za counts - ne računaj pri svakom renderu
-    const unreadCount = useMemo(
-        () => conversations.filter(c => c.isUnread && !c.isArchived).length,
-        [conversations]
-    );
-    const archivedCount = useMemo(
-        () => conversations.filter(c => c.isArchived).length,
-        [conversations]
-    );
+    const scrollRef = useRef<ScrollView>(null);
 
-    // ✅ KRITIČNO: useMemo za filteredConversations - inače se filtrira na svakom renderu!
-    const filteredConversations = useMemo(() => {
-        const lowerSearch = searchText.toLowerCase();
-        return conversations.filter((conv) => {
-            const matchesSearch =
-                conv.name.toLowerCase().includes(lowerSearch) ||
-                conv.itemName.toLowerCase().includes(lowerSearch) ||
-                conv.lastMessage.toLowerCase().includes(lowerSearch);
-            if (activeCategory === 'Unread') return conv.isUnread && !conv.isArchived && matchesSearch;
-            if (activeCategory === 'Archived') return conv.isArchived && matchesSearch;
-            return !conv.isArchived && matchesSearch;
-        });
-    }, [conversations, searchText, activeCategory]);
+    // Resetaj poruke kad se promijeni konverzacija
+    useEffect(() => { setMessages([]); }, [conv.id]);
 
-    // ✅ Memoizirani handleri - stabilne reference za child komponente
-    const openChat = useCallback((conv: Conversation) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        swipeableRefs.current[conv.id]?.close();
-        setConversations(prev =>
-            prev.map(c => c.id === conv.id ? { ...c, isUnread: false } : c)
-        );
-        router.push({
-            pathname: '/chat',
-            params: {
-                conversation: JSON.stringify({
-                    id: conv.id,
-                    name: conv.name,
-                    itemName: conv.itemName,
-                    avatar: conv.avatar,
-                    isOnline: conv.isOnline,
-                }),
-            },
-        });
-    }, []);
-
-    const archiveConversation = useCallback((id: number) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        setConversations(prev =>
-            prev.map(c => c.id === id ? { ...c, isArchived: true, isUnread: false } : c)
-        );
-    }, []);
-
-    const unarchiveConversation = useCallback((id: number) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        setConversations(prev =>
-            prev.map(c => c.id === id ? { ...c, isArchived: false } : c)
-        );
-    }, []);
-
-    const deleteConversation = useCallback((id: number) => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        Alert.alert(
-            t('inbox', 'deleteConversation'),
-            t('inbox', 'cannotUndo'),
-            [
-                { text: t('common', 'cancel'), style: 'cancel' },
-                {
-                    text: t('common', 'delete'),
-                    style: 'destructive',
-                    onPress: () => {
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        setConversations(prev => prev.filter(c => c.id !== id));
-                    }
-                }
-            ]
-        );
-    }, [t]);
-
-    const clearSearch = useCallback(() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setSearchText('');
-    }, []);
-
-    const handleCategoryPress = useCallback((name: string) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setActiveCategory(name);
-    }, []);
-
-    // ✅ Memoiziran Swipeable handler - ne rekreira se pri svakom renderu
-    const handleSwipeableWillOpen = useCallback((convId: number) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        Object.entries(swipeableRefs.current).forEach(([id, ref]) => {
-            if (Number(id) !== convId && ref) {
-                ref.close();
+    // Keyboard listeneri
+    useEffect(() => {
+        const showSub = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+            (e) => {
+                const height = e.endCoordinates?.height ?? 0;
+                setKeyboardOffset(height > 0 ? height : 0);
             }
-        });
+        );
+        const hideSub = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+            () => setKeyboardOffset(0)
+        );
+        return () => { showSub.remove(); hideSub.remove(); };
     }, []);
 
-    // ✅ Memoiziran renderRightActions - prima conv ID umjesto cijelog objekta
-    const renderRightActions = useCallback((conv: Conversation) => {
-        return (
-            <View style={styles.swipeActions}>
-                {!conv.isArchived ? (
-                    <TouchableOpacity
-                        style={styles.archiveBtn}
-                        onPress={() => {
-                            swipeableRefs.current[conv.id]?.close();
-                            archiveConversation(conv.id);
-                        }}
-                    >
-                        <Ionicons name="archive-outline" size={22} color={colors.iconColorInverse} />
-                    </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity
-                        style={styles.unarchiveBtn}
-                        onPress={() => {
-                            swipeableRefs.current[conv.id]?.close();
-                            unarchiveConversation(conv.id);
-                        }}
-                    >
-                        <Ionicons name="arrow-undo-outline" size={22} color={colors.iconColorInverse} />
-                    </TouchableOpacity>
-                )}
-                <TouchableOpacity
-                    style={styles.deleteBtn}
-                    onPress={() => {
-                        swipeableRefs.current[conv.id]?.close();
-                        deleteConversation(conv.id);
-                    }}
-                >
-                    <Ionicons name="trash-outline" size={22} color={colors.iconColorInverse} />
-                </TouchableOpacity>
-            </View>
-        );
-    }, [archiveConversation, unarchiveConversation, deleteConversation, colors, styles]);
+    // ✅ Memoiziran formatTime - ne rekreira se pri svakom renderu
+    const formatTime = useCallback((date?: Date) =>
+            date ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+        []);
 
-    const filterLabels: Record<string, string> = {
-        'All': t('inbox', 'all'),
-        'Unread': t('inbox', 'unread'),
-        'Archived': t('inbox', 'archived'),
-    };
+    // ✅ Memoiziran handleSend s haptics feedbackom
+    const handleSend = useCallback(() => {
+        if (!input.trim()) return;
+
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setMessages(prev => [
+            ...prev,
+            { id: `me_${Date.now()}`, text: input.trim(), senderId: 'me', createdAt: new Date() }
+        ]);
+        setInput('');
+
+        // Auto-reply simulacija
+        setTimeout(() => {
+            setMessages(prev => [
+                ...prev,
+                {
+                    id: `them_${Date.now()}`,
+                    text: t('chat', 'autoReply'),
+                    senderId: 'them',
+                    createdAt: new Date()
+                }
+            ]);
+        }, 1500);
+    }, [input, t]);
+
+    // ✅ Memoiziran handleBack
+    const handleBack = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.back();
+    }, []);
+
+    // ✅ Memoiziran handleOptions
+    const handleOptions = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        // TODO: Implementiraj opcije (npr. block user, report, itd.)
+    }, []);
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                {/* SEARCH BAR */}
-                <View style={styles.searchBar}>
-                    <Fontisto name="search" style={styles.searchIcon} />
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder={t('inbox', 'search')}
-                        placeholderTextColor={colors.placeholder}
-                        value={searchText}
-                        onChangeText={setSearchText}
-                    />
-                    {searchText.length > 0 && (
-                        <TouchableOpacity onPress={clearSearch}>
-                            <Ionicons name="close-circle" size={20} color={colors.textMuted} />
-                        </TouchableOpacity>
-                    )}
+        <SafeAreaView
+            style={[styles.container, { marginBottom: keyboardOffset }]}
+            edges={['top']}
+        >
+            {/* HEADER */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={26} color={colors.text} />
+                </TouchableOpacity>
+                <Image
+                    source={{ uri: conv.avatar }}
+                    style={styles.avatar}
+                    cachePolicy="memory-disk" // ✅ Brže ponovno učitavanje
+                    transition={200}
+                />
+                <View style={styles.headerText}>
+                    <Text style={styles.headerName} numberOfLines={1}>{conv.name}</Text>
+                    <Text style={styles.headerItem} numberOfLines={1}>{conv.itemName}</Text>
                 </View>
+                <TouchableOpacity style={styles.headerIcon} onPress={handleOptions}>
+                    <Ionicons name="ellipsis-vertical" size={22} color={colors.text} />
+                </TouchableOpacity>
+            </View>
 
-                {/* FILTER TABS */}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryContent}>
-                    {(['All', 'Unread', 'Archived'] as string[]).map((name) => {
-                        const isActive = activeCategory === name;
-                        const count = name === 'Unread' ? unreadCount : name === 'Archived' ? archivedCount : 0;
+            {/* MESSAGES */}
+            <ScrollView
+                ref={scrollRef}
+                style={styles.messagesContainer}
+                contentContainerStyle={styles.messagesContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="interactive"
+                onContentSizeChange={() => {
+                    scrollRef.current?.scrollToEnd({ animated: true });
+                }}
+                decelerationRate="normal"
+            >
+                {messages.length === 0 ? (
+                    <View style={styles.emptyState}>
+                        <Ionicons name="chatbubble-ellipses-outline" size={56} color={colors.textSecondary} />
+                        <Text style={styles.emptyText}>
+                            {t('chat', 'noMessages')}{'\n'}{t('chat', 'startConv')}
+                        </Text>
+                    </View>
+                ) : (
+                    messages.map((msg) => {
+                        const isMe = msg.senderId === 'me';
                         return (
-                            <TouchableOpacity
-                                key={name}
-                                style={[
-                                    styles.CategoryButton,
-                                    isActive && styles.CategoryButtonActive
-                                ]}
-                                onPress={() => handleCategoryPress(name)}
-                            >
-                                <Text style={[
-                                    styles.categoryText,
-                                    isActive && styles.categoryTextActive
-                                ]}>
-                                    {filterLabels[name]}
-                                    {count > 0 && ` (${count})`}
-                                </Text>
-                            </TouchableOpacity>
-                        );
-                    })}
-                </ScrollView>
-
-                {/* CONVERSATION LIST */}
-                <View style={styles.conversationList}>
-                    {filteredConversations.length === 0 ? (
-                        <View style={styles.emptyContainer}>
-                            <Ionicons
-                                name={
-                                    activeCategory === 'Archived' ? 'archive-outline' :
-                                        activeCategory === 'Unread' ? 'mail-unread-outline' :
-                                            'chatbubbles-outline'
-                                }
-                                size={56}
-                                color={colors.textMuted}
-                            />
-                            <Text style={styles.emptyTitle}>
-                                {searchText
-                                    ? t('inbox', 'noResults')
-                                    : activeCategory === 'Archived'
-                                        ? t('inbox', 'noArchived')
-                                        : activeCategory === 'Unread'
-                                            ? t('inbox', 'allCaught')
-                                            : t('inbox', 'noConversations')}
-                            </Text>
-                            <Text style={styles.emptySubtitle}>
-                                {searchText
-                                    ? t('inbox', 'tryDifferent')
-                                    : activeCategory === 'Archived'
-                                        ? t('inbox', 'archivedHere')
-                                        : activeCategory === 'Unread'
-                                            ? t('inbox', 'noUnread')
-                                            : t('inbox', 'startChatting')}
-                            </Text>
-                        </View>
-                    ) : (
-                        filteredConversations.map((conv) => (
                             <View
-                                key={conv.id}
-                                style={[
-                                    styles.swipeWrapper,
-                                    conv.isUnread && styles.swipeWrapperUnread
-                                ]}
+                                key={msg.id}
+                                style={isMe ? styles.messageRowMe : styles.messageRowThem}
                             >
-                                <Swipeable
-                                    ref={(ref) => {
-                                        if (ref) swipeableRefs.current[conv.id] = ref;
-                                    }}
-                                    renderRightActions={() => renderRightActions(conv)}
-                                    overshootRight={false}
-                                    overshootLeft={false}
-                                    friction={1.5}
-                                    rightThreshold={40}
-                                    overshootFriction={5}
-                                    onSwipeableWillOpen={() => handleSwipeableWillOpen(conv.id)}
-                                >
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.conversationItem,
-                                            conv.isUnread && styles.conversationItemUnread
-                                        ]}
-                                        activeOpacity={0.7}
-                                        onPress={() => openChat(conv)}
-                                    >
-                                        <View style={styles.avatarWrapper}>
-                                            <Image
-                                                source={{ uri: conv.avatar }}
-                                                style={styles.avatar}
-                                                cachePolicy="memory-disk"
-                                                transition={200}
-                                            />
-                                            {conv.isOnline && <View style={styles.onlineDot} />}
-                                        </View>
-                                        <View style={styles.convContent}>
-                                            <View style={styles.convHeader}>
-                                                <Text
-                                                    style={[
-                                                        styles.convName,
-                                                        conv.isUnread && styles.convNameUnread
-                                                    ]}
-                                                    numberOfLines={1}
-                                                >
-                                                    {conv.name}
-                                                </Text>
-                                                <Text
-                                                    style={[
-                                                        styles.timeAgo,
-                                                        conv.isUnread && styles.timeAgoUnread
-                                                    ]}
-                                                >
-                                                    {conv.timeAgo}
-                                                </Text>
-                                            </View>
-                                            <View style={styles.messageRow}>
-                                                <Ionicons name="pricetag" size={11} color={colors.primary} />
-                                                <Text style={styles.itemName} numberOfLines={1}>
-                                                    {conv.itemName}
-                                                </Text>
-                                            </View>
-                                            <Text
-                                                style={[
-                                                    styles.lastMessage,
-                                                    conv.isUnread && styles.lastMessageUnread
-                                                ]}
-                                                numberOfLines={1}
-                                            >
-                                                {conv.lastMessage}
-                                            </Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                </Swipeable>
+                                <View style={[
+                                    styles.messageBubble,
+                                    isMe ? styles.messageBubbleMe : styles.messageBubbleThem
+                                ]}>
+                                    <Text style={[
+                                        styles.messageText,
+                                        isMe ? styles.messageTextMe : styles.messageTextThem
+                                    ]}>
+                                        {msg.text}
+                                    </Text>
+                                    {msg.createdAt && (
+                                        <Text style={[
+                                            styles.messageTime,
+                                            isMe ? styles.messageTimeMe : styles.messageTimeThem
+                                        ]}>
+                                            {formatTime(msg.createdAt)}
+                                        </Text>
+                                    )}
+                                </View>
                             </View>
-                        ))
-                    )}
-                </View>
+                        );
+                    })
+                )}
             </ScrollView>
+
+            {/* INPUT AREA */}
+            <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 8 }]}>
+                <TextInput
+                    style={styles.input}
+                    placeholder={t('chat', 'typeMessage')}
+                    placeholderTextColor={colors.textSecondary}
+                    value={input}
+                    onChangeText={setInput}
+                    multiline
+                    maxLength={500}
+                    onSubmitEditing={handleSend}
+                    returnKeyType="send"
+                />
+                <TouchableOpacity
+                    onPress={handleSend}
+                    style={[styles.sendButton, !input.trim() && styles.sendButtonDisabled]}
+                    disabled={!input.trim()}
+                >
+                    <Ionicons
+                        name="send"
+                        size={24}
+                        color={input.trim() ? '#fff' : colors.placeholder}
+                    />
+                </TouchableOpacity>
+            </View>
         </SafeAreaView>
     );
 }
 
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { paddingHorizontal: 16, paddingVertical: 16 },
-    searchBar: { flexDirection: 'row', alignItems: 'center', marginTop: 10, marginBottom: 16, paddingHorizontal: 15, paddingVertical: 5, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12 },
-    searchIcon: { fontSize: 16, color: colors.textMuted, marginRight: 8 },
-    searchInput: { flex: 1, height: 45, fontSize: 16, color: colors.text },
-    categoryContent: { gap: 8, alignItems: 'center', marginTop: 5, marginBottom: 16 },
-    CategoryButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 20, borderRadius: 9999, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-    CategoryButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    categoryText: { fontSize: 14, color: colors.text, fontWeight: '500' },
-    categoryTextActive: { color: colors.activeTabText, fontWeight: '600' },
-    conversationList: {},
-    swipeWrapper: { borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: colors.border, marginBottom: 10 },
-    swipeWrapperUnread: { borderColor: colors.primary + '30' },
-    conversationItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, backgroundColor: colors.card, borderLeftWidth: 0, borderLeftColor: 'transparent' },
-    conversationItemUnread: { backgroundColor: colors.card, borderLeftWidth: 4, borderLeftColor: colors.primary },
-    avatarWrapper: { position: 'relative', marginRight: 12 },
-    avatar: { width: 50, height: 50, borderRadius: 9999, backgroundColor: colors.border },
-    onlineDot: { position: 'absolute', bottom: 2, right: 2, width: 12, height: 12, borderRadius: 14, backgroundColor: colors.success, borderWidth: 2, borderColor: colors.card },
-    convContent: { flex: 1, gap: 3 },
-    convHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    convName: { fontSize: 15, fontWeight: '500', color: colors.text, flex: 1, marginRight: 8 },
-    convNameUnread: { fontWeight: '700' },
-    timeAgo: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
-    timeAgoUnread: { color: colors.primary, fontWeight: '600' },
-    messageRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 4 },
-    itemName: { fontSize: 11, fontWeight: '600', color: colors.primary, letterSpacing: 0.4, flex: 1 },
-    lastMessage: { fontSize: 13, color: colors.textSecondary, marginTop: 1 },
-    lastMessageUnread: { color: colors.text, fontWeight: '500' },
-    emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 8 },
-    emptyTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginTop: 8 },
-    emptySubtitle: { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
-    swipeActions: { flexDirection: 'row', alignItems: 'stretch', justifyContent: 'flex-end' },
-    archiveBtn: { width: 75, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
-    unarchiveBtn: { width: 75, backgroundColor: colors.success, justifyContent: 'center', alignItems: 'center' },
-    deleteBtn: { width: 75, backgroundColor: colors.danger, justifyContent: 'center', alignItems: 'center' },
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 14,
+        borderBottomWidth: 0.5,
+        borderBottomColor: colors.border,
+        gap: 14,
+    },
+    backButton: { padding: 6 },
+    avatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: colors.border,
+    },
+    headerText: { flex: 1, gap: 2 },
+    headerName: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: colors.text,
+    },
+    headerItem: {
+        fontSize: 12,
+        color: colors.textMuted,
+    },
+    headerIcon: { padding: 8 },
+    messagesContainer: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
+    messagesContent: {
+        flexGrow: 1,
+        justifyContent: 'flex-end',
+        padding: 18,
+        paddingBottom: 24,
+        gap: 12,
+    },
+    emptyState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 16,
+    },
+    emptyText: {
+        textAlign: 'center',
+        fontSize: 16,
+        lineHeight: 22,
+        color: colors.textMuted,
+    },
+    messageRowMe: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+    },
+    messageRowThem: {
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+    },
+    messageBubble: {
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        maxWidth: '85%',
+        gap: 6,
+    },
+    messageBubbleMe: {
+        alignSelf: 'flex-end',
+        borderBottomRightRadius: 8,
+        backgroundColor: colors.primary,
+    },
+    messageBubbleThem: {
+        alignSelf: 'flex-start',
+        borderBottomLeftRadius: 8,
+        borderWidth: 0.5,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+    },
+    messageText: {
+        fontSize: 16,
+        lineHeight: 22,
+    },
+    messageTextMe: {
+        color: colors.activeTabText ?? '#fff',
+    },
+    messageTextThem: {
+        color: colors.text,
+    },
+    messageTime: {
+        fontSize: 12,
+        alignSelf: 'flex-end',
+    },
+    messageTimeMe: {
+        color: 'rgba(255, 255, 255, 0.85)',
+    },
+    messageTimeThem: {
+        color: colors.textMuted,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        gap: 12,
+        paddingHorizontal: 18,
+        paddingVertical: 14,
+    },
+    input: {
+        flex: 1,
+        fontSize: 17,
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+        borderRadius: 28,
+        borderWidth: 0.5,
+        borderColor: colors.border,
+        maxHeight: 140,
+        backgroundColor: colors.border,
+        color: colors.text,
+    },
+    sendButton: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: colors.primary,
+    },
+    sendButtonDisabled: {
+        backgroundColor: colors.border,
+    },
 });
