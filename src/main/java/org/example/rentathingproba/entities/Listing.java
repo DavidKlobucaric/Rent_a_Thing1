@@ -2,15 +2,19 @@ package org.example.rentathingproba.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "listings")
 @Getter
 @Setter
+@NoArgsConstructor
 public class Listing {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,23 +40,21 @@ public class Listing {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "security_deposit", nullable = true)
+    private BigDecimal securityDeposit;
+
+    @OneToMany(
+            mappedBy = "listing",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @OrderBy("sortOrder ASC")
+    private List<ListingImage> images = new ArrayList<>();
+
     @PrePersist
     protected void  onCreate()
     {
         this.createdAt = LocalDateTime.now();
-    }
-
-    @Column(name = "image_urls", columnDefinition = "TEXT")
-    private String imageUrls;
-
-    @Column(name = "security_deposit", nullable = true)
-    private BigDecimal securityDeposit;
-
-    @Transient
-    public String getImageUrl() {
-        if (imageUrls == null || imageUrls.isBlank()) {
-            return null;
-        }
-        return imageUrls.split(",")[0];
     }
 }

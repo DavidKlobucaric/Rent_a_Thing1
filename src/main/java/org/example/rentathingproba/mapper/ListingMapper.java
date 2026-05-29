@@ -1,11 +1,13 @@
 package org.example.rentathingproba.mapper;
 
 import org.example.rentathingproba.dto.ListingDTO;
-import org.example.rentathingproba.entities.Listing;
-import org.example.rentathingproba.entities.Thing;
-import org.example.rentathingproba.entities.User;
+import org.example.rentathingproba.entities.*;
 import org.example.rentathingproba.responses.ListingResponseDTO;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Component
 public class ListingMapper {
@@ -17,7 +19,7 @@ public class ListingMapper {
         listing.setSecurityDeposit(dto.getSecurityDeposit());
         listing.setLocation(dto.getLocation());
         listing.setIsAvailable(true);
-        listing.setImageUrls(thing.getImageUrls() != null ? thing.getImageUrls() : "");
+        copyImagesFromThing(listing, thing);
         return listing;
     }
 
@@ -28,6 +30,10 @@ public class ListingMapper {
     }
 
     public ListingResponseDTO toResponse(Listing l) {
+        List<String> urls = l.getImages().stream()
+                .map(ListingImage::getUrl)
+                .collect(Collectors.toList());
+
         return new ListingResponseDTO(
                 l.getId(),
                 l.getPrice(),
@@ -39,9 +45,21 @@ public class ListingMapper {
                 l.getThings().getName(),
                 l.getThings().getCategory(),
                 l.getThings().getDescription(),
-                l.getImageUrls() != null ? l.getImageUrls() : "",
+                urls,
                 l.getUser().getId(),
                 l.getUser().getUsername()
         );
+    }
+
+    private void copyImagesFromThing(Listing listing, Thing thing) {
+        List<String> urls = thing.getImages().stream()
+                .map(ThingImage::getUrl)
+                .collect(Collectors.toList());
+
+        List<ListingImage> images = IntStream.range(0, urls.size())
+                .mapToObj(i -> new ListingImage(listing, urls.get(i), i))
+                .collect(Collectors.toList());
+
+        listing.getImages().addAll(images);
     }
 }

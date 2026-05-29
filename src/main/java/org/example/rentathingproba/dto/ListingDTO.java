@@ -12,4 +12,6 @@ public class ListingDTO {
     private BigDecimal price;
     private BigDecimal securityDeposit;
     private String location;
+    private Double latitude;
+    private Double longitude;
 }
