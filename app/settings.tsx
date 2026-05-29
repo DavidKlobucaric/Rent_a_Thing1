@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 
+import { useRouter } from 'expo-router';
 import { Modal } from 'react-native';
 import { useLanguage, SUPPORTED_LANGUAGES } from '@/src/context/languageContext';
 import { LANGUAGE_NAMES, LANGUAGE_FLAGS } from '@/src/i18n/translations';
@@ -25,6 +26,7 @@ type SettingItemProps = {
     colors: typeof Colors.light;
 };
 
+const router = useRouter();
 
 const SettingItem = ({
                          iconName,
@@ -51,6 +53,7 @@ const SettingItem = ({
 
 
     return (
+
 
 
         <TouchableOpacity
@@ -276,11 +279,11 @@ export default function SettingsScreen() {
                     <SettingItem colors={colors} iconName="document-text"
                                  title={t('settings', 'terms')}
                                  description={t('settings', 'termsDesc')}
-                                 type="link" onPress={() => handleLinkPress('Terms')} />
+                                 type="link" onPress={() => router.push('/terms')} />
                     <SettingItem colors={colors} iconName="shield-checkmark"
                                  title={t('settings', 'privacyPolicy')}
                                  description={t('settings', 'privacyPolicyDesc')}
-                                 type="link" onPress={() => handleLinkPress('Privacy')} />
+                                 type="link" onPress={() => router.push('/privacy')} />
                 </View>
 
                 {/* Danger Zone */}

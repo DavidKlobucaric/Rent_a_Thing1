@@ -193,48 +193,55 @@ export default function HomeScreen() {
                 </ScrollView>
 
                 {/* SEARCH RESULTS */}
-                <View style={styles.listContainer}>
-                    {searchLoading ? (
-                        <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />
-                    ) : searchError ? (
-                        <Text style={styles.emptyText}>{searchError}</Text>
-                    ) : searchResults.length === 0 ? (
-                        <Text style={styles.emptyText}>
-                            {searchText
-                                ? `${t('home', 'noResults')} "${searchText}"`
-                                : `${t('home', 'noItemsCategory')} "${activeCategory}"`}
-                        </Text>
-                    ) : (
-                        <FlatList
-                            data={searchResults}
-                            keyExtractor={(item) => item.listingId.toString()}
-                            scrollEnabled={false}
-                            horizontal={true}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={{ paddingHorizontal: 10 }}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={styles.itemCard}
-                                    onPress={() => router.push({
-                                        pathname: '/item',
-                                        params: { listingId: item.listingId.toString() }
-                                    })}
-                                >
-                                    <Image
-                                        source={{ uri: getFirstImage(item.imageUrls) }}
-                                        style={styles.itemImage}
-                                    />
-                                    <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                                    <Text style={styles.locationText} numberOfLines={1}>📍 {item.location}</Text>
-                                    <View style={{ flexDirection: 'row' }}>
-                                        <Text style={styles.price}>${item.price}</Text>
-                                        <Text style={styles.perDay}>{t('home', 'perDay')}</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            )}
-                        />
-                    )}
-                </View>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    nestedScrollEnabled={true}
+                    decelerationRate={0.92}
+                >
+                    <View style={styles.listContainer}>
+                        {searchLoading ? (
+                            <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />
+                        ) : searchError ? (
+                            <Text style={styles.emptyText}>{searchError}</Text>
+                        ) : searchResults.length === 0 ? (
+                            <Text style={styles.emptyText}>
+                                {searchText
+                                    ? `${t('home', 'noResults')} "${searchText}"`
+                                    : `${t('home', 'noItemsCategory')} "${activeCategory}"`}
+                            </Text>
+                        ) : (
+                            <FlatList
+                                data={searchResults}
+                                keyExtractor={(item) => item.listingId.toString()}
+                                scrollEnabled={false}
+                                horizontal={true}
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={{ paddingHorizontal: 10 }}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        style={styles.itemCard}
+                                        onPress={() => router.push({
+                                            pathname: '/item',
+                                            params: { listingId: item.listingId.toString() }
+                                        })}
+                                    >
+                                        <Image
+                                            source={{ uri: getFirstImage(item.imageUrls) }}
+                                            style={styles.itemImage}
+                                        />
+                                        <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                                        <Text style={styles.locationText} numberOfLines={1}>📍 {item.location}</Text>
+                                        <View style={{ flexDirection: 'row' }}>
+                                            <Text style={styles.price}>${item.price}</Text>
+                                            <Text style={styles.perDay}>{t('home', 'perDay')}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        )}
+                    </View>
+                </ScrollView>
 
                 {/* RECOMMENDED */}
                 <Text style={styles.sectionTitle}>{t('home', 'recommended')}</Text>
@@ -436,7 +443,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     },
     price: {
         fontWeight: '600',
-        color: colors.primary,
+        color: colors.primarySecondary,
         fontSize: 15,
     },
     perDay: {
