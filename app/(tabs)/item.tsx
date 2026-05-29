@@ -8,14 +8,21 @@ import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
-import  ShimmerPlaceholder  from 'react-native-shimmer-placeholder';
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
-import { getListingById, addFavourite, removeFavourite, checkFavourite } from '@/src/api/itemsApi';
-import type { Listing } from '@/src/api/itemsApi';
+import {
+    getListingById,
+    addFavourite,
+    removeFavourite,
+    checkFavourite,
+    getBlockedPeriods,
+    createBooking,
+} from '@/src/api/itemsApi';
+import type { Listing, BlockedPeriod } from '@/src/api/itemsApi';
 import * as Haptics from 'expo-haptics';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
@@ -46,12 +53,13 @@ export default function ListingDetailScreen() {
     const [listing, setListing] = useState<Listing | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [blockedPeriods, setBlockedPeriods] = useState<BlockedPeriod[]>([]);
 
     // Bottom Sheet ref
     const calendarSheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['65%', '85%'], []);
 
-    // ✅ Spojena dva useEffect u jedan - manje API poziva, manje re-renders
+    // ✅ Spojena tri useEffect u jedan - manje API poziva, manje re-renders
     useEffect(() => {
         if (!listingId) return;
         let isActive = true;
@@ -60,9 +68,10 @@ export default function ListingDetailScreen() {
             setLoading(true);
             setError('');
 
-            const [listingResult, favouriteResult] = await Promise.all([
+            const [listingResult, favouriteResult, blockedResult] = await Promise.all([
                 getListingById(Number(listingId)),
                 checkFavourite(Number(listingId)),
+                getBlockedPeriods(Number(listingId)),
             ]);
 
             if (!isActive) return;
@@ -74,6 +83,11 @@ export default function ListingDetailScreen() {
             }
 
             setIsFavorite(favouriteResult);
+
+            if (blockedResult.success) {
+                setBlockedPeriods(blockedResult.data);
+            }
+
             setLoading(false);
         })();
 
@@ -159,6 +173,24 @@ export default function ListingDetailScreen() {
 
     const markedDates = useMemo(() => {
         const marked: any = {};
+
+        // Shade booked/blocked periods in red
+        blockedPeriods.forEach(({ startDate: s, endDate: e }) => {
+            let current = new Date(s);
+            const end = new Date(e);
+            while (current <= end) {
+                const dateStr = current.toISOString().split('T')[0];
+                marked[dateStr] = {
+                    disabled: true,
+                    disableTouchEvent: true,
+                    color: colors.danger + '40',
+                    textColor: colors.danger,
+                };
+                current.setDate(current.getDate() + 1);
+            }
+        });
+
+        // Selected range on top
         if (startDate) {
             marked[startDate] = { startingDay: true, color: colors.primary, textColor: colors.iconColorInverse };
         }
@@ -176,7 +208,7 @@ export default function ListingDetailScreen() {
             }
         }
         return marked;
-    }, [startDate, endDate, colors]);
+    }, [startDate, endDate, colors, blockedPeriods]);
 
     // ✅ Memoiziran handleContactHost
     const handleContactHost = useCallback(() => {
@@ -185,18 +217,15 @@ export default function ListingDetailScreen() {
         router.push({
             pathname: '/chat',
             params: {
-                conversation: JSON.stringify({
-                    id: listing.listingId,
-                    name: listing.userName,
-                    itemName: listing.name,
-                    avatar: '',
-                    isOnline: false,
-                }),
+                listingId: listing.listingId.toString(),
+                ownerId: (listing.userId ?? 0).toString(),
+                ownerName: listing.userName,
+                itemName: listing.name,
             },
         });
     }, [listing, router]);
 
-    // ✅ Memoiziran handleBook
+    // ✅ Memoiziran handleBook - calls real API
     const handleBook = useCallback(() => {
         if (!listing) return;
         if (!startDate || !endDate) {
@@ -213,10 +242,20 @@ export default function ListingDetailScreen() {
                 { text: t('common', 'cancel'), style: 'cancel' },
                 {
                     text: t('common', 'confirm'),
-                    onPress: () => {
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        Alert.alert('🎉 ' + t('listing', 'bookingConfirmed'), t('listing', 'hostContact'));
-                        router.back();
+                    onPress: async () => {
+                        const result = await createBooking({
+                            listingId: listing.listingId,
+                            startDate: startDate!,
+                            endDate: endDate!,
+                        });
+                        if (result.success) {
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            Alert.alert('🎉 ' + t('listing', 'bookingConfirmed'), t('listing', 'hostContact'));
+                            router.back();
+                        } else {
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                            Alert.alert(t('common', 'error'), result.message);
+                        }
                     },
                 },
             ]
@@ -421,7 +460,7 @@ export default function ListingDetailScreen() {
                     <View style={styles.hostCard}>
                         <View style={styles.hostInfo}>
                             <Image
-                                source={{ uri: 'https://i.pravatar.cc/150' }}
+                                source={{ uri: `https://i.pravatar.cc/150?u=${listing.userId ?? listing.userName}` }}
                                 style={styles.hostAvatar}
                                 cachePolicy="memory-disk"
                                 transition={200}

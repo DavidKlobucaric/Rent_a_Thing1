@@ -276,3 +276,44 @@ export const checkFavourite = async (listingId: number): Promise<boolean> => {
         return false;
     }
 };
+
+// ── Availability / Bookings ───────────────────────────────────────────────────
+
+export type BlockedPeriod = {
+    startDate: string; // 'YYYY-MM-DD'
+    endDate: string;
+};
+
+export const getBlockedPeriods = async (listingId: number): Promise<ApiResult<BlockedPeriod[]>> => {
+    try {
+        const response = await api.get<BlockedPeriod[]>(`/bookings/listing/${listingId}/blocked`);
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return { success: false, message: error.response?.data?.message || 'Could not load availability.' };
+    }
+};
+
+export type BookingParams = {
+    listingId: number;
+    startDate: string; // 'YYYY-MM-DD'
+    endDate: string;
+};
+
+export type Booking = {
+    bookingId: number;
+    listingId: number;
+    listingName: string;
+    startDate: string;
+    endDate: string;
+    status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+    totalAmount: number;
+};
+
+export const createBooking = async (params: BookingParams): Promise<ApiResult<Booking>> => {
+    try {
+        const response = await api.post<Booking>('/bookings', params);
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return { success: false, message: error.response?.data?.message || 'Failed to create booking.' };
+    }
+};
