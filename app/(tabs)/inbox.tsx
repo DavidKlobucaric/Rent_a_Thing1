@@ -54,14 +54,12 @@ export default function Inbox() {
         if (showRefreshing) setRefreshing(true);
         else setLoading(true);
         setError('');
-
         const result = await getMyConversations();
         if (result.success) {
-            setConversations(result.data);
+            setConversations(result.data ?? []);
         } else {
             setError(result.message);
         }
-
         setLoading(false);
         setRefreshing(false);
     }, []);

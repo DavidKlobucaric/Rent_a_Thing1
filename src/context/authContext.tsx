@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getAuthToken, getStoredUser, clearAuth, AuthUser } from '@/src/storage/storageTokens';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-const BASE_URL = API_BASE_URL;
+const BASE_URL = (API_BASE_URL ?? 'http://192.168.100.8:8080') + '/api';
 
 type AuthContextType = {
     user: AuthUser | null;
@@ -26,6 +27,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+
+
 
     useEffect(() => {
         refreshAuth();

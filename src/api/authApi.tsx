@@ -2,7 +2,7 @@ import axios from "axios";
 import { saveAuthData, AuthUser } from "@/src/storage/storageTokens";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-const BASE_URL = API_BASE_URL;
+const BASE_URL = (API_BASE_URL ?? 'http://192.168.100.8:8080') + '/api';
 
 const api = axios.create({
     baseURL: BASE_URL,
