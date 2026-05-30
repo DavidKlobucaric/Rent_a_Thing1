@@ -22,7 +22,6 @@ export default function RootLayout() {
                         <BottomSheetModalProvider>
                             <Stack>
                                 <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade', animationDuration: 950 }} />
-                                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
                                 <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade', animationDuration: 350 }} />
                                 <Stack.Screen name="sign-in" options={{ headerShown: false, animation: 'fade', animationDuration: 350 }} />
                                 <Stack.Screen name="log-in" options={{ headerShown: false, animation: 'fade', animationDuration: 350 }} />
