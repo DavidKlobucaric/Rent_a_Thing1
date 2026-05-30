@@ -20,16 +20,17 @@ import {
     removeFavourite,
     checkFavourite,
     getBlockedPeriods,
-    createBooking,
 } from '@/src/api/itemsApi';
+import {
+    getOrCreateConversation,
+    createBookingRequest,
+} from '@/src/api/chatApi';
 import type { Listing, BlockedPeriod } from '@/src/api/itemsApi';
 import * as Haptics from 'expo-haptics';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLACEHOLDER_IMAGE = 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png';
-
-// ✅ Memoiziran izvan komponente - ne mijenja se
 const TODAY = new Date().toISOString().split('T')[0];
 
 export default function ListingDetailScreen() {
@@ -39,58 +40,52 @@ export default function ListingDetailScreen() {
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const isDark = scheme === 'dark';
-
-    // ✅ Stabilan styles - ovisi o scheme (primitive), ne o colors objektu
     const styles = useMemo(() => makeStyles(colors), [scheme]);
 
-    // ✅ Shimmer boje ovisno o temi
     const shimmerColors = useMemo(() =>
             scheme === 'dark'
                 ? ['#2A2A2A', '#3A3A3A', '#2A2A2A']
                 : ['#E0E0E0', '#F5F5F5', '#E0E0E0'],
-        [scheme]);
+        [scheme]
+    );
 
     const [listing, setListing] = useState<Listing | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [blockedPeriods, setBlockedPeriods] = useState<BlockedPeriod[]>([]);
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [startDate, setStartDate] = useState<string | null>(null);
+    const [endDate, setEndDate] = useState<string | null>(null);
+    const [selectingStart, setSelectingStart] = useState(true);
+    const [booking, setBooking] = useState(false);
 
-    // Bottom Sheet ref
     const calendarSheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['65%', '85%'], []);
 
-    // ✅ Spojena tri useEffect u jedan - manje API poziva, manje re-renders
     useEffect(() => {
         if (!listingId) return;
         let isActive = true;
-
         (async () => {
             setLoading(true);
             setError('');
-
             const [listingResult, favouriteResult, blockedResult] = await Promise.all([
                 getListingById(Number(listingId)),
                 checkFavourite(Number(listingId)),
                 getBlockedPeriods(Number(listingId)),
             ]);
-
             if (!isActive) return;
-
             if (listingResult.success) {
                 setListing(listingResult.data);
             } else {
                 setError(listingResult.message);
             }
-
             setIsFavorite(favouriteResult);
-
             if (blockedResult.success) {
                 setBlockedPeriods(blockedResult.data);
             }
-
             setLoading(false);
         })();
-
         return () => { isActive = false; };
     }, [listingId]);
 
@@ -99,21 +94,15 @@ export default function ListingDetailScreen() {
         return listing.imageUrls;
     }, [listing?.imageUrls]);
 
-    const [activeImageIndex, setActiveImageIndex] = useState(0);
-    const [isFavorite, setIsFavorite] = useState(false);
-
-    // ✅ Memoiziran handler za scroll - spriječava rekreiranje funkcije
     const handleGalleryScroll = useCallback((e: any) => {
         const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
         setActiveImageIndex(index);
     }, []);
 
-    // ✅ Memoiziran toggle favourite handler
     const handleToggleFavourite = useCallback(async () => {
         if (!listingId) return;
         const next = !isFavorite;
         setIsFavorite(next);
-
         if (next) {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             await addFavourite(Number(listingId));
@@ -122,10 +111,6 @@ export default function ListingDetailScreen() {
             await removeFavourite(Number(listingId));
         }
     }, [listingId, isFavorite]);
-
-    const [startDate, setStartDate] = useState<string | null>(null);
-    const [endDate, setEndDate] = useState<string | null>(null);
-    const [selectingStart, setSelectingStart] = useState(true);
 
     const numberOfDays = useMemo(() => {
         if (!startDate || !endDate) return 0;
@@ -139,14 +124,12 @@ export default function ListingDetailScreen() {
     const deposit = listing?.securityDeposit || 0;
     const total = subtotal + deposit;
 
-    // ✅ Memoiziran formatDate - ne rekreira se pri svakom renderu
     const formatDate = useCallback((dateStr: string | null) => {
         if (!dateStr) return t('listing', 'selectDate');
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }, [t]);
 
-    // ✅ Memoiziran resetDates handler
     const resetDates = useCallback(() => {
         setStartDate(null);
         setEndDate(null);
@@ -154,7 +137,6 @@ export default function ListingDetailScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }, []);
 
-    // ✅ Memoiziran handleDayPress - ključno za Calendar performansu
     const handleDayPress = useCallback((day: { dateString: string }) => {
         Haptics.selectionAsync();
         if (selectingStart) {
@@ -173,8 +155,6 @@ export default function ListingDetailScreen() {
 
     const markedDates = useMemo(() => {
         const marked: any = {};
-
-        // Shade booked/blocked periods in red
         blockedPeriods.forEach(({ startDate: s, endDate: e }) => {
             let current = new Date(s);
             const end = new Date(e);
@@ -189,8 +169,6 @@ export default function ListingDetailScreen() {
                 current.setDate(current.getDate() + 1);
             }
         });
-
-        // Selected range on top
         if (startDate) {
             marked[startDate] = { startingDay: true, color: colors.primary, textColor: colors.iconColorInverse };
         }
@@ -210,7 +188,6 @@ export default function ListingDetailScreen() {
         return marked;
     }, [startDate, endDate, colors, blockedPeriods]);
 
-    // ✅ Memoiziran handleContactHost
     const handleContactHost = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         if (!listing) return;
@@ -225,7 +202,7 @@ export default function ListingDetailScreen() {
         });
     }, [listing, router]);
 
-    // ✅ Memoiziran handleBook - calls real API
+    // ── BOOKING: Integrirano s Inbox/Chat ──
     const handleBook = useCallback(() => {
         if (!listing) return;
         if (!startDate || !endDate) {
@@ -233,28 +210,61 @@ export default function ListingDetailScreen() {
             Alert.alert(t('listing', 'selectDates'), t('listing', 'selectDatesFirst'));
             return;
         }
+
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         const dayWord = numberOfDays === 1 ? t('listing', 'day') : t('listing', 'days');
+
         Alert.alert(
             t('listing', 'confirmBooking'),
-            `Book ${listing.name} for ${numberOfDays} ${dayWord}?\n${t('listing', 'total')}: $${total}`,
+            `Book ${listing.name} for ${numberOfDays} ${dayWord}?\n\n${t('listing', 'total')}: $${total}\n\n${t('listing', 'bookingInfo')}`,
             [
                 { text: t('common', 'cancel'), style: 'cancel' },
                 {
                     text: t('common', 'confirm'),
                     onPress: async () => {
-                        const result = await createBooking({
-                            listingId: listing.listingId,
-                            startDate: startDate!,
-                            endDate: endDate!,
-                        });
-                        if (result.success) {
+                        setBooking(true);
+
+                        // 1. Kreiraj ili dohvati razgovor s ownerom
+                        const convResult = await getOrCreateConversation(listing.listingId);
+
+                        // ⭐ POPRAVAK: Dodano || !convResult.data
+                        if (!convResult.success || !convResult.data) {
+                            setBooking(false);
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                            Alert.alert(t('common', 'error'), convResult.message || 'Failed to start conversation');
+                            return;
+                        }
+
+                        // 2. Pošalji booking request (automatski se pojavi u chatu)
+                        // Sada TypeScript zna da convResult.data sigurno postoji
+                        const bookingResult = await createBookingRequest(
+                            convResult.data.conversationId,
+                            listing.listingId,
+                            startDate!,
+                            endDate!
+                        );
+
+                        setBooking(false);
+
+                        if (bookingResult.success) {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            Alert.alert('🎉 ' + t('listing', 'bookingConfirmed'), t('listing', 'hostContact'));
-                            router.back();
+                            Alert.alert(
+                                '🎉 ' + t('listing', 'requestSent'),
+                                t('listing', 'requestSentSub'),
+                                [
+                                    {
+                                        text: t('listing', 'goToInbox'),
+                                        onPress: () => router.replace('/(tabs)/inbox'), // ⭐ Popravak rute za inbox
+                                    },
+                                    {
+                                        text: t('common', 'ok'),
+                                        onPress: () => router.back(),
+                                    },
+                                ]
+                            );
                         } else {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                            Alert.alert(t('common', 'error'), result.message);
+                            Alert.alert(t('common', 'error'), bookingResult.message);
                         }
                     },
                 },
@@ -262,7 +272,6 @@ export default function ListingDetailScreen() {
         );
     }, [listing, startDate, endDate, numberOfDays, total, t, router]);
 
-    // ✅ Memoiziran handleShare
     const handleShare = useCallback(async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         if (!listing) return;
@@ -287,85 +296,48 @@ export default function ListingDetailScreen() {
         }
     }, [listing, t]);
 
-    // ✅ Memoiziran back handler
     const handleBack = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.back();
     }, [router]);
 
-    // ✅ Memoiziran open calendar handler
     const openCalendar = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         calendarSheetRef.current?.expand();
     }, []);
 
-    // ✅ Memoiziran close calendar handler
     const closeCalendar = useCallback(() => {
         calendarSheetRef.current?.close();
     }, []);
 
-    // ✅ Memoiziran done calendar handler
     const handleCalendarDone = useCallback(() => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         calendarSheetRef.current?.close();
     }, []);
 
-    // ═══════════════════════════════════════════════════════════════
-    // ✨ SHIMMER LOADING STATE - premium UX
-    // ═══════════════════════════════════════════════════════════════
+    // ── SHIMMER LOADING ──
     if (loading) {
         return (
             <SafeAreaView style={styles.container} edges={['top']}>
                 <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
                 <ScrollView showsVerticalScrollIndicator={false}>
-                    {/* Hero Image Skeleton */}
                     <ShimmerPlaceholder
                         LinearGradient={LinearGradient}
                         style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH * 0.85 }}
                         shimmerColors={shimmerColors}
                     />
-                    {/* Content Skeletons */}
                     <View style={{ paddingHorizontal: 20, paddingTop: 24, gap: 14 }}>
-                        <ShimmerPlaceholder
-                            LinearGradient={LinearGradient}
-                            style={{ width: '30%', height: 20, borderRadius: 6 }}
-                            shimmerColors={shimmerColors}
-                        />
-                        <ShimmerPlaceholder
-                            LinearGradient={LinearGradient}
-                            style={{ width: '85%', height: 28, borderRadius: 8, marginBottom: 4 }}
-                            shimmerColors={shimmerColors}
-                        />
-                        <ShimmerPlaceholder
-                            LinearGradient={LinearGradient}
-                            style={{ width: '50%', height: 16, borderRadius: 6 }}
-                            shimmerColors={shimmerColors}
-                        />
-                        <ShimmerPlaceholder
-                            LinearGradient={LinearGradient}
-                            style={{ width: '35%', height: 30, borderRadius: 8, marginTop: 8 }}
-                            shimmerColors={shimmerColors}
-                        />
+                        <ShimmerPlaceholder LinearGradient={LinearGradient} style={{ width: '30%', height: 20, borderRadius: 6 }} shimmerColors={shimmerColors} />
+                        <ShimmerPlaceholder LinearGradient={LinearGradient} style={{ width: '85%', height: 28, borderRadius: 8, marginBottom: 4 }} shimmerColors={shimmerColors} />
+                        <ShimmerPlaceholder LinearGradient={LinearGradient} style={{ width: '50%', height: 16, borderRadius: 6 }} shimmerColors={shimmerColors} />
+                        <ShimmerPlaceholder LinearGradient={LinearGradient} style={{ width: '35%', height: 30, borderRadius: 8, marginTop: 8 }} shimmerColors={shimmerColors} />
                         <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />
                         {[1, 2, 3, 4, 5].map((i) => (
-                            <ShimmerPlaceholder
-                                key={i}
-                                LinearGradient={LinearGradient}
-                                style={{ width: i === 5 ? '70%' : '100%', height: 16, borderRadius: 4 }}
-                                shimmerColors={shimmerColors}
-                            />
+                            <ShimmerPlaceholder key={i} LinearGradient={LinearGradient} style={{ width: i === 5 ? '70%' : '100%', height: 16, borderRadius: 4 }} shimmerColors={shimmerColors} />
                         ))}
                         <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />
-                        <ShimmerPlaceholder
-                            LinearGradient={LinearGradient}
-                            style={{ width: '40%', height: 18, borderRadius: 6 }}
-                            shimmerColors={shimmerColors}
-                        />
-                        <ShimmerPlaceholder
-                            LinearGradient={LinearGradient}
-                            style={{ width: '100%', height: 70, borderRadius: 16, marginTop: 8 }}
-                            shimmerColors={shimmerColors}
-                        />
+                        <ShimmerPlaceholder LinearGradient={LinearGradient} style={{ width: '40%', height: 18, borderRadius: 6 }} shimmerColors={shimmerColors} />
+                        <ShimmerPlaceholder LinearGradient={LinearGradient} style={{ width: '100%', height: 70, borderRadius: 16, marginTop: 8 }} shimmerColors={shimmerColors} />
                     </View>
                 </ScrollView>
             </SafeAreaView>
@@ -453,9 +425,11 @@ export default function ListingDetailScreen() {
                         <Text style={styles.perDay}>{t('listing', 'perDay')}</Text>
                     </View>
                     <View style={styles.divider} />
+
                     <Text style={styles.sectionTitle}>{t('listing', 'description')}</Text>
                     <Text style={styles.description}>{listing.description}</Text>
                     <View style={styles.divider} />
+
                     <Text style={styles.sectionTitle}>{t('listing', 'hostedBy')}</Text>
                     <View style={styles.hostCard}>
                         <View style={styles.hostInfo}>
@@ -497,7 +471,6 @@ export default function ListingDetailScreen() {
                         </View>
                         <Ionicons name="calendar-outline" size={22} color={colors.primary} style={{ marginLeft: 6 }} />
                     </TouchableOpacity>
-
                     {(startDate || endDate) && (
                         <TouchableOpacity style={styles.resetButton} onPress={resetDates}>
                             <Text style={styles.resetButtonText}>{t('listing', 'resetDates')}</Text>
@@ -535,14 +508,24 @@ export default function ListingDetailScreen() {
                     <Text style={styles.bottomPerDay}>{t('listing', 'perDay')}</Text>
                 </View>
                 <TouchableOpacity
-                    style={[styles.bookButton, !listing.isAvailable && styles.bookButtonDisabled]}
+                    style={[styles.bookButton, (!listing.isAvailable || booking) && styles.bookButtonDisabled]}
                     onPress={handleBook}
-                    disabled={!listing.isAvailable}
+                    disabled={!listing.isAvailable || booking}
                 >
-                    <Ionicons name="checkmark-circle-outline" size={18} color={colors.iconColorInverse} />
-                    <Text style={styles.bookButtonText}>
-                        {listing.isAvailable ? t('listing', 'bookNow') : t('listing', 'unavailable')}
-                    </Text>
+                    {booking ? (
+                        <ShimmerPlaceholder
+                            LinearGradient={LinearGradient}
+                            style={{ width: 20, height: 20, borderRadius: 10 }}
+                            shimmerColors={['#fff', '#ddd', '#fff']}
+                        />
+                    ) : (
+                        <>
+                            <Ionicons name="checkmark-circle-outline" size={18} color={colors.iconColorInverse} />
+                            <Text style={styles.bookButtonText}>
+                                {listing.isAvailable ? t('listing', 'bookNow') : t('listing', 'unavailable')}
+                            </Text>
+                        </>
+                    )}
                 </TouchableOpacity>
             </View>
 
