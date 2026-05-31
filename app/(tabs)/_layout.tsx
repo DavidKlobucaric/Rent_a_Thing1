@@ -20,6 +20,10 @@ export default function TabLayout() {
                 tabBarInactiveTintColor: colors.textMuted,
                 headerShown: false,
                 tabBarButton: HapticTab,
+                // Ovdje definiramo stil za cijeli tab bar ako zatreba
+                tabBarStyle: {
+                    backgroundColor: colors.background, // ili colors.surface ovisno o tvom dizajnu
+                }
             }}>
 
             <Tabs.Screen
@@ -38,28 +42,28 @@ export default function TabLayout() {
                 }}
             />
 
-
             <Tabs.Screen
                 name="add"
                 options={{
                     title: t('tabs', 'add'),
-                    tabBarIcon: ({ focused }) => (
+                    tabBarIcon: ({ focused, color }) => (
                         <View style={{
-
                             width: 56,
                             height: 56,
-                            borderRadius: 28,
-                            backgroundColor: colors.primary,
+                            borderRadius: 9999,
+                            backgroundColor: focused ? colors.primary : (colors.surface || colors.background),
                             justifyContent: 'center',
                             alignItems: 'center',
-                            marginTop: -20,
-                            borderWidth: 3,
-                            borderColor: colors.card,
+                            marginTop: -30,
+
+                            borderWidth: 1,
+                            borderColor: focused ? colors.primary : (colors.border || '#E0E0E0'),
+
                         }}>
                             <MaterialIcons
                                 name="add"
-                                size={30}
-                                color="#FFFFFF"
+                                size={32}
+                                color={focused ? '#FFFFFF' : color}
                             />
                         </View>
                     ),

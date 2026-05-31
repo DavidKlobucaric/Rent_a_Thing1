@@ -86,7 +86,7 @@ export default function SavedItemsScreen() {
     // ✅ Memoiziran handleItemPress
     const handleItemPress = useCallback((listingId: number) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push({ pathname: '/(tabs)/item', params: { listingId: listingId.toString() } });
+        router.push({ pathname: '/item', params: { listingId: listingId.toString() } });
     }, [router]);
 
     const getFirstImage = useCallback((imageUrls: string[] | string | undefined) => {

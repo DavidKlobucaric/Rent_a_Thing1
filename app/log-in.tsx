@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity,
     StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
-import { Image } from 'expo-image'; // ✅ expo-image umjesto RN Image (brže, s cachingom)
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
@@ -13,6 +13,8 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
 import * as Haptics from 'expo-haptics';
+
+import { getRememberedEmail } from "@/src/storage/storageTokens";
 
 export default function LogInScreen() {
     const [email, setEmail] = useState('');
@@ -26,10 +28,21 @@ export default function LogInScreen() {
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
 
-    // ✅ Stabilan styles - ovisi o scheme (primitive), ne o colors objektu
     const styles = useMemo(() => makeStyles(colors), [scheme]);
 
-    // ✅ Memoiziran handleLogIn
+    // 🔄 Prilikom otvaranja ekrana provjeri ima li zapamćenog Gmaila
+    useEffect(() => {
+        const checkRememberedEmail = async () => {
+            const savedEmail = await getRememberedEmail();
+            if (savedEmail) {
+                setEmail(savedEmail);
+                setRememberMe(true);
+            }
+        };
+        checkRememberedEmail();
+    }, []);
+
+    // 🚀 Čisti poziv loginUser-a (Remember Me logika se odvija iza kulisa u API-ju)
     const handleLogIn = useCallback(async () => {
         if (!email.trim() || !password.trim()) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -38,19 +51,21 @@ export default function LogInScreen() {
         }
         setLoading(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        const result = await loginUser(email.trim(), password);
+
+        // Prosljeđujemo i rememberMe stanje u naš ažurirani API
+        const result = await loginUser(email.trim(), password, rememberMe);
         setLoading(false);
+
         if (result.success) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             await refreshAuth();
-            router.replace('/home');
+            router.replace('/home'); // Auto-login će od ovog trenutka raditi jer je token zapisan
         } else {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(t('auth', 'loginFailed'), result.message);
         }
-    }, [email, password, t, refreshAuth, router]);
+    }, [email, password, rememberMe, t, refreshAuth, router]);
 
-    // ✅ Memoizirani manji handleri
     const toggleRememberMe = useCallback(() => {
         Haptics.selectionAsync();
         setRememberMe(prev => !prev);
@@ -58,7 +73,6 @@ export default function LogInScreen() {
 
     const handleForgotPassword = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        // TODO: Implementirati forgot password flow
     }, []);
 
     const handleSocialPress = useCallback(() => {
@@ -143,7 +157,7 @@ export default function LogInScreen() {
                         <Image
                             source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }}
                             style={styles.socialIcon}
-                            cachePolicy="memory-disk" // ✅ Brže ponovno učitavanje
+                            cachePolicy="memory-disk"
                             transition={200}
                         />
                         <Text style={[styles.mediumText, { color: colors.googleButtonText }]}>

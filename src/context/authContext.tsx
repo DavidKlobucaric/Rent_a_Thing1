@@ -1,90 +1,64 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getAuthToken, getStoredUser, clearAuth, AuthUser } from '@/src/storage/storageTokens';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getAuthToken, getAuthUser, deleteAuthToken, AuthUser } from '@/src/storage/storageTokens';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-const BASE_URL = API_BASE_URL;
-
-type AuthContextType = {
-    user: AuthUser | null;
+interface AuthContextType {
     token: string | null;
+    user: AuthUser | null;
     isLoading: boolean;
-    isLoggedIn: boolean;
-    logout: () => Promise<void>;
     refreshAuth: () => Promise<void>;
-};
+    logout: () => Promise<void>;
+}
 
-const AuthContext = createContext<AuthContextType>({
-    user: null,
-    token: null,
-    isLoading: true,
-    isLoggedIn: false,
-    logout: async () => {},
-    refreshAuth: async () => {},
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<AuthUser | null>(null);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [token, setToken] = useState<string | null>(null);
+    const [user, setUser] = useState<AuthUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        refreshAuth();
-    }, []);
-
-    const refreshAuth = async () => {
+    const refreshAuth = useCallback(async () => {
         try {
-            const [savedToken, savedUser] = await Promise.all([
-                getAuthToken(),
-                getStoredUser(),
-            ]);
-
-            if (!savedToken) {
-                setToken(null);
-                setUser(null);
-                return;
-            }
-
-            try {
-                const response = await fetch(`${BASE_URL}/listings/recommended`, {
-                    headers: { Authorization: `Bearer ${savedToken}` },
-                });
-
-                if (response.status === 401 || response.status === 403) {
-                    // Token rejected — clear everything and treat as logged out
-                    await clearAuth();
-                    setToken(null);
-                    setUser(null);
-                    return;
-                }
-            } catch {
-            }
+            const savedToken = await getAuthToken();
+            const savedUser = await getAuthUser();
             setToken(savedToken);
             setUser(savedUser);
-        } catch {
+        } catch (error) {
+            console.error('[AUTH] Error refreshing auth:', error);
             setToken(null);
             setUser(null);
-        } finally {
-            setIsLoading(false);
         }
-    };
+    }, []);
 
-    const logout = async () => {
-        await clearAuth();
-        setToken(null);
-        setUser(null);
-    };
+    const logout = useCallback(async () => {
+        try {
+            await deleteAuthToken();
+            setToken(null);
+            setUser(null);
+        } catch (error) {
+            console.error('[AUTH] Error logging out:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        const initAuth = async () => {
+            setIsLoading(true);
+            await refreshAuth();
+            setIsLoading(false);
+        };
+        initAuth();
+    }, [refreshAuth]);
 
     return (
-        <AuthContext.Provider value={{
-            user, token, isLoading,
-            isLoggedIn: !!token,
-            logout, refreshAuth,
-        }}>
+        <AuthContext.Provider value={{ token, user, isLoading, refreshAuth, logout }}>
             {children}
         </AuthContext.Provider>
     );
-}
+};
 
-export function useAuth() {
-    return useContext(AuthContext);
-}
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};

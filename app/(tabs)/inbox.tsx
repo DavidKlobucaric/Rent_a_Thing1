@@ -57,9 +57,9 @@ export default function Inbox() {
 
         const result = await getMyConversations();
         if (result.success) {
-            setConversations(result.data);
+            setConversations(result.data ?? []);
         } else {
-            setError(result.message);
+            setError(result.message || 'Failed to load conversations');
         }
 
         setLoading(false);

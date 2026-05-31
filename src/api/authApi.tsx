@@ -1,8 +1,31 @@
 import axios from "axios";
-import { saveAuthData, AuthUser } from "@/src/storage/storageTokens";
+import { Platform } from "react-native";
+import Constants from "expo-constants";
+import {
+    saveAuthData,
+    AuthUser,
+    saveRememberedEmail,
+    deleteRememberedEmail
+} from "@/src/storage/storageTokens";
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-const BASE_URL = API_BASE_URL;
+// 🌐 AUTOMATSKO DETEKTIRANJE IP ADRESE RAČUNALA (Usklađeno s itemsApi)
+const getBackendURL = () => {
+    const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+    if (API_BASE_URL) return API_BASE_URL;
+
+    // Automatski izvlačimo IP adresu tvog računala iz Expo hosta
+    const debuggerHost = Constants.expoConfig?.hostUri;
+    const ip = debuggerHost ? debuggerHost.split(":")[0] : null;
+
+    if (Platform.OS === "android") {
+        return ip ? `http://${ip}:8080` : "http://10.0.2.2:8080";
+    } else {
+        return ip ? `http://${ip}:8080` : "http://localhost:8080";
+    }
+};
+
+const BASE_URL = getBackendURL() + '/api';
+console.log("[AUTH_CONNECT] Auth se spaja na backend na adresi:", BASE_URL);
 
 const api = axios.create({
     baseURL: BASE_URL,
@@ -76,15 +99,25 @@ export const verifyCode = async (
     }
 };
 
+// 💾 POPRAVLJENA LOGIN FUNKCIJA (Upravlja i sesijom i Gmailom)
 export const loginUser = async (
     email: string,
-    password: string
+    password: string,
+    rememberMe: boolean = false
 ): Promise<AuthResult<LoginData>> => {
     try {
         const response = await api.post("auth/login", { email, password });
         const { token, userId, username, email: userEmail } = response.data;
 
+        // 1. Spremanje tokena za potrebe Auto-Logina pri sljedećem otvaranju app-a
         await saveAuthData(token, { userId, username, email: userEmail });
+
+        // 2. Spremanje ILI brisanje SAMO email adrese ovisno o kvačici
+        if (rememberMe) {
+            await saveRememberedEmail(email.trim());
+        } else {
+            await deleteRememberedEmail();
+        }
 
         return {
             success: true,
