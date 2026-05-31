@@ -2,15 +2,19 @@ import { Image } from 'expo-image';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     StyleSheet, Text, View, TextInput,
-    ScrollView, TouchableOpacity, FlatList,
+    ScrollView, TouchableOpacity, FlatList, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Fontisto, Ionicons } from '@expo/vector-icons';
-
-
 import { LinearGradient } from 'expo-linear-gradient';
-
-import { searchListings, getRecommendedListings, addFavourite, removeFavourite, getFavourites } from '@/src/api/itemsApi';
+import {
+    searchListings,
+    getRecommendedListings,
+    addFavourite,
+    removeFavourite,
+    getFavourites,
+    getAllListings,
+} from '@/src/api/itemsApi';
 import { useAuth } from '@/src/context/authContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
@@ -18,9 +22,6 @@ import { router, useFocusEffect } from 'expo-router';
 import { useLanguage } from '@/src/context/languageContext';
 import * as Haptics from 'expo-haptics';
 import ShimmerPlaceholder from "react-native-shimmer-placeholder";
-
-
-
 
 type Category = {
     id: string;
@@ -30,6 +31,7 @@ type Category = {
 };
 
 const CATEGORIES: Category[] = [
+    { id: 'all',     label: 'ALL',     activeIcon: 'apps',            inactiveIcon: 'apps-outline' },
     { id: 'tools',   label: 'TOOLS',   activeIcon: 'construct',       inactiveIcon: 'construct-outline' },
     { id: 'camping', label: 'CAMPING', activeIcon: 'bonfire',         inactiveIcon: 'bonfire-outline' },
     { id: 'tech',    label: 'TECH',    activeIcon: 'laptop',          inactiveIcon: 'laptop-outline' },
@@ -64,60 +66,98 @@ export default function HomeScreen() {
         : ['#E0E0E0', '#F5F5F5', '#E0E0E0'];
 
     const [searchText, setSearchText] = useState('');
-    const [activeCategory, setActiveCategory] = useState('tools');
+    const [activeCategory, setActiveCategory] = useState('all');
     const [favouriteIds, setFavouriteIds] = useState<Set<number>>(new Set());
     const [searchResults, setSearchResults] = useState<Listing[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchError, setSearchError] = useState('');
     const [recommended, setRecommended] = useState<Listing[]>([]);
     const [recLoading, setRecLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        (async () => {
-            setRecLoading(true);
-            const result = await getRecommendedListings();
-            if (result.success) {
-                setRecommended(Array.isArray(result.data) ? result.data : []);
+    const loadRecommended = useCallback(async () => {
+        setRecLoading(true);
+        const result = await getRecommendedListings();
+        if (result.success) {
+            setRecommended(Array.isArray(result.data) ? result.data : []);
+        }
+        setRecLoading(false);
+    }, []);
+
+    const loadFavourites = useCallback(async () => {
+        const result = await getFavourites();
+        if (result.success) {
+            const ids = new Set(result.data.map((l: Listing) => l.listingId));
+            setFavouriteIds(ids);
+        }
+    }, []);
+
+    const loadSearchResults = useCallback(async (query: string, category: string) => {
+        setSearchLoading(true);
+        setSearchError('');
+
+        try {
+            let result;
+            const trimmedQuery = query.trim();
+
+            if (trimmedQuery) {
+                result = await searchListings(trimmedQuery);
+            } else if (category === 'all') {
+                result = await getAllListings();
+            } else {
+                result = await searchListings(category);
             }
-            setRecLoading(false);
-        })();
-    }, [token]);
 
-    useFocusEffect(
-        useCallback(() => {
-            (async () => {
-                const result = await getFavourites();
-                if (result.success) {
-                    const ids = new Set(result.data.map((l: Listing) => l.listingId));
-                    setFavouriteIds(ids);
-                }
-            })();
-        }, [])
-    );
-
-    useEffect(() => {
-        const query = searchText.trim() || activeCategory;
-        const timeout = setTimeout(async () => {
-            setSearchLoading(true);
-            setSearchError('');
-            const result = await searchListings(query);
             if (result.success) {
                 const data = Array.isArray(result.data) ? result.data : [];
-                const filtered = searchText.trim()
+                const filtered = trimmedQuery || category === 'all'
                     ? data
                     : data.filter(
                         (item: Listing) =>
-                            item.category?.toLowerCase() === activeCategory.toLowerCase()
+                            item.category?.toLowerCase() === category.toLowerCase()
                     );
                 setSearchResults(filtered);
             } else {
                 setSearchError(result.message);
                 setSearchResults([]);
             }
-            setSearchLoading(false);
+        } catch (error: any) {
+            setSearchError(error.message || 'Search failed');
+            setSearchResults([]);
+        }
+
+        setSearchLoading(false);
+    }, []);
+
+    useEffect(() => {
+        loadRecommended();
+    }, [token, loadRecommended]);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadFavourites();
+        }, [loadFavourites])
+    );
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            loadSearchResults(searchText, activeCategory);
         }, 400);
         return () => clearTimeout(timeout);
-    }, [searchText, activeCategory]);
+    }, [searchText, activeCategory, loadSearchResults]);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+        await Promise.all([
+            loadRecommended(),
+            loadFavourites(),
+            loadSearchResults(searchText, activeCategory),
+        ]);
+
+        setRefreshing(false);
+    }, [searchText, activeCategory, loadRecommended, loadFavourites, loadSearchResults]);
 
     const toggleFavourite = async (id: number) => {
         const isCurrentlyFav = favouriteIds.has(id);
@@ -142,10 +182,9 @@ export default function HomeScreen() {
     };
 
     const renderSearchItem = useCallback(({ item }: { item: Listing }) => {
-        const itemStyles = makeStyles(colors);
         return (
             <TouchableOpacity
-                style={itemStyles.itemCard}
+                style={styles.itemCard}
                 onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     router.push({
@@ -153,28 +192,61 @@ export default function HomeScreen() {
                         params: { listingId: item.listingId.toString() }
                     });
                 }}
+                activeOpacity={0.9}
             >
                 <Image
                     source={{ uri: getFirstImage(item.imageUrls) }}
-                    style={itemStyles.itemImage}
+                    style={styles.itemImage}
                     cachePolicy="memory-disk"
                     transition={200}
+                    contentFit="cover"
                 />
-                <Text style={itemStyles.itemName} numberOfLines={1}>{item.name}</Text>
-                <Text style={itemStyles.locationText} numberOfLines={1}>📍 {item.location}</Text>
-                <View style={{ flexDirection: 'row' }}>
-                    <Text style={itemStyles.price}>${item.price}</Text>
-                    <Text style={itemStyles.perDay}>{t('home', 'perDay')}</Text>
+                <View style={styles.itemCardContent}>
+                    {/* 🆕 MODERNIJI RASPORED - veći font, bolji razmaci */}
+                    <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+
+                    <View style={styles.itemLocationRow}>
+                        <Ionicons name="location" size={12} color={colors.textMuted} />
+                        <Text style={styles.locationText} numberOfLines={1}>{item.location}</Text>
+                    </View>
+
+                    <View style={styles.itemDivider} />
+
+                    <View style={styles.itemPriceRow}>
+                        <View style={styles.priceContainer}>
+                            <Text style={styles.price}>${item.price}</Text>
+                            <Text style={styles.perDay}>{t('home', 'perDay')}</Text>
+                        </View>
+                        <View style={styles.categoryBadge}>
+                            <Text style={styles.categoryBadgeText}>{item.category}</Text>
+                        </View>
+                    </View>
                 </View>
             </TouchableOpacity>
         );
-    }, [router, t, colors]);
+    }, [router, t, styles, colors]);
 
     const keyExtractor = useCallback((item: Listing) => item.listingId.toString(), []);
 
+    const getCategoryLabel = () => {
+        const cat = CATEGORIES.find(c => c.id === activeCategory);
+        return cat?.label || activeCategory.toUpperCase();
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        tintColor={colors.primary}
+                        colors={[colors.primary]}
+                        progressBackgroundColor={colors.surface}
+                    />
+                }
+            >
                 {/* SEARCH BAR */}
                 <View style={styles.searchBar}>
                     <Fontisto name="search" style={[styles.searchIcon, { color: colors.primarySecondary }]} />
@@ -244,13 +316,13 @@ export default function HomeScreen() {
                                         key={i}
                                         LinearGradient={LinearGradient}
                                         style={{
-                                            width: 180,
-                                            height: 220,
-                                            borderRadius: 14,
+                                            width: 200,
+                                            height: 290,
+                                            borderRadius: 18,
                                             marginTop: 8,
                                             marginBottom: 8,
-                                            marginRight: 12,
-                                            marginLeft: 10,
+                                            marginRight: 14,
+                                            marginLeft: 12,
                                         }}
                                         shimmerColors={shimmerColors}
                                     />
@@ -260,9 +332,11 @@ export default function HomeScreen() {
                             <Text style={styles.emptyText}>{searchError}</Text>
                         ) : searchResults.length === 0 ? (
                             <Text style={styles.emptyText}>
-                                {searchText
+                                {searchText.trim()
                                     ? `${t('home', 'noResults')} "${searchText}"`
-                                    : `${t('home', 'noItemsCategory')} "${activeCategory}"`}
+                                    : activeCategory === 'all'
+                                        ? t('home', 'noItems')
+                                        : `${t('home', 'noItemsCategory')} "${getCategoryLabel()}"`}
                             </Text>
                         ) : (
                             <FlatList
@@ -271,7 +345,7 @@ export default function HomeScreen() {
                                 scrollEnabled={false}
                                 horizontal={true}
                                 showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{ paddingHorizontal: 10 }}
+                                contentContainerStyle={{ paddingHorizontal: 12 }}
                                 renderItem={renderSearchItem}
                                 removeClippedSubviews={true}
                                 maxToRenderPerBatch={5}
@@ -284,12 +358,12 @@ export default function HomeScreen() {
                 {/* RECOMMENDED */}
                 <Text style={styles.sectionTitle}>{t('home', 'recommended')}</Text>
                 {recLoading ? (
-                    <View style={{ paddingHorizontal: 20, gap: 12 }}>
+                    <View style={{ paddingHorizontal: 20, gap: 10 }}>
                         {[1, 2, 3].map((i) => (
                             <ShimmerPlaceholder
                                 key={i}
                                 LinearGradient={LinearGradient}
-                                style={{ height: 96, borderRadius: 16 }}
+                                style={{ height: 95, borderRadius: 14, marginHorizontal: 0 }}
                                 shimmerColors={shimmerColors}
                             />
                         ))}
@@ -310,32 +384,38 @@ export default function HomeScreen() {
                                     params: { listingId: item.listingId.toString() }
                                 });
                             }}
+                            activeOpacity={0.9}
                         >
                             <Image
                                 source={{ uri: getFirstImage(item.imageUrls) }}
                                 style={styles.thumbnail}
                                 cachePolicy="memory-disk"
                                 transition={200}
+                                contentFit="cover"
                             />
                             <View style={styles.cardContent}>
-                                <Text style={styles.itemTitle} numberOfLines={1}>{item.name}</Text>
-                                <Text style={styles.distanceText} numberOfLines={1}>📍 {item.location}</Text>
-                                <View style={{ flexDirection: 'row' }}>
-                                    <Text style={styles.price}>${item.price}</Text>
-                                    <Text style={styles.perDay}>{t('home', 'perDay')}</Text>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.itemTitle} numberOfLines={1}>{item.name}</Text>
+                                    <View style={styles.recLocationRow}>
+                                        <Ionicons name="location" size={11} color={colors.textMuted} />
+                                        <Text style={styles.distanceText} numberOfLines={1}>{item.location}</Text>
+                                    </View>
+                                    <View style={styles.recPriceRow}>
+                                        <Text style={styles.price}>${item.price}</Text>
+                                        <Text style={styles.perDay}>{t('home', 'perDay')}</Text>
+                                    </View>
                                 </View>
-                            </View>
-                            <View style={styles.actions}>
                                 <TouchableOpacity
                                     onPress={(e) => {
                                         e.stopPropagation();
                                         toggleFavourite(item.listingId);
                                     }}
                                     hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                                    style={styles.favoriteButton}
                                 >
                                     <Ionicons
                                         name={favouriteIds.has(item.listingId) ? 'heart' : 'heart-outline'}
-                                        size={24}
+                                        size={22}
                                         color={favouriteIds.has(item.listingId) ? colors.danger : colors.border}
                                     />
                                 </TouchableOpacity>
@@ -343,6 +423,8 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                     ))
                 )}
+
+                <View style={{ height: 20 }} />
             </ScrollView>
         </SafeAreaView>
     );
@@ -354,25 +436,147 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     searchIcon: { fontSize: 18, marginRight: 10 },
     searchInput: { flex: 1, height: 44, fontSize: 15, color: colors.text },
     clearBtn: { fontSize: 20, fontWeight: '600', padding: 4 },
-    locationText: { fontSize: 12, color: colors.textMuted, paddingTop: 2 },
     tabsContainer: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
     tab: { alignItems: 'center', minWidth: 60, paddingHorizontal: 6 },
     iconCircle: { width: 52, height: 52, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderLight, justifyContent: 'center', alignItems: 'center' },
     iconCircleActive: { backgroundColor: colors.primary, borderColor: colors.primary },
     tabLabel: { fontSize: 11, paddingTop: 6, color: colors.textMuted, textAlign: 'center', fontWeight: '500', letterSpacing: 0.3 },
     tabLabelActive: { color: colors.primary, fontWeight: '600' },
-    listContainer: { marginTop: 4, marginBottom: 8 },
-    itemCard: { backgroundColor: colors.card, padding: 12, borderRadius: 14, marginTop: 8, marginBottom: 8, marginRight: 12, marginLeft: 10, borderWidth: 1, borderColor: colors.border, width: 180 },
-    itemName: { fontWeight: '600', fontSize: 15, paddingTop: 10, color: colors.text },
+    listContainer: { marginTop: 4, marginBottom: 12 },
+
+    // 🎯 MODERNIJE HORIZONTALNE KARTICE - veći font, bolji raspored
+    itemCard: {
+        backgroundColor: colors.card,
+        borderRadius: 18,
+        marginTop: 8,
+        marginBottom: 8,
+        marginRight: 14,
+        marginLeft: 12,
+        borderWidth: 1,
+        borderColor: colors.border,
+        width: 200,
+        overflow: 'hidden',
+    },
+    itemImage: {
+        width: '100%',
+        height: 160,
+        backgroundColor: colors.border,
+    },
+    itemCardContent: {
+        padding: 14,
+        paddingTop: 12,
+    },
+    itemName: {
+        fontWeight: '700',
+        fontSize: 16,
+        color: colors.text,
+        marginBottom: 6,
+        lineHeight: 20,
+        letterSpacing: -0.2,
+    },
+    itemLocationRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        marginBottom: 10,
+    },
+    locationText: {
+        fontSize: 13,
+        color: colors.textMuted,
+        flex: 1,
+    },
+    itemDivider: {
+        height: 1,
+        backgroundColor: colors.border,
+        marginBottom: 10,
+    },
+    itemPriceRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    priceContainer: {
+        flexDirection: 'row',
+        alignItems: 'baseline',
+    },
+    price: {
+        fontWeight: '700',
+        fontSize: 17,
+        color: colors.primarySecondary,
+        letterSpacing: -0.3,
+    },
+    perDay: {
+        color: colors.textMuted,
+        marginLeft: 4,
+        fontSize: 12,
+        fontWeight: '500',
+    },
+    categoryBadge: {
+        backgroundColor: colors.primary + '15',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 6,
+    },
+    categoryBadgeText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: colors.primary,
+        textTransform: 'uppercase',
+        letterSpacing: 0.3,
+    },
+
     emptyText: { textAlign: 'center', color: colors.textMuted, paddingVertical: 24, fontSize: 14, marginHorizontal: 20 },
-    sectionTitle: { marginTop: 28, marginLeft: 20, marginBottom: 14, fontSize: 17, fontWeight: '600', color: colors.text, letterSpacing: -0.3 },
-    card: { flexDirection: 'row', backgroundColor: colors.card, marginHorizontal: 20, marginVertical: 8, padding: 16, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
-    thumbnail: { width: 64, height: 64, borderRadius: 12, backgroundColor: colors.border },
-    cardContent: { flex: 1, paddingHorizontal: 16, gap: 4 },
-    itemTitle: { fontWeight: '600', fontSize: 15, color: colors.text },
-    distanceText: { fontSize: 12, color: colors.textMuted },
-    price: { fontWeight: '600', color: colors.primarySecondary, fontSize: 15 },
-    perDay: { color: colors.textMuted, marginLeft: 4, fontSize: 13 },
-    actions: { alignItems: 'flex-end', gap: 4 },
-    itemImage: { width: 160, height: 160, borderRadius: 12, backgroundColor: colors.border },
+    sectionTitle: { marginTop: 24, marginLeft: 20, marginBottom: 12, fontSize: 17, fontWeight: '700', color: colors.text, letterSpacing: -0.3 },
+
+    // 🎯 MANJE RECOMMENDED KARTICE - kompaktnije
+    card: {
+        flexDirection: 'row',
+        backgroundColor: colors.card,
+        marginHorizontal: 20,
+        marginVertical: 6,
+        borderRadius: 14,
+        alignItems: 'stretch',
+        borderWidth: 1,
+        borderColor: colors.border,
+        overflow: 'hidden',
+        height: 95,
+    },
+    thumbnail: {
+        width: 95,
+        height: '100%',
+        backgroundColor: colors.border,
+    },
+    cardContent: {
+        flex: 1,
+        padding: 12,
+        justifyContent: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    itemTitle: {
+        fontWeight: '700',
+        fontSize: 15,
+        color: colors.text,
+        marginBottom: 3,
+        letterSpacing: -0.2,
+    },
+    recLocationRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 3,
+        marginBottom: 4,
+    },
+    distanceText: {
+        fontSize: 12,
+        color: colors.textMuted,
+        flex: 1,
+    },
+    recPriceRow: {
+        flexDirection: 'row',
+        alignItems: 'baseline',
+    },
+    favoriteButton: {
+        padding: 4,
+        marginLeft: 6,
+    },
 });

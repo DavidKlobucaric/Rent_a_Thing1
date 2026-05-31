@@ -5,7 +5,7 @@ import {
     Alert, Dimensions, Share, Platform, StatusBar,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
@@ -41,6 +41,9 @@ export default function ListingDetailScreen() {
     const colors = Colors[scheme];
     const isDark = scheme === 'dark';
     const styles = useMemo(() => makeStyles(colors), [colors]);
+
+    // ✅ NOVO: Dohvaćamo sigurne margine ekrana (za Android navigation bar i iOS home indicator)
+    const insets = useSafeAreaInsets();
 
     const shimmerColors = useMemo(() =>
             scheme === 'dark'
@@ -144,34 +147,27 @@ export default function ListingDetailScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }, []);
 
-    // ✅ POJEDNOSTAVLJENA LOGIKA - podržava 1 dan
     const handleDayPress = useCallback((day: { dateString: string }) => {
         Haptics.selectionAsync();
 
         if (selectingStart) {
-            // Prvi klik - postavi start date
             setStartDate(day.dateString);
             setEndDate(null);
             setSelectingStart(false);
         } else {
-            // Drugi klik
             if (startDate && day.dateString >= startDate) {
-                // Datum je nakon ili jednak start date - postavi end date
                 setEndDate(day.dateString);
                 setSelectingStart(true);
             } else {
-                // Datum je prije start date - resetiraj i postavi novi start
                 setStartDate(day.dateString);
                 setEndDate(null);
             }
         }
     }, [selectingStart, startDate]);
 
-    // ✅ PERIOD MARKING - stabilniji i jednostavniji
     const markedDates = useMemo(() => {
         const marked: any = {};
 
-        // Blokirani periodi
         blockedPeriods.forEach(({ startDate: s, endDate: e }) => {
             let current = new Date(s);
             const end = new Date(e);
@@ -187,7 +183,6 @@ export default function ListingDetailScreen() {
             }
         });
 
-        // Odabrani period
         if (startDate && endDate) {
             marked[startDate] = {
                 startingDay: true,
@@ -200,7 +195,6 @@ export default function ListingDetailScreen() {
                 textColor: colors.iconColorInverse
             };
 
-            // Dani između
             let current = new Date(startDate);
             const end = new Date(endDate);
             current.setDate(current.getDate() + 1);
@@ -213,7 +207,6 @@ export default function ListingDetailScreen() {
                 current.setDate(current.getDate() + 1);
             }
         } else if (startDate) {
-            // Samo start date odabran
             marked[startDate] = {
                 selected: true,
                 color: colors.primary,
@@ -476,12 +469,14 @@ export default function ListingDetailScreen() {
                             </View>
                         </View>
                     )}
-                    <View style={{ height: 140 }} />
+
+                    {/* 🔄 PROMIJENJENO: Spacer na dnu scrollview-a sada dinamički računa visinu bottom bara + insete */}
+                    <View style={{ height: 100 + Math.max(insets.bottom, 12) }} />
                 </View>
             </ScrollView>
 
-            {/* STICKY BOTTOM BAR */}
-            <View style={styles.bottomBar}>
+            {/* 🔄 PROMIJENJENO: STICKY BOTTOM BAR s dinamičkim paddingom za Android/iOS */}
+            <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
                 <View style={styles.bottomPriceInfo}>
                     <Text style={styles.bottomPrice}>${listing.price}</Text>
                     <Text style={styles.bottomPerDay}>{t('listing', 'perDay')}</Text>
@@ -596,7 +591,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     errorText: { textAlign: 'center', color: colors.textMuted, marginTop: 40, fontSize: 15 },
     imageGallery: { width: SCREEN_WIDTH, height: SCREEN_WIDTH * 0.85, position: 'relative' },
     galleryImage: { width: SCREEN_WIDTH, height: SCREEN_WIDTH * 0.85 },
-    headerOverlay: { position: 'absolute', top: Platform.OS === 'ios' ? 44 : 24, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, zIndex: 10 },
+    headerOverlay: { position: 'absolute', top: Platform.OS === 'ios' ? 65 : 45, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, zIndex: 10 },
     headerRight: { flexDirection: 'row', gap: 12 },
     headerButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border },
     imageCounter: { position: 'absolute', bottom: 16, right: 16, backgroundColor: 'rgba(0,0,0,0.65)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14 },
@@ -635,7 +630,22 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     breakdownTotal: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12, marginTop: 4 },
     breakdownTotalLabel: { fontSize: 15, fontWeight: '700', color: colors.text },
     breakdownTotalValue: { fontSize: 18, fontWeight: '700', color: colors.primary },
-    bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 85, backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 15 : 0 },
+
+    // 🔄 AŽURIRANO: Maknut fiksni height i hardcoded paddingBottom, dodan paddingTop za balans
+    bottomBar: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: colors.card,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingTop: 12
+    },
     bottomPriceInfo: { flexDirection: 'row', alignItems: 'baseline' },
     bottomPrice: { fontSize: 22, fontWeight: '700', color: colors.text },
     bottomPerDay: { fontSize: 13, color: colors.textMuted, marginLeft: 2 },

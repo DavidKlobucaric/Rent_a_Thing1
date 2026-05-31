@@ -318,3 +318,13 @@ export const getBlockedPeriods = async (listingId: number): Promise<ApiResult<Bl
         return { success: false, message: error.response?.data?.message || 'Could not load availability.' };
     }
 };
+
+export const getAllListings = async (): Promise<ApiResult<Listing[]>> => {
+    try {
+        // 🆕 Novi endpoint koji vraća SVE dostupne listinge bez limita
+        const response = await api.get<any[]>('/listings/all');
+        return { success: true, data: response.data.map(normalizeListing) };
+    } catch (error: any) {
+        return { success: false, message: error.response?.data?.message || 'Could not load all listings.' };
+    }
+};

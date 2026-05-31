@@ -22,8 +22,6 @@ export const LANGUAGE_FLAGS: Record<Language, string> = {
 
 export const translations = {
     en: {
-
-
         common: {
             cancel: 'Cancel', save: 'Save', delete: 'Delete', remove: 'Remove',
             done: 'Done', reset: 'Reset', confirm: 'Confirm', error: 'Error',
@@ -64,7 +62,9 @@ export const translations = {
         home: {
             search: 'Search...', recommended: 'Recommended for You',
             noRecommendations: 'No recommendations for now.',
-            noResults: 'No results for:', noItemsCategory: 'No items in category:', perDay: '/day',
+            noResults: 'No results for:', noItemsCategory: 'No items in category:',
+            noItems: 'No items available right now.', // ✅ NOVO
+            perDay: '/day',
             errorNetwork: 'Connection lost. Please check your internet and try again.',
             errorNoResults: "We couldn't find anything matching your search.",
             errorGeneric: 'Something went wrong while loading items. Please try again.',
@@ -277,6 +277,7 @@ export const translations = {
             search: 'Pretraži...', recommended: 'Preporučeno za tebe',
             noRecommendations: 'Trenutno nema preporuka.',
             noResults: 'Nema rezultata za:', noItemsCategory: 'Nema stavki u kategoriji:',
+            noItems: 'Trenutno nema dostupnih predmeta.', // ✅ NOVO
             perDay: '/dan',
             errorNetwork: 'Veza je prekinuta. Provjerite internet i pokušajte ponovo.',
             errorNoResults: 'Nismo pronašli ništa što odgovara vašoj pretrazi.',
@@ -503,6 +504,7 @@ export const translations = {
             search: 'Suchen...', recommended: 'Für dich empfohlen',
             noRecommendations: 'Momentan keine Empfehlungen.',
             noResults: 'Keine Ergebnisse für:', noItemsCategory: 'Keine Artikel in Kategorie:',
+            noItems: 'Derzeit keine Artikel verfügbar.', // ✅ NOVO
             perDay: '/Tag',
             errorNetwork: 'Verbindung verloren. Bitte überprüfen Sie Ihr Internet.',
             errorNoResults: 'Wir konnten nichts finden, das Ihrer Suche entspricht.',
@@ -726,6 +728,7 @@ export const translations = {
             search: '搜索...', recommended: '为你推荐',
             noRecommendations: '暂无推荐。',
             noResults: '没有找到:', noItemsCategory: '该分类下没有物品:',
+            noItems: '目前没有可用物品。', // ✅ NOVO
             perDay: '/天',
             errorNetwork: '连接丢失。请检查您的互联网并重试。',
             errorNoResults: '我们找不到与您的搜索匹配的内容。',
@@ -941,6 +944,7 @@ export const translations = {
             search: 'Buscar...', recommended: 'Recomendado para ti',
             noRecommendations: 'Sin recomendaciones por ahora.',
             noResults: 'Sin resultados para:', noItemsCategory: 'Sin artículos en categoría:',
+            noItems: 'No hay artículos disponibles en este momento.', // ✅ NOVO
             perDay: '/día',
             errorNetwork: 'Conexión perdida. Por favor, revisa tu internet e intenta de nuevo.',
             errorNoResults: 'No pudimos encontrar nada que coincida con tu búsqueda.',
@@ -1163,6 +1167,7 @@ export const translations = {
             search: 'Rechercher...', recommended: 'Recommandé pour vous',
             noRecommendations: 'Pas de recommandations pour le moment.',
             noResults: 'Aucun résultat pour:', noItemsCategory: 'Aucun article dans la catégorie:',
+            noItems: 'Aucun article disponible pour le moment.', // ✅ NOVO
             perDay: '/jour',
             errorNetwork: 'Connexion perdue. Veuillez vérifier votre internet et réessayer.',
             errorNoResults: "Nous n'avons rien trouvé correspondant à votre recherche.",
@@ -1391,6 +1396,7 @@ export const translations = {
             noRecommendations: 'Nessun consiglio al momento.',
             noResults: 'Nessun risultato per:',
             noItemsCategory: 'Nessun articolo nella categoria:',
+            noItems: 'Nessun articolo disponibile al momento.', // ✅ NOVO
             perDay: '/giorno',
             errorNetwork: 'Connessione persa. Controlla la tua connessione e riprova.',
             errorNoResults: 'Non abbiamo trovato nulla che corrisponda alla tua ricerca.',
