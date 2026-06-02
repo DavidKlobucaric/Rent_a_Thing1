@@ -2,10 +2,12 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import {
     StyleSheet, View, Text, TextInput, TouchableOpacity,
     Keyboard, ScrollView, Alert, ActivityIndicator, Platform, Dimensions, Share, StatusBar,
+    Modal, Animated, Easing,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Calendar } from 'react-native-calendars';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,6 +35,204 @@ import type { Listing, BlockedPeriod } from '@/src/api/itemsApi';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLACEHOLDER_IMAGE = 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png';
 const TODAY = new Date().toISOString().split('T')[0];
+
+// ────────────────────────────────────────────────────────────────────────────
+// 🎨 CUSTOM MODAL TYPES
+// ────────────────────────────────────────────────────────────────────────────
+type ModalType = 'success' | 'error' | 'warning' | 'info';
+
+interface CustomModalConfig {
+    visible: boolean;
+    type: ModalType;
+    title: string;
+    message: string;
+    primaryLabel: string;
+    primaryDestructive?: boolean;
+    onPrimaryPress: () => void;
+    secondaryLabel?: string;
+    onSecondaryPress?: () => void;
+}
+
+const DEFAULT_MODAL: CustomModalConfig = {
+    visible: false,
+    type: 'info',
+    title: '',
+    message: '',
+    primaryLabel: 'OK',
+    onPrimaryPress: () => {},
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+// 🎨 CUSTOM MODAL COMPONENT
+// ────────────────────────────────────────────────────────────────────────────
+function CustomModal({
+                         config,
+                         colors,
+                         styles,
+                         onDismiss,
+                     }: {
+    config: CustomModalConfig;
+    colors: typeof Colors.light;
+    styles: any;
+    onDismiss: () => void;
+}) {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const scaleAnim = useRef(new Animated.Value(0.85)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
+
+    useEffect(() => {
+        if (config.visible) {
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 250,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+                Animated.spring(scaleAnim, {
+                    toValue: 1,
+                    tension: 80,
+                    friction: 10,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 300,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        } else {
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 0,
+                    duration: 200,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(scaleAnim, {
+                    toValue: 0.85,
+                    duration: 200,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    }, [config.visible]);
+
+    if (!config.visible) return null;
+
+    const modalConfig = {
+        success: {
+            icon: 'check-circle' as const,
+            gradientColors: ['#10B981', '#059669'] as [string, string],
+            iconBg: '#10B98120',
+        },
+        error: {
+            icon: 'error' as const,
+            gradientColors: ['#EF4444', '#DC2626'] as [string, string],
+            iconBg: '#EF444420',
+        },
+        warning: {
+            icon: 'warning' as const,
+            gradientColors: ['#F59E0B', '#D97706'] as [string, string],
+            iconBg: '#F59E0B20',
+        },
+        info: {
+            icon: 'info' as const,
+            gradientColors: [colors.primary, colors.primary] as [string, string],
+            iconBg: colors.primary + '20',
+        },
+    }[config.type];
+
+    return (
+        <Modal
+            visible={config.visible}
+            transparent
+            animationType="none"
+            onRequestClose={onDismiss}
+            statusBarTranslucent
+        >
+            <Animated.View
+                style={[
+                    styles.modalOverlay,
+                    { opacity: fadeAnim },
+                ]}
+            >
+                <TouchableOpacity
+                    style={StyleSheet.absoluteFill}
+                    activeOpacity={1}
+                    onPress={onDismiss}
+                />
+                <Animated.View
+                    style={[
+                        styles.modalContainer,
+                        {
+                            backgroundColor: colors.card,
+                            borderColor: colors.border,
+                            transform: [
+                                { scale: scaleAnim },
+                                { translateY: slideAnim },
+                            ],
+                        },
+                    ]}
+                >
+                    <View style={[styles.modalIconWrapper, { backgroundColor: modalConfig.iconBg }]}>
+                        <LinearGradient
+                            colors={modalConfig.gradientColors}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.modalIconGradient}
+                        >
+                            <MaterialIcons name={modalConfig.icon} size={32} color="#FFFFFF" />
+                        </LinearGradient>
+                    </View>
+
+                    <Text style={[styles.modalTitle, { color: colors.text }]}>
+                        {config.title}
+                    </Text>
+                    <Text style={[styles.modalMessage, { color: colors.textSecondary }]}>
+                        {config.message}
+                    </Text>
+
+                    <View style={styles.modalButtons}>
+                        {config.secondaryLabel && config.onSecondaryPress && (
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalButton,
+                                    styles.modalButtonSecondary,
+                                    { borderColor: colors.border, backgroundColor: colors.surface },
+                                ]}
+                                onPress={config.onSecondaryPress}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={[styles.modalButtonText, { color: colors.text }]}>
+                                    {config.secondaryLabel}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                        <TouchableOpacity
+                            style={[
+                                styles.modalButton,
+                                styles.modalButtonPrimary,
+                                { flex: 1 },
+                                {
+                                    backgroundColor: config.primaryDestructive
+                                        ? colors.danger
+                                        : modalConfig.gradientColors[0],
+                                },
+                            ]}
+                            onPress={config.onPrimaryPress}
+                            activeOpacity={0.85}
+                        >
+                            <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>
+                                {config.primaryLabel}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </Animated.View>
+            </Animated.View>
+        </Modal>
+    );
+}
 
 export default function ListingDetailScreen() {
     const router = useRouter();
@@ -64,6 +264,18 @@ export default function ListingDetailScreen() {
     const [currentMonth, setCurrentMonth] = useState(TODAY);
     const calendarSheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['75%', '90%'], []);
+
+    // ✨ Custom modal state
+    const [modal, setModal] = useState<CustomModalConfig>(DEFAULT_MODAL);
+
+    // ✨ Modal helpers
+    const showModal = (cfg: Omit<CustomModalConfig, 'visible'>) => {
+        setModal({ ...cfg, visible: true });
+    };
+
+    const hideModal = () => {
+        setModal(prev => ({ ...prev, visible: false }));
+    };
 
     const isOwnListing = useMemo(() => {
         if (!listing?.userId || !me?.userId) return false;
@@ -159,6 +371,7 @@ export default function ListingDetailScreen() {
         });
     }, [blockedPeriods]);
 
+    // ✅ POBOLJŠANA LOGIKA: Jedan klik za rezervaciju jednog dana
     const handleDayPress = useCallback((day: { dateString: string }) => {
         Haptics.selectionAsync();
         const selectedDate = day.dateString;
@@ -168,11 +381,20 @@ export default function ListingDetailScreen() {
             return;
         }
 
+        // Ako klikne na dan koji je već startDate, postavi endDate na isti dan (rezervacija za 1 dan)
+        if (startDate === selectedDate && !endDate) {
+            setEndDate(selectedDate);
+            setSelectingStart(true);
+            return;
+        }
+
         if (selectingStart) {
+            // Prvi klik: postavi startDate i automatski endDate na isti dan (default za 1 dan)
             setStartDate(selectedDate);
-            setEndDate(null);
-            setSelectingStart(false);
+            setEndDate(selectedDate); // ✅ Automatski postavi endDate na isti dan
+            setSelectingStart(true); // Ostavi true da može produžiti ako želi
         } else {
+            // Drugi klik: promijeni endDate
             if (startDate && selectedDate >= startDate) {
                 let hasBlocked = false;
                 let current = new Date(startDate);
@@ -191,11 +413,12 @@ export default function ListingDetailScreen() {
                 setEndDate(selectedDate);
                 setSelectingStart(true);
             } else {
+                // Kliknuo na raniji dan: resetiraj i postavi novi startDate
                 setStartDate(selectedDate);
-                setEndDate(null);
+                setEndDate(selectedDate); // ✅ Automatski postavi endDate
             }
         }
-    }, [selectingStart, startDate, isDateBlocked]);
+    }, [selectingStart, startDate, endDate, isDateBlocked]);
 
     const markedDates = useMemo(() => {
         const marked: any = {};
@@ -214,26 +437,36 @@ export default function ListingDetailScreen() {
             }
         });
         if (startDate && endDate) {
-            marked[startDate] = {
-                startingDay: true,
-                color: colors.primary,
-                textColor: colors.iconColorInverse
-            };
-            marked[endDate] = {
-                endingDay: true,
-                color: colors.primary,
-                textColor: colors.iconColorInverse
-            };
-            let current = new Date(startDate);
-            const end = new Date(endDate);
-            current.setDate(current.getDate() + 1);
-            while (current < end) {
-                const dateStr = current.toISOString().split('T')[0];
-                marked[dateStr] = {
-                    color: colors.primary + '40',
-                    textColor: colors.text
+            if (startDate === endDate) {
+                // Jedan dan
+                marked[startDate] = {
+                    selected: true,
+                    color: colors.primary,
+                    textColor: colors.iconColorInverse
                 };
+            } else {
+                // Raspon dana
+                marked[startDate] = {
+                    startingDay: true,
+                    color: colors.primary,
+                    textColor: colors.iconColorInverse
+                };
+                marked[endDate] = {
+                    endingDay: true,
+                    color: colors.primary,
+                    textColor: colors.iconColorInverse
+                };
+                let current = new Date(startDate);
+                const end = new Date(endDate);
                 current.setDate(current.getDate() + 1);
+                while (current < end) {
+                    const dateStr = current.toISOString().split('T')[0];
+                    marked[dateStr] = {
+                        color: colors.primary + '40',
+                        textColor: colors.text
+                    };
+                    current.setDate(current.getDate() + 1);
+                }
             }
         } else if (startDate) {
             marked[startDate] = {
@@ -250,7 +483,13 @@ export default function ListingDetailScreen() {
         if (!listing) return;
         if (isOwnListing) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            Alert.alert('Your Listing', 'You cannot contact yourself on your own listing.');
+            showModal({
+                type: 'warning',
+                title: t('listing', 'cannotBookOwn') || 'Your Listing',
+                message: t('listing', 'cannotBookOwnSub') || 'You cannot contact yourself on your own listing.',
+                primaryLabel: t('common', 'ok') || 'OK',
+                onPrimaryPress: hideModal,
+            });
             return;
         }
         router.push({
@@ -262,63 +501,94 @@ export default function ListingDetailScreen() {
                 itemName: listing.name,
             },
         });
-    }, [listing, router, isOwnListing]);
+    }, [listing, router, isOwnListing, t]);
 
     const handleBook = useCallback(() => {
         if (!listing) return;
         if (isOwnListing) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            Alert.alert('Your Listing', 'You cannot book your own listing.');
+            showModal({
+                type: 'warning',
+                title: t('listing', 'cannotBookOwn') || 'Your Listing',
+                message: t('listing', 'cannotBookOwnSub') || 'You cannot book your own listing.',
+                primaryLabel: t('common', 'ok') || 'OK',
+                onPrimaryPress: hideModal,
+            });
             return;
         }
         if (!startDate || !endDate) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            Alert.alert(t('listing', 'selectDates'), t('listing', 'selectDatesFirst'));
+            showModal({
+                type: 'warning',
+                title: t('listing', 'selectDates') || 'Select Dates',
+                message: t('listing', 'selectDatesFirst') || 'Please select check-in and check-out dates first.',
+                primaryLabel: t('common', 'ok') || 'OK',
+                onPrimaryPress: hideModal,
+            });
             return;
         }
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         const dayWord = numberOfDays === 1 ? t('listing', 'day') : t('listing', 'days');
-        Alert.alert(
-            t('listing', 'confirmBooking'),
-            `Book ${listing.name} for ${numberOfDays} ${dayWord}?\n${t('listing', 'total')}: $${total}`,
-            [
-                { text: t('common', 'cancel'), style: 'cancel' },
-                {
-                    text: t('common', 'confirm'),
-                    onPress: async () => {
-                        setBooking(true);
-                        const convResult = await getOrCreateConversation(listing.listingId);
-                        if (!convResult.success || !convResult.data) {
-                            setBooking(false);
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                            Alert.alert(t('common', 'error'), (convResult as any).message || 'Failed to start conversation');
-                            return;
-                        }
-                        const bookingResult = await createBookingRequest(
-                            convResult.data.conversationId,
-                            listing.listingId,
-                            startDate!,
-                            endDate!
-                        );
-                        setBooking(false);
-                        if (bookingResult.success) {
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            Alert.alert(
-                                '🎉 ' + t('listing', 'requestSent'),
-                                t('listing', 'requestSentSub'),
-                                [
-                                    { text: t('listing', 'goToInbox'), onPress: () => router.replace('/(tabs)/inbox') },
-                                    { text: t('common', 'ok'), onPress: () => router.back() },
-                                ]
-                            );
-                        } else {
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                            Alert.alert(t('common', 'error'), (bookingResult as any).message || 'Booking failed.');
-                        }
-                    },
-                },
-            ]
-        );
+
+        showModal({
+            type: 'info',
+            title: t('listing', 'confirmBooking') || 'Confirm Booking',
+            message: `Book ${listing.name} for ${numberOfDays} ${dayWord}?\n${t('listing', 'total') || 'Total'}: $${total}`,
+            primaryLabel: t('common', 'confirm') || 'Confirm',
+            secondaryLabel: t('common', 'cancel') || 'Cancel',
+            onPrimaryPress: async () => {
+                hideModal();
+                setBooking(true);
+                const convResult = await getOrCreateConversation(listing.listingId);
+                if (!convResult.success || !convResult.data) {
+                    setBooking(false);
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                    showModal({
+                        type: 'error',
+                        title: t('common', 'error') || 'Error',
+                        message: (convResult as any).message || 'Failed to start conversation',
+                        primaryLabel: t('common', 'ok') || 'OK',
+                        onPrimaryPress: hideModal,
+                    });
+                    return;
+                }
+                const bookingResult = await createBookingRequest(
+                    convResult.data.conversationId,
+                    listing.listingId,
+                    startDate!,
+                    endDate!
+                );
+                setBooking(false);
+                if (bookingResult.success) {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    showModal({
+                        type: 'success',
+                        title: '🎉 ' + (t('listing', 'requestSent') || 'Request Sent!'),
+                        message: t('listing', 'requestSentSub') || 'Your booking request has been sent. The owner will confirm shortly.',
+                        primaryLabel: t('listing', 'goToInbox') || 'Go to Inbox',
+                        secondaryLabel: t('common', 'ok') || 'OK',
+                        onPrimaryPress: () => {
+                            hideModal();
+                            router.replace('/(tabs)/inbox');
+                        },
+                        onSecondaryPress: () => {
+                            hideModal();
+                            router.back();
+                        },
+                    });
+                } else {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                    showModal({
+                        type: 'error',
+                        title: t('common', 'error') || 'Error',
+                        message: (bookingResult as any).message || 'Booking failed.',
+                        primaryLabel: t('common', 'ok') || 'OK',
+                        onPrimaryPress: hideModal,
+                    });
+                }
+            },
+            onSecondaryPress: hideModal,
+        });
     }, [listing, startDate, endDate, numberOfDays, total, t, router, isOwnListing]);
 
     const handleShare = useCallback(async () => {
@@ -339,7 +609,13 @@ export default function ListingDetailScreen() {
                 });
             }
         } catch (error: any) {
-            Alert.alert(t('common', 'error'), error.message || 'Could not share this listing.');
+            showModal({
+                type: 'error',
+                title: t('common', 'error') || 'Error',
+                message: error.message || 'Could not share this listing.',
+                primaryLabel: t('common', 'ok') || 'OK',
+                onPrimaryPress: hideModal,
+            });
         }
     }, [listing, t]);
 
@@ -521,7 +797,7 @@ export default function ListingDetailScreen() {
                         </View>
                     )}
 
-                    {/* ✅ OWNER MANAGEMENT PANEL — Per Day + Deposit + Info (bez Share gumba) */}
+                    {/* ✅ OWNER MANAGEMENT PANEL */}
                     {isOwnListing && (
                         <View style={styles.ownerPanel}>
                             <View style={styles.ownerPanelHeader}>
@@ -552,7 +828,7 @@ export default function ListingDetailScreen() {
                 </View>
             </ScrollView>
 
-            {/* ✅ BOTTOM BAR — jedini Edit gumb za vlastite listinge */}
+            {/* ✅ BOTTOM BAR */}
             {isOwnListing ? (
                 <View style={[styles.bottomBar, styles.bottomBarOwn, { paddingBottom: Math.max(insets.bottom, 12) }]}>
                     <View style={styles.bottomBarOwnInfo}>
@@ -578,9 +854,13 @@ export default function ListingDetailScreen() {
                         onPress={handleBook}
                         disabled={!listing.isAvailable || booking}
                     >
-                        <Text style={styles.bookButtonText}>
-                            {!listing.isAvailable ? t('listing', 'unavailable') : t('listing', 'bookNow')}
-                        </Text>
+                        {booking ? (
+                            <ActivityIndicator size="small" color="white" />
+                        ) : (
+                            <Text style={styles.bookButtonText}>
+                                {!listing.isAvailable ? t('listing', 'unavailable') : t('listing', 'bookNow')}
+                            </Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             )}
@@ -674,6 +954,14 @@ export default function ListingDetailScreen() {
                     </View>
                 </BottomSheetView>
             </BottomSheet>
+
+            {/* ✨ CUSTOM MODAL */}
+            <CustomModal
+                config={modal}
+                colors={colors}
+                styles={styles}
+                onDismiss={hideModal}
+            />
         </View>
     );
 }
@@ -859,7 +1147,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     bookButtonText: { color: colors.iconColorInverse, fontSize: 15, fontWeight: '600' },
     sheetContent: { flex: 1, paddingHorizontal: 20, gap: 12 },
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-    modalTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
     calendarInfoBar: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -902,4 +1189,88 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     modalDoneButton: { flex: 2, backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
     modalDoneButtonDisabled: { opacity: 0.5 },
     modalDoneText: { fontSize: 15, fontWeight: '600', color: colors.iconColorInverse },
+
+    // ─── ✨ CUSTOM MODAL STYLES ─────────────────────────────────────────────
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.55)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+    },
+    modalContainer: {
+        width: '100%',
+        maxWidth: 360,
+        borderRadius: 24,
+        padding: 24,
+        alignItems: 'center',
+        borderWidth: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.25,
+        shadowRadius: 20,
+        elevation: 15,
+    },
+    modalIconWrapper: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 18,
+    },
+    modalIconGradient: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        textAlign: 'center',
+        marginBottom: 8,
+        letterSpacing: -0.3,
+    },
+    modalMessage: {
+        fontSize: 14,
+        textAlign: 'center',
+        lineHeight: 20,
+        marginBottom: 24,
+        paddingHorizontal: 8,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        gap: 10,
+        width: '100%',
+    },
+    modalButton: {
+        flex: 1,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    modalButtonPrimary: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    modalButtonSecondary: {
+        borderWidth: 1,
+    },
+    modalButtonText: {
+        fontSize: 15,
+        fontWeight: '600',
+        letterSpacing: 0.2,
+    },
 });

@@ -379,6 +379,29 @@ export default function AddScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
+            // ── ✅ GEOCODING: Pretvori adresu u koordinate ──────────────
+            // ✅ PROMJENA: null je zamijenjen s undefined zbog TypeScript-a
+            let latitude: number | undefined = undefined;
+            let longitude: number | undefined = undefined;
+
+            try {
+                const geoResponse = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location.trim())}&limit=1`,
+                    { headers: { 'User-Agent': 'RentAThingApp/1.0' } }
+                );
+                const geoData = await geoResponse.json();
+
+                if (geoData && geoData.length > 0) {
+                    latitude = parseFloat(geoData[0].lat);
+                    longitude = parseFloat(geoData[0].lon);
+                    console.log('[GEOCODING] Uspješno:', { latitude, longitude, address: location });
+                } else {
+                    console.warn('[GEOCODING] Nije pronađena lokacija za:', location);
+                }
+            } catch (geoError) {
+                console.error('[GEOCODING] Greška:', geoError);
+            }
+
             // ── Upload images ───────────────────────────────────────────
             let imageUrls: string[] = [];
             if (images.length > 0) {
@@ -419,12 +442,14 @@ export default function AddScreen() {
             }
             const thingId: number = thingResult.data?.thingId ?? thingResult.data?.id;
 
-            // ── Create Listing ──────────────────────────────────────────
+            // ── ✅ Create Listing S KOORDINATAMA ────────────────────────
             const listingPayload = {
                 thingId,
                 price: Number(dailyRate),
                 securityDeposit: Math.max(0, Number(securityDeposit) || 0),
                 location: location.trim(),
+                latitude: latitude,
+                longitude: longitude
             };
             const listingResult = await createListing(listingPayload);
             if (listingResult.success === false) {

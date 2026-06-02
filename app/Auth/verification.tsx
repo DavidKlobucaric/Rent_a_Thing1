@@ -80,7 +80,7 @@ export default function VerificationScreen() {
             Alert.alert(
                 t('auth', 'accountVerified'),
                 t('auth', 'verifyAccount') + ' ✓',
-                [{ text: t('auth', 'logIn'), onPress: () => router.replace('/log-in')}]
+                [{ text: t('auth', 'logIn'), onPress: () => router.replace('/Auth/log-in')}]
             );
         } else {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);

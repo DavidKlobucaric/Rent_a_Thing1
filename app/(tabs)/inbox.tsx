@@ -5,7 +5,7 @@ import {
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState, useMemo, useRef, useCallback } from "react";
+import React, { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { router, useFocusEffect } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
@@ -18,6 +18,7 @@ import {
     getMyConversations,
     type Conversation as ApiConversation,
 } from '@/src/api/chatApi';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const avatarUri = (userId: number) => `https://i.pravatar.cc/150?u=${userId}`;
 
@@ -103,6 +104,7 @@ export default function Inbox() {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
     const swipeableRefs = useRef<Record<number, Swipeable | null>>({});
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null); // ✅ NOVO: Ref za interval
 
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
@@ -112,9 +114,10 @@ export default function Inbox() {
         ? ['#2A2A2A', '#3A3A3A', '#2A2A2A']
         : ['#E0E0E0', '#F5F5F5', '#E0E0E0'];
 
-    const loadConversations = useCallback(async (showRefreshing = false) => {
+    // ✅ MODIFICIRANO: Dodan silent parametar za tihi refresh
+    const loadConversations = useCallback(async (showRefreshing = false, silent = false) => {
         if (showRefreshing) setRefreshing(true);
-        else setLoading(true);
+        else if (!silent) setLoading(true); // Samo ako nije tihi refresh
         setError('');
 
         await new Promise(resolve => setTimeout(resolve, 400));
@@ -126,15 +129,44 @@ export default function Inbox() {
             setError(result.message || 'Failed to load conversations');
         }
 
-        setLoading(false);
+        if (!silent) setLoading(false);
         setRefreshing(false);
     }, []);
 
+
     useFocusEffect(
         useCallback(() => {
+            // Inicijalno učitavanje
             loadConversations();
+
+
+            intervalRef.current = setInterval(() => {
+                loadConversations(false, true);
+            }, 10000);
+
+            // Cleanup kad ekran izgubi fokus
+            return () => {
+                if (intervalRef.current) {
+                    clearInterval(intervalRef.current);
+                    intervalRef.current = null;
+                }
+            };
         }, [loadConversations])
+
+
     );
+
+
+    useEffect(() => {
+        const totalUnread = conversations.reduce((sum, c) => {
+            if (archivedIds.has(c.conversationId)) return sum; // Arhivirane ne brojimo
+            return sum + (c.unreadCount || 0);
+        }, 0);
+
+        // Spremi u AsyncStorage da TabLayout može pročitati
+        AsyncStorage.setItem('@app_unread_count', totalUnread.toString()).catch(() => {});
+    }, [conversations, archivedIds]);
+
 
     const unreadCount = useMemo(
         () => conversations.filter(c => !archivedIds.has(c.conversationId) && c.unreadCount > 0).length,
@@ -147,7 +179,8 @@ export default function Inbox() {
 
     const filteredConversations = useMemo(() => {
         const lowerSearch = searchText.toLowerCase();
-        return conversations.filter((conv) => {
+
+        const filtered = conversations.filter((conv) => {
             const isArchived = archivedIds.has(conv.conversationId);
             const matchesSearch =
                 conv.otherUserName.toLowerCase().includes(lowerSearch) ||
@@ -157,6 +190,12 @@ export default function Inbox() {
             if (activeCategory === 'Unread') return !isArchived && conv.unreadCount > 0 && matchesSearch;
             if (activeCategory === 'Archived') return isArchived && matchesSearch;
             return !isArchived && matchesSearch;
+        });
+
+        return filtered.sort((a, b) => {
+            const dateA = new Date(a.lastMessageAt || 0).getTime();
+            const dateB = new Date(b.lastMessageAt || 0).getTime();
+            return dateB - dateA;
         });
     }, [conversations, searchText, activeCategory, archivedIds]);
 
@@ -390,7 +429,7 @@ export default function Inbox() {
                     })}
                 </ScrollView>
 
-                {/* CONVERSATION LIST - 🎯 Shimmer se prikazuje i kod refresha */}
+                {/* CONVERSATION LIST */}
                 <View style={styles.conversationList}>
                     {loading || refreshing ? (
                         <View>
@@ -685,8 +724,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     archiveBtn: { width: 75, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
     unarchiveBtn: { width: 75, backgroundColor: (colors as any).success, justifyContent: 'center', alignItems: 'center' },
     deleteBtn: { width: 75, backgroundColor: (colors as any).danger, justifyContent: 'center', alignItems: 'center' },
-
-    // 🎨 IDENTICAL SHIMMER STYLES - savršeno odgovara pravim karticama
     shimmerWrapper: {
         borderRadius: 14,
         overflow: 'hidden',

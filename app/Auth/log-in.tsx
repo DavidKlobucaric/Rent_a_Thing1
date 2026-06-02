@@ -1,93 +1,100 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity,
     StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
-import { Image } from 'expo-image'; // ✅ expo-image umjesto RN Image (brže, s cachingom)
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
-import { registerUser } from "@/src/api/authApi";
+import { loginUser } from "@/src/api/authApi";
+import { useAuth } from "@/src/context/authContext";
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
 import * as Haptics from 'expo-haptics';
 
-export default function SignUpScreen() {
-    const [username, setUsername] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [agreed, setAgreed] = useState(false);
+import { getRememberedEmail } from "@/src/storage/storageTokens";
+
+export default function LogInScreen() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
-    const { t } = useLanguage();
     const router = useRouter();
+    const { refreshAuth } = useAuth();
+    const { t } = useLanguage();
 
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
 
-
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
-    // ✅ Memoiziran handleSignUp
-    const handleSignUp = useCallback(async () => {
-        if (!agreed) {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            Alert.alert(t('auth', 'missingInfo'), t('auth', 'pleaseAgree'));
-            return;
-        }
-        if (!username.trim() || !email.trim() || !password.trim()) {
+    // 🔄 Prilikom otvaranja ekrana provjeri ima li zapamćenog Gmaila
+    useEffect(() => {
+        const checkRememberedEmail = async () => {
+            const savedEmail = await getRememberedEmail();
+            if (savedEmail) {
+                setEmail(savedEmail);
+                setRememberMe(true);
+            }
+        };
+        checkRememberedEmail();
+    }, []);
+
+    // 🚀 Čisti poziv loginUser-a (Remember Me logika se odvija iza kulisa u API-ju)
+    const handleLogIn = useCallback(async () => {
+        if (!email.trim() || !password.trim()) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(t('auth', 'missingInfo'), t('auth', 'fillAllFields'));
             return;
         }
         setLoading(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        const result = await registerUser(username.trim(), email.trim(), password);
+
+        // Prosljeđujemo i rememberMe stanje u naš ažurirani API
+        const result = await loginUser(email.trim(), password, rememberMe);
         setLoading(false);
+
         if (result.success) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            router.push({
-                pathname: '/Auth/verification',
-                params: { email: email.trim() }
-            });
+            await refreshAuth();
+            router.replace('/home'); // Auto-login će od ovog trenutka raditi jer je token zapisan
         } else {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert(t('auth', 'registrationFailed'), result.message);
+            Alert.alert(t('auth', 'loginFailed'), result.message);
         }
-    }, [agreed, username, email, password, t, router]);
+    }, [email, password, rememberMe, t, refreshAuth, router]);
 
-    // ✅ Memoizirani manji handleri
-    const toggleAgreed = useCallback(() => {
+    const toggleRememberMe = useCallback(() => {
         Haptics.selectionAsync();
-        setAgreed(prev => !prev);
+        setRememberMe(prev => !prev);
+    }, []);
+
+    const handleForgotPassword = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }, []);
 
     const handleSocialPress = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }, []);
 
-    const handleLoginPress = useCallback(() => {
+    const handleSignUpPress = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push('/log-in');
+        router.push('/Auth/sign-in');
     }, [router]);
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
             <View style={styles.header}>
-                <Text style={styles.titleText}>{t('auth', 'createAccount')}</Text>
+                <Text style={styles.titleText}>{t('auth', 'welcomeBack')}</Text>
             </View>
             <View style={styles.subtitleContainer}>
-                <Text style={styles.subtitleText}>{t('auth', 'joinCommunity')}</Text>
+                <Text style={styles.subtitleText}>
+                    {t('auth', 'logInSubtitle')}
+                </Text>
             </View>
             <View style={styles.card}>
-                <Text style={styles.labelText}>{t('auth', 'username')}</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Joe Doe"
-                    placeholderTextColor={colors.placeholder}
-                    value={username}
-                    onChangeText={setUsername}
-                />
                 <Text style={styles.labelText}>{t('auth', 'email')}</Text>
                 <TextInput
                     style={styles.input}
@@ -105,31 +112,36 @@ export default function SignUpScreen() {
                     placeholderTextColor={colors.placeholder}
                     value={password}
                     onChangeText={setPassword}
-                    secureTextEntry
+                    secureTextEntry={true}
                 />
-                <View style={styles.termsRow}>
+                <View style={styles.rememberRow}>
                     <TouchableOpacity
-                        style={styles.termsContainer}
-                        onPress={toggleAgreed}
+                        style={styles.rememberMeContainer}
+                        onPress={toggleRememberMe}
                     >
                         <MaterialIcons
-                            name={agreed ? "check-box" : "check-box-outline-blank"}
+                            name={rememberMe ? "check-box" : "check-box-outline-blank"}
                             size={22}
-                            color={agreed ? colors.primary : colors.textMuted}
+                            color={rememberMe ? colors.primary : colors.textMuted}
                         />
                         <Text style={[styles.smallText, { color: colors.textSecondary }]}>
-                            {t('auth', 'agreeTerms')}
+                            {t('auth', 'rememberMe')}
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleForgotPassword}>
+                        <Text style={[styles.smallText, { color: colors.primary, fontWeight: '600' }]}>
+                            {t('auth', 'forgotPassword')}
                         </Text>
                     </TouchableOpacity>
                 </View>
                 <TouchableOpacity
                     style={[styles.primaryButton, loading && { opacity: 0.7 }]}
-                    onPress={handleSignUp}
+                    onPress={handleLogIn}
                     disabled={loading}
                 >
                     {loading
                         ? <ActivityIndicator color={colors.iconColorInverse} />
-                        : <Text style={styles.primaryButtonText}>{t('auth', 'signUp')}</Text>
+                        : <Text style={styles.primaryButtonText}>{t('auth', 'logIn')}</Text>
                     }
                 </TouchableOpacity>
                 <View style={styles.dividerContainer}>
@@ -145,20 +157,20 @@ export default function SignUpScreen() {
                         <Image
                             source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }}
                             style={styles.socialIcon}
-                            cachePolicy="memory-disk" // ✅ Brže ponovno učitavanje
+                            cachePolicy="memory-disk"
                             transition={200}
                         />
                         <Text style={[styles.mediumText, { color: colors.googleButtonText }]}>
-                            {t('auth', 'signUpGoogle')}
+                            {t('auth', 'signInGoogle')}
                         </Text>
                     </TouchableOpacity>
                 </View>
             </View>
             <View style={styles.signUpContainer}>
-                <Text style={styles.mediumText}>{t('auth', 'haveAccount')}</Text>
-                <TouchableOpacity onPress={handleLoginPress}>
+                <Text style={styles.mediumText}>{t('auth', 'noAccount')}</Text>
+                <TouchableOpacity onPress={handleSignUpPress}>
                     <Text style={[styles.mediumText, { color: colors.primary, fontWeight: "600" }]}>
-                        {t('auth', 'logIn')}
+                        {t('auth', 'signUp')}
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -189,9 +201,9 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     card: { width: '100%', borderRadius: 14, padding: 20, paddingTop: 0, alignSelf: 'center' },
     labelText: { fontSize: 12, fontWeight: "600", color: colors.text, paddingTop: 16, paddingBottom: 8, letterSpacing: 0.4, textTransform: 'uppercase' },
     input: { width: '100%', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 0.5, borderColor: colors.border, fontSize: 14, color: colors.text },
-    termsRow: { paddingTop: 16, paddingBottom: 8 },
-    termsContainer: { flexDirection: "row", alignItems: "center", gap: 6 },
-    smallText: { fontSize: 13, flex: 1 },
+    rememberRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 16, paddingBottom: 8 },
+    rememberMeContainer: { flexDirection: "row", alignItems: "center", gap: 6 },
+    smallText: { fontSize: 13 },
     mediumText: { fontSize: 15, color: colors.textSecondary },
     primaryButton: { width: '100%', alignItems: "center", justifyContent: "center", paddingVertical: 10, paddingHorizontal: 20, borderRadius: 14, backgroundColor: colors.primary, marginTop: 20 },
     primaryButtonText: { fontSize: 16, fontWeight: "600", color: colors.iconColorInverse },

@@ -1,17 +1,23 @@
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity,
-    StyleSheet, ScrollView, Switch, Alert,
+    StyleSheet, ScrollView, Switch, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router'; // ✅ Ostaje import
+import { useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage, SUPPORTED_LANGUAGES } from '@/src/context/languageContext';
 import { LANGUAGE_NAMES, LANGUAGE_FLAGS } from '@/src/i18n/translations';
 import * as Haptics from 'expo-haptics';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+// Uvezi svoj auth context ili funkciju za logout i brisanje računa
+// import { useAuth } from '@/src/context/authContext';
+// import { changePasswordApi, deleteAccountApi } from '@/src/api/userApi';
+
+const NOTIF_KEY = '@settings_notifications';
 
 type SettingItemProps = {
     iconName: string;
@@ -25,81 +31,32 @@ type SettingItemProps = {
     colors: typeof Colors.light;
 };
 
-// ❌ UKLONJENO: const router = useRouter(); — hook ne smije biti na top-levelu
-
-const SettingItem = ({
-                         iconName,
-                         title,
-                         description,
-                         onPress,
-                         onToggle,
-                         value,
-                         type,
-                         isDestructive = false,
-                         colors,
-                     }: SettingItemProps) => {
-// ✅ router se sada dohvaća unutar komponente ako je potreban
-    const router = useRouter();
+const SettingItem = ({ iconName, title, description, onPress, onToggle, value, type, isDestructive = false, colors }: SettingItemProps) => {
     const styles = makeStyles(colors);
-    const handlePress = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        if (type === 'toggle' && typeof value === 'boolean') {
-            onToggle?.(!value);
-        } else if (type === 'link' || type === 'button') {
-            onPress?.();
-        }
-    };
     return (
         <TouchableOpacity
-            style={[
-                styles.settingItem,
-                isDestructive && styles.destructiveItem,
-            ]}
-            onPress={handlePress}
+            style={[styles.settingItem, isDestructive && styles.destructiveItem]}
+            onPress={type === 'toggle' ? undefined : onPress}
             activeOpacity={type === 'toggle' ? 1 : 0.7}
-            disabled={type === 'toggle'}
         >
             <View style={styles.settingLeft}>
-                <View style={[
-                    styles.iconBox,
-                    isDestructive && styles.destructiveIconBox,
-                ]}>
-                    <Ionicons
-                        name={iconName as any}
-                        size={20}
-                        color={isDestructive ? colors.danger : colors.iconColor}
-                    />
+                <View style={[styles.iconBox, isDestructive && styles.destructiveIconBox]}>
+                    <Ionicons name={iconName as any} size={20} color={isDestructive ? colors.danger : colors.iconColor} />
                 </View>
                 <View style={styles.textContainer}>
-                    <Text style={[
-                        styles.settingTitle,
-                        { color: colors.text },
-                        isDestructive && { color: colors.danger }
-                    ]}>
-                        {title}
-                    </Text>
-                    <Text style={styles.settingDescription}>
-                        {description}
-                    </Text>
+                    <Text style={[styles.settingTitle, { color: colors.text }, isDestructive && { color: colors.danger }]}>{title}</Text>
+                    <Text style={styles.settingDescription}>{description}</Text>
                 </View>
             </View>
             {type === 'toggle' ? (
                 <Switch
                     value={typeof value === 'boolean' ? value : false}
-                    onValueChange={(v) => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        onToggle?.(v);
-                    }}
+                    onValueChange={(v) => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onToggle?.(v); }}
                     trackColor={{ false: colors.border, true: colors.primary }}
                     thumbColor={value ? colors.iconColorInverse : colors.textMuted}
-                    style={styles.switch}
                 />
             ) : (
-                <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color={colors.textSecondary}
-                />
+                <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             )}
         </TouchableOpacity>
     );
@@ -110,178 +67,131 @@ export default function SettingsScreen() {
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
     const { language, setLanguage, t } = useLanguage();
-    const router = useRouter(); // ✅ router sada unutar komponente
+    const router = useRouter();
+
     const langSheetRef = useRef<BottomSheet>(null);
-    const snapPoints = useMemo(() => ['55%'], []);
-    const [notifications, setNotifications] = useState({
-        pushEnabled: true,
-        emailEnabled: true,
-        newMessages: true,
-        bookingRequests: true,
-        reminders: true,
-        promotions: false,
-    });
-    const [privacy, setPrivacy] = useState({
-        profileVisibility: 'Public',
-        showPhoneNumber: false,
-        showEmail: false,
-        locationSharing: true,
-    });
-    const accountInfo = {
-        email: 'alex.neighbor@email.com',
-        phone: '+1 (555) 123-4567',
+    const passSheetRef = useRef<BottomSheet>(null);
+    const snapPoints = useMemo(() => ['50%'], []);
+
+    // Stanja za notifikacije (Spremaju se lokalno!)
+    const [notifications, setNotifications] = useState({ pushEnabled: true, newMessages: true });
+
+    // Stanja za lozinku
+    const [currentPass, setCurrentPass] = useState('');
+    const [newPass, setNewPass] = useState('');
+    const [saving, setSaving] = useState(false);
+
+    // Učitaj notifikacije iz memorije telefona
+    useEffect(() => {
+        AsyncStorage.getItem(NOTIF_KEY).then(data => {
+            if (data) setNotifications(JSON.parse(data));
+        });
+    }, []);
+
+    const toggleNotif = async (key: keyof typeof notifications) => {
+        const updated = { ...notifications, [key]: !notifications[key] };
+        setNotifications(updated);
+        await AsyncStorage.setItem(NOTIF_KEY, JSON.stringify(updated));
     };
-    const toggleNotification = (key: keyof typeof notifications) => {
-        setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
+
+    const handleChangePassword = async () => {
+        if (!currentPass || !newPass) return Alert.alert('Error', 'Fill all fields');
+        if (newPass.length < 6) return Alert.alert('Error', 'Min 6 characters');
+
+        setSaving(true);
+        // TODO: Pozovi svoj backend API ovdje!
+        // const res = await changePasswordApi(currentPass, newPass);
+        await new Promise(r => setTimeout(r, 1000)); // Simulacija
+        setSaving(false);
+
+        Alert.alert('Success', 'Password changed');
+        passSheetRef.current?.close();
+        setCurrentPass(''); setNewPass('');
     };
-    const togglePrivacy = (key: keyof typeof privacy) => {
-        setPrivacy(prev => ({ ...prev, [key]: !prev[key] }));
-    };
-    const handleLinkPress = (label: string) => {
-        Alert.alert(label, `Open ${label} screen`);
-    };
+
     const handleDeleteAccount = () => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        Alert.alert(
-            'Delete Account',
-            'This action cannot be undone. All your data will be permanently removed.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: () => {
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        Alert.alert('Account Deleted', 'Your account has been permanently deleted');
-                    },
-                },
-            ]
-        );
+        Alert.alert('Delete Account', 'Are you sure? This cannot be undone.', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Delete', style: 'destructive', onPress: async () => {
+                    // TODO: Pozovi backend API za brisanje!
+                    // await deleteAccountApi();
+                    // await logout(); // Obrisi token
+                    // router.replace('/(auth)/login');
+                    Alert.alert('Deleted', 'Account removed.');
+                }},
+        ]);
     };
+
+
     return (
         <SafeAreaView style={styles.container} edges={['left', 'right']}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: 20 }]}>
-                    {t('settings', 'notifications')}
-                </Text>
+
+                {/* NOTIFIKACIJE */}
+                <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: 20 }]}>{t('settings', 'notifications')}</Text>
                 <View style={styles.settingContainer}>
-                    <SettingItem colors={colors} iconName="notifications" title={t('settings', 'push')} description={t('settings', 'pushDesc')} type="toggle" value={notifications.pushEnabled} onToggle={() => toggleNotification('pushEnabled')} />
-                    <SettingItem colors={colors} iconName="chatbubbles" title={t('settings', 'newMessages')} description={t('settings', 'newMessagesDesc')} type="toggle" value={notifications.newMessages} onToggle={() => toggleNotification('newMessages')} />
-                    <SettingItem colors={colors} iconName="time" title={t('settings', 'reminders')} description={t('settings', 'remindersDesc')} type="toggle" value={notifications.reminders} onToggle={() => toggleNotification('reminders')} />
-                    <SettingItem colors={colors} iconName="pricetag" title={t('settings', 'promotions')} description={t('settings', 'promotionsDesc')} type="toggle" value={notifications.promotions} onToggle={() => toggleNotification('promotions')} />
+                    <SettingItem colors={colors} iconName="notifications" title={t('settings', 'push')} description={t('settings', 'pushDesc')} type="toggle" value={notifications.pushEnabled} onToggle={() => toggleNotif('pushEnabled')} />
+                    <SettingItem colors={colors} iconName="chatbubbles" title={t('settings', 'newMessages')} description={t('settings', 'newMessagesDesc')} type="toggle" value={notifications.newMessages} onToggle={() => toggleNotif('newMessages')} />
                 </View>
-                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-                    {t('settings', 'privacy')}
-                </Text>
+
+                {/* RAČUN */}
+                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings', 'account')}</Text>
                 <View style={styles.settingContainer}>
-                    <SettingItem colors={colors} iconName="eye" title={t('settings', 'profileVisibility')} description={`${t('settings', 'currently')}: ${privacy.profileVisibility}`} type="link" onPress={() => handleLinkPress('Profile Visibility')} />
-                    <SettingItem colors={colors} iconName="call" title={t('settings', 'showPhone')} description={t('settings', 'showPhoneDesc')} type="toggle" value={privacy.showPhoneNumber} onToggle={() => togglePrivacy('showPhoneNumber')} />
-                    <SettingItem colors={colors} iconName="location" title={t('settings', 'locationSharing')} description={t('settings', 'locationSharingDesc')} type="toggle" value={privacy.locationSharing} onToggle={() => togglePrivacy('locationSharing')} />
+                    <SettingItem colors={colors} iconName="mail" title={t('settings', 'emailAddress')} description="user@example.com" type="link" onPress={() => Alert.alert('Info', 'Contact support to change email.')} />
+                    <SettingItem colors={colors} iconName="lock-closed" title={t('settings', 'changePassword')} description={t('settings', 'changePasswordDesc')} type="link" onPress={() => passSheetRef.current?.expand()} />
+                    <SettingItem colors={colors} iconName="language" title={t('settings', 'language')} description={`${LANGUAGE_FLAGS[language]} ${LANGUAGE_NAMES[language]}`} type="link" onPress={() => langSheetRef.current?.expand()} />
                 </View>
-                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-                    {t('settings', 'account')}
-                </Text>
-                <View style={styles.settingContainer}>
-                    <SettingItem colors={colors} iconName="mail" title={t('settings', 'emailAddress')} description={accountInfo.email} type="link" onPress={() => handleLinkPress('Email')} />
-                    <SettingItem colors={colors} iconName="call" title={t('settings', 'phoneNumber')} description={accountInfo.phone} type="link" onPress={() => handleLinkPress('Phone')} />
-                    <SettingItem colors={colors} iconName="lock-closed" title={t('settings', 'changePassword')} description={t('settings', 'changePasswordDesc')} type="link" onPress={() => handleLinkPress('Password')} />
-                    <SettingItem colors={colors} iconName="card" title={t('settings', 'paymentMethods')} description={t('settings', 'paymentMethodsDesc')} type="link" onPress={() => handleLinkPress('Payment')} />
-                    <SettingItem
-                        colors={colors}
-                        iconName="language"
-                        title={t('settings', 'language')}
-                        description={`${LANGUAGE_FLAGS[language]} ${LANGUAGE_NAMES[language]}`}
-                        type="link"
-                        onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            langSheetRef.current?.expand();
-                        }}
-                    />
-                </View>
-                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-                    {t('settings', 'legal')}
-                </Text>
+
+                {/* PRAVNO */}
+                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings', 'legal')}</Text>
                 <View style={styles.settingContainer}>
                     <SettingItem colors={colors} iconName="document-text" title={t('settings', 'terms')} description={t('settings', 'termsDesc')} type="link" onPress={() => router.push('/terms')} />
                     <SettingItem colors={colors} iconName="shield-checkmark" title={t('settings', 'privacyPolicy')} description={t('settings', 'privacyPolicyDesc')} type="link" onPress={() => router.push('/privacy')} />
                 </View>
-                <Text style={[styles.sectionTitle, { color: colors.danger }]}>
-                    {t('settings', 'dangerZone')}
-                </Text>
+
+                {/* OPASNA ZONA & ODJAVA */}
+                <Text style={[styles.sectionTitle, { color: colors.danger }]}>{t('settings', 'dangerZone')}</Text>
                 <View style={[styles.settingContainer, { borderColor: colors.borderLight }]}>
-                    <SettingItem
-                        colors={colors}
-                        iconName="trash"
-                        title={t('settings', 'deleteAccount')}
-                        description={t('settings', 'deleteAccountDesc')}
-                        type="button"
-                        isDestructive
-                        onPress={handleDeleteAccount}
-                    />
+                    <SettingItem colors={colors} iconName="trash" title={t('settings', 'deleteAccount')} description={t('settings', 'deleteAccountDesc')} type="button" isDestructive onPress={handleDeleteAccount} />
                 </View>
-                <Text style={[styles.versionText, { color: colors.textMuted }]}>
-                    {t('settings', 'version')} 1.0.0
-                </Text>
+
+                <Text style={[styles.versionText, { color: colors.textMuted }]}>Version 1.0.0</Text>
             </ScrollView>
-            <BottomSheet
-                ref={langSheetRef}
-                index={-1}
-                snapPoints={snapPoints}
-                enablePanDownToClose={true}
-                backgroundStyle={{
-                    backgroundColor: colors.card,
-                    borderTopLeftRadius: 24,
-                    borderTopRightRadius: 24,
-                }}
-                handleIndicatorStyle={{
-                    backgroundColor: colors.textMuted,
-                    width: 40,
-                }}
-            >
+
+            {/* LANGUAGE SHEET */}
+            <BottomSheet ref={langSheetRef} index={-1} snapPoints={snapPoints} enablePanDownToClose backgroundStyle={{ backgroundColor: colors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24 }} handleIndicatorStyle={{ backgroundColor: colors.textMuted, width: 40 }}>
                 <BottomSheetView style={styles.sheetContent}>
-                    <View style={styles.sheetHeader}>
-                        <Text style={styles.sheetTitle}>🌍 {t('settings', 'selectLanguage')}</Text>
-                    </View>
+                    <Text style={styles.sheetTitle}>🌍 {t('settings', 'selectLanguage')}</Text>
                     <View style={styles.sheetList}>
                         {SUPPORTED_LANGUAGES.map((lang) => {
                             const isActive = language === lang;
                             return (
-                                <TouchableOpacity
-                                    key={lang}
-                                    style={[
-                                        styles.sheetItem,
-                                        isActive && styles.sheetItemActive,
-                                    ]}
-                                    onPress={() => {
-                                        Haptics.selectionAsync();
-                                        setLanguage(lang);
-                                        langSheetRef.current?.close();
-                                    }}
-                                >
+                                <TouchableOpacity key={lang} style={[styles.sheetItem, isActive && styles.sheetItemActive]} onPress={() => { setLanguage(lang); langSheetRef.current?.close(); }}>
                                     <Text style={styles.sheetFlag}>{LANGUAGE_FLAGS[lang]}</Text>
-                                    <View style={styles.sheetTextContainer}>
-                                        <Text style={[
-                                            styles.sheetItemText,
-                                            isActive && styles.sheetItemTextActive,
-                                        ]}>
-                                            {LANGUAGE_NAMES[lang]}
-                                        </Text>
-                                        <Text style={styles.sheetLangCode}>{lang.toUpperCase()}</Text>
-                                    </View>
-                                    {isActive && (
-                                        <View style={styles.sheetCheckmark}>
-                                            <Ionicons name="checkmark" size={20} color="white" />
-                                        </View>
-                                    )}
+                                    <Text style={[styles.sheetItemText, isActive && styles.sheetItemTextActive]}>{LANGUAGE_NAMES[lang]}</Text>
+                                    {isActive && <Ionicons name="checkmark" size={20} color={colors.primary} />}
                                 </TouchableOpacity>
                             );
                         })}
                     </View>
                 </BottomSheetView>
             </BottomSheet>
+
+            {/* PASSWORD SHEET */}
+            <BottomSheet ref={passSheetRef} index={-1} snapPoints={snapPoints} enablePanDownToClose backgroundStyle={{ backgroundColor: colors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24 }} handleIndicatorStyle={{ backgroundColor: colors.textMuted, width: 40 }}>
+                <BottomSheetView style={styles.sheetContent}>
+                    <Text style={styles.sheetTitle}>🔒 {t('settings', 'changePassword')}</Text>
+                    <TextInput style={styles.input} placeholder="Current Password" placeholderTextColor={colors.textMuted} secureTextEntry value={currentPass} onChangeText={setCurrentPass} />
+                    <TextInput style={styles.input} placeholder="New Password" placeholderTextColor={colors.textMuted} secureTextEntry value={newPass} onChangeText={setNewPass} />
+                    <TouchableOpacity style={styles.saveBtn} onPress={handleChangePassword} disabled={saving}>
+                        {saving ? <ActivityIndicator color="white" /> : <Text style={styles.saveBtnText}>Save Password</Text>}
+                    </TouchableOpacity>
+                </BottomSheetView>
+            </BottomSheet>
         </SafeAreaView>
     );
 }
+
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     scrollContent: { paddingVertical: 10, paddingHorizontal: 16 },
@@ -295,37 +205,16 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     textContainer: { flex: 1, paddingRight: 8 },
     settingTitle: { fontSize: 15, fontWeight: '500', marginBottom: 2 },
     settingDescription: { fontSize: 12, color: colors.textMuted, lineHeight: 16 },
-    switch: { transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] },
     versionText: { textAlign: 'center', fontSize: 12, marginTop: 10, marginBottom: 30 },
-    sheetContent: { flex: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 32 },
-    sheetHeader: { alignItems: 'center', paddingVertical: 12, marginBottom: 8 },
-    sheetTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
+    sheetContent: { flex: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 32, gap: 12 },
+    sheetTitle: { fontSize: 18, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 10 },
     sheetList: { gap: 6 },
-    sheetItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderRadius: 14,
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.border,
-    },
-    sheetItemActive: {
-        backgroundColor: colors.primary + '15',
-        borderColor: colors.primary,
-    },
+    sheetItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+    sheetItemActive: { backgroundColor: colors.primary + '15', borderColor: colors.primary },
     sheetFlag: { fontSize: 26, marginRight: 14 },
-    sheetTextContainer: { flex: 1 },
-    sheetItemText: { fontSize: 16, fontWeight: '500', color: colors.text },
+    sheetItemText: { fontSize: 16, fontWeight: '500', color: colors.text, flex: 1 },
     sheetItemTextActive: { color: colors.primary, fontWeight: '700' },
-    sheetLangCode: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-    sheetCheckmark: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+    input: { width: '100%', paddingVertical: 13, paddingHorizontal: 16, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, fontSize: 15, color: colors.text },
+    saveBtn: { width: '100%', paddingVertical: 15, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
+    saveBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 });

@@ -106,8 +106,8 @@ function RootNavigation() {
             <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
                 <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
-                <Stack.Screen name="sign-in" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
-                <Stack.Screen name="log-in" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="Auth/sign-in" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="Auth/log-in" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
                 <Stack.Screen name="Auth/verification" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
                 <Stack.Screen name="saved-items" options={{ title: 'Saved Items', animation: 'fade', animationDuration: 250 }} />
                 <Stack.Screen name="settings" options={{ title: 'Settings', animation: 'fade', animationDuration: 250 }} />
