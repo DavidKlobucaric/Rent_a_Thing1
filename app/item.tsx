@@ -8,7 +8,7 @@ import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Calendar } from 'react-native-calendars';
+import { Calendar, DateData } from 'react-native-calendars';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -85,7 +85,7 @@ function CustomModal({
             Animated.parallel([
                 Animated.timing(fadeAnim, {
                     toValue: 1,
-                    duration: 250,
+                    duration: 400,
                     easing: Easing.out(Easing.cubic),
                     useNativeDriver: true,
                 }),
@@ -97,7 +97,7 @@ function CustomModal({
                 }),
                 Animated.timing(slideAnim, {
                     toValue: 0,
-                    duration: 300,
+                    duration: 500,
                     easing: Easing.out(Easing.cubic),
                     useNativeDriver: true,
                 }),
@@ -106,12 +106,12 @@ function CustomModal({
             Animated.parallel([
                 Animated.timing(fadeAnim, {
                     toValue: 0,
-                    duration: 200,
+                    duration: 400,
                     useNativeDriver: true,
                 }),
                 Animated.timing(scaleAnim, {
                     toValue: 0.85,
-                    duration: 200,
+                    duration: 500,
                     useNativeDriver: true,
                 }),
             ]).start();
@@ -263,7 +263,7 @@ export default function ListingDetailScreen() {
     const [booking, setBooking] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(TODAY);
     const calendarSheetRef = useRef<BottomSheet>(null);
-    const snapPoints = useMemo(() => ['75%', '90%'], []);
+    const snapPoints = useMemo(() => ['80%', '95%'], []);
 
     // ✨ Custom modal state
     const [modal, setModal] = useState<CustomModalConfig>(DEFAULT_MODAL);
@@ -371,8 +371,8 @@ export default function ListingDetailScreen() {
         });
     }, [blockedPeriods]);
 
-    // ✅ POBOLJŠANA LOGIKA: Jedan klik za rezervaciju jednog dana
-    const handleDayPress = useCallback((day: { dateString: string }) => {
+    // ✅ POBOLJŠANA LOGIKA: Jedan klik za rezervaciju jednog dana, drugi klik za raspon
+    const handleDayPress = useCallback((day: DateData) => {
         Haptics.selectionAsync();
         const selectedDate = day.dateString;
 
@@ -392,7 +392,7 @@ export default function ListingDetailScreen() {
             // Prvi klik: postavi startDate i automatski endDate na isti dan (default za 1 dan)
             setStartDate(selectedDate);
             setEndDate(selectedDate); // ✅ Automatski postavi endDate na isti dan
-            setSelectingStart(true); // Ostavi true da može produžiti ako želi
+            setSelectingStart(false); // ✅ Promijeni u false da sljedeći klik produži raspon
         } else {
             // Drugi klik: promijeni endDate
             if (startDate && selectedDate >= startDate) {
@@ -411,17 +411,21 @@ export default function ListingDetailScreen() {
                     return;
                 }
                 setEndDate(selectedDate);
-                setSelectingStart(true);
+                setSelectingStart(true); // Resetiraj za sljedeći odabir
             } else {
                 // Kliknuo na raniji dan: resetiraj i postavi novi startDate
                 setStartDate(selectedDate);
                 setEndDate(selectedDate); // ✅ Automatski postavi endDate
+                setSelectingStart(false);
             }
         }
     }, [selectingStart, startDate, endDate, isDateBlocked]);
 
+    // ✅ POBOLJŠANI MARKED DATES - Ljepši vizualni prikaz
     const markedDates = useMemo(() => {
         const marked: any = {};
+
+        // Blokirani dani
         blockedPeriods.forEach(({ startDate: s, endDate: e }) => {
             let current = new Date(s);
             const end = new Date(e);
@@ -430,40 +434,103 @@ export default function ListingDetailScreen() {
                 marked[dateStr] = {
                     disabled: true,
                     disableTouchEvent: true,
-                    color: colors.danger + '40',
-                    textColor: colors.danger,
+                    marked: true,
+                    dotColor: colors.danger,
+                    customStyles: {
+                        container: {
+                            backgroundColor: colors.danger + '15',
+                        },
+                        text: {
+                            color: colors.danger,
+                            textDecorationLine: 'line-through',
+                            fontWeight: '500',
+                        },
+                    },
                 };
                 current.setDate(current.getDate() + 1);
             }
         });
+
+        // Odabrani raspon
         if (startDate && endDate) {
             if (startDate === endDate) {
                 // Jedan dan
                 marked[startDate] = {
                     selected: true,
-                    color: colors.primary,
-                    textColor: colors.iconColorInverse
+                    selectedColor: colors.primary,
+                    selectedTextColor: '#FFFFFF',
+                    customStyles: {
+                        container: {
+                            backgroundColor: colors.primary,
+                            borderRadius: 12,
+                        },
+                        text: {
+                            color: '#FFFFFF',
+                            fontWeight: '700',
+                        },
+                    },
                 };
             } else {
-                // Raspon dana
+                // Početni dan
                 marked[startDate] = {
-                    startingDay: true,
-                    color: colors.primary,
-                    textColor: colors.iconColorInverse
+                    selected: true,
+                    selectedColor: colors.primary,
+                    selectedTextColor: '#FFFFFF',
+                    customStyles: {
+                        container: {
+                            backgroundColor: colors.primary,
+                            borderTopRightRadius: 0,
+                            borderBottomRightRadius: 0,
+                            borderTopLeftRadius: 12,
+                            borderBottomLeftRadius: 12,
+                        },
+                        text: {
+                            color: '#FFFFFF',
+                            fontWeight: '700',
+                        },
+                    },
                 };
+
+                // Završni dan
                 marked[endDate] = {
-                    endingDay: true,
-                    color: colors.primary,
-                    textColor: colors.iconColorInverse
+                    selected: true,
+                    selectedColor: colors.primary,
+                    selectedTextColor: '#FFFFFF',
+                    customStyles: {
+                        container: {
+                            backgroundColor: colors.primary,
+                            borderTopLeftRadius: 0,
+                            borderBottomLeftRadius: 0,
+                            borderTopRightRadius: 12,
+                            borderBottomRightRadius: 12,
+                        },
+                        text: {
+                            color: '#FFFFFF',
+                            fontWeight: '700',
+                        },
+                    },
                 };
+
+                // Dani između
                 let current = new Date(startDate);
                 const end = new Date(endDate);
                 current.setDate(current.getDate() + 1);
                 while (current < end) {
                     const dateStr = current.toISOString().split('T')[0];
                     marked[dateStr] = {
-                        color: colors.primary + '40',
-                        textColor: colors.text
+                        selected: true,
+                        selectedColor: colors.primary + '40',
+                        selectedTextColor: colors.text,
+                        customStyles: {
+                            container: {
+                                backgroundColor: colors.primary + '40',
+                                borderRadius: 0,
+                            },
+                            text: {
+                                color: colors.text,
+                                fontWeight: '600',
+                            },
+                        },
                     };
                     current.setDate(current.getDate() + 1);
                 }
@@ -471,10 +538,21 @@ export default function ListingDetailScreen() {
         } else if (startDate) {
             marked[startDate] = {
                 selected: true,
-                color: colors.primary,
-                textColor: colors.iconColorInverse
+                selectedColor: colors.primary,
+                selectedTextColor: '#FFFFFF',
+                customStyles: {
+                    container: {
+                        backgroundColor: colors.primary,
+                        borderRadius: 12,
+                    },
+                    text: {
+                        color: '#FFFFFF',
+                        fontWeight: '700',
+                    },
+                },
             };
         }
+
         return marked;
     }, [startDate, endDate, colors, blockedPeriods]);
 
@@ -865,7 +943,8 @@ export default function ListingDetailScreen() {
                 </View>
             )}
 
-            {/* KALENDAR */}
+            {/* 🎨 POBOLJŠANI KALENDAR */}
+            {/* 🎨 POBOLJŠANI KALENDAR */}
             <BottomSheet
                 ref={calendarSheetRef}
                 index={-1}
@@ -873,8 +952,8 @@ export default function ListingDetailScreen() {
                 enablePanDownToClose
                 backgroundStyle={{
                     backgroundColor: colors.card,
-                    borderTopLeftRadius: 24,
-                    borderTopRightRadius: 24
+                    borderTopLeftRadius: 28,
+                    borderTopRightRadius: 28
                 }}
                 handleIndicatorStyle={{
                     backgroundColor: colors.textMuted,
@@ -883,37 +962,56 @@ export default function ListingDetailScreen() {
             >
                 <BottomSheetView style={styles.sheetContent}>
                     <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>
-                            {selectingStart ? t('listing', 'checkIn') : t('listing', 'checkOut')}
-                        </Text>
-                        <TouchableOpacity onPress={closeCalendar}>
-                            <Ionicons name="close" size={26} color={colors.text} />
+                        <View>
+                            <Text style={[styles.modalTitle, { color: '#FFFFFF' }]}>
+                                {selectingStart ? t('listing', 'selectStartDate') : t('listing', 'selectEndDate')}
+                            </Text>
+                            <Text style={[styles.modalSubtitle, { color: 'rgba(255,255,255,0.7)' }]}>
+                                {selectingStart ? 'Tap a date to start your rental' : 'Tap another date to complete your range'}
+                            </Text>
+                        </View>
+                        <TouchableOpacity onPress={closeCalendar} style={styles.closeButtonCalendar}>
+                            <Ionicons name="close-circle" size={28} color="rgba(255,255,255,0.7)" />
                         </TouchableOpacity>
                     </View>
+
+                    {/* ✅ UKLONJENO ISTICANJE - bez calendarInfoItemActive */}
                     <View style={styles.calendarInfoBar}>
                         <View style={styles.calendarInfoItem}>
-                            <Text style={styles.calendarInfoLabel}>{t('listing', 'checkIn')}</Text>
-                            <Text style={styles.calendarInfoValue}>{formatDateShort(startDate)}</Text>
+                            <Text style={styles.calendarInfoLabel}>
+                                {t('listing', 'checkIn')}
+                            </Text>
+                            <Text style={styles.calendarInfoValue}>
+                                {formatDateShort(startDate)}
+                            </Text>
                         </View>
-                        <View style={styles.calendarInfoDivider} />
+
+                        <View style={styles.calendarInfoArrow}>
+                            <Ionicons name="arrow-forward" size={16} color={colors.textMuted} />
+                        </View>
+
                         <View style={styles.calendarInfoItem}>
-                            <Text style={styles.calendarInfoLabel}>{t('listing', 'checkOut')}</Text>
-                            <Text style={styles.calendarInfoValue}>{formatDateShort(endDate)}</Text>
+                            <Text style={styles.calendarInfoLabel}>
+                                {t('listing', 'checkOut')}
+                            </Text>
+                            <Text style={styles.calendarInfoValue}>
+                                {formatDateShort(endDate)}
+                            </Text>
                         </View>
-                        {numberOfDays > 0 && (
-                            <>
-                                <View style={styles.calendarInfoDivider} />
-                                <View style={styles.calendarInfoItem}>
-                                    <Text style={styles.calendarInfoLabel}>
-                                        {numberOfDays === 1 ? t('listing', 'day') : t('listing', 'days')}
-                                    </Text>
-                                    <Text style={[styles.calendarInfoValue, { color: colors.primary }]}>
-                                        {numberOfDays}
-                                    </Text>
-                                </View>
-                            </>
-                        )}
                     </View>
+
+                    {/* Legend za blokirane dane */}
+                    <View style={styles.calendarLegend}>
+                        <View style={styles.legendItem}>
+                            <View style={[styles.legendDot, { backgroundColor: colors.danger + '40' }]} />
+                            <Text style={styles.legendText}>Unavailable</Text>
+                        </View>
+                        <View style={styles.legendItem}>
+                            <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
+                            <Text style={styles.legendText}>Selected</Text>
+                        </View>
+                    </View>
+
                     <View style={styles.calendarWrapper}>
                         <Calendar
                             current={currentMonth}
@@ -921,25 +1019,37 @@ export default function ListingDetailScreen() {
                             onDayPress={handleDayPress}
                             onMonthChange={(month) => setCurrentMonth(month.dateString)}
                             markedDates={markedDates}
-                            markingType="period"
+                            markingType={'custom'}
                             hideExtraDays={true}
                             enableSwipeMonths={true}
+                            firstDay={1}
                             theme={{
+                                backgroundColor: colors.card,
                                 calendarBackground: colors.card,
+                                textSectionTitleColor: colors.textMuted,
+                                textSectionTitleDisabledColor: colors.textMuted + '50',
                                 dayTextColor: colors.text,
-                                monthTextColor: colors.text,
                                 todayTextColor: colors.primary,
+                                selectedDayBackgroundColor: colors.primary,
+                                selectedDayTextColor: '#FFFFFF',
+                                textDisabledColor: colors.textMuted + '50',
+                                monthTextColor: colors.text,
+                                indicatorColor: colors.primary,
                                 arrowColor: colors.primary,
+                                disabledArrowColor: colors.textMuted + '50',
                                 textMonthFontWeight: '700',
-                                textMonthFontSize: 18,
+                                textMonthFontSize: 20,
                                 textDayHeaderFontSize: 13,
                                 textDayHeaderFontWeight: '600',
                                 textDayFontSize: 16,
+                                textDayFontWeight: '500',
                             }}
                         />
                     </View>
+
                     <View style={styles.modalFooter}>
                         <TouchableOpacity style={styles.modalResetButton} onPress={resetDates}>
+                            <Ionicons name="refresh-outline" size={16} color={colors.textSecondary} />
                             <Text style={styles.modalResetText}>{t('common', 'reset')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -950,6 +1060,7 @@ export default function ListingDetailScreen() {
                             <Text style={[styles.modalDoneText, (!startDate || !endDate) && { opacity: 0.5 }]}>
                                 {t('common', 'done')}
                             </Text>
+                            <Ionicons name="checkmark" size={18} color="#FFFFFF" />
                         </TouchableOpacity>
                     </View>
                 </BottomSheetView>
@@ -1145,52 +1256,132 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     bookButton: { backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 },
     bookButtonDisabled: { opacity: 0.5 },
     bookButtonText: { color: colors.iconColorInverse, fontSize: 15, fontWeight: '600' },
-    sheetContent: { flex: 1, paddingHorizontal: 20, gap: 12 },
-    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+
+    // 🎨 KALENDAR STYLES
+    sheetContent: { flex: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16, gap: 12 },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
+
+    // ✅ BIJELA BOJA ZA NASLOV KALENDARA
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#FFFFFF', // Bijela boja
+        marginBottom: 4,
+    },
+    modalSubtitle: {
+        fontSize: 13,
+        color: 'rgba(255,255,255,0.7)', // Svijetlo bijela za podnaslov
+    },
+
+    closeButtonCalendar: { padding: 4 },
+
     calendarInfoBar: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: colors.surface,
-        borderRadius: 14,
+        borderRadius: 16,
         paddingVertical: 14,
-        paddingHorizontal: 8,
+        paddingHorizontal: 12,
         borderWidth: 1,
         borderColor: colors.border,
+        gap: 8,
     },
+
+    // ✅ UKLONJENO ISTICANJE (nema više calendarInfoItemActive)
     calendarInfoItem: {
         flex: 1,
         alignItems: 'center',
         gap: 4,
     },
+
     calendarInfoLabel: {
-        fontSize: 11,
-        color: colors.textMuted,
+        fontSize: 10,
+        color: colors.textMuted, // Standardna boja, bez isticanja
         fontWeight: '600',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
+
     calendarInfoValue: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '700',
-        color: colors.text,
+        color: colors.text, // Standardna boja, bez isticanja
     },
-    calendarInfoDivider: {
-        width: 1,
-        height: 30,
-        backgroundColor: colors.border,
+
+    calendarInfoArrow: {
+        paddingHorizontal: 4,
     },
+    calendarInfoBadge: {
+        backgroundColor: colors.primary,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 10,
+    },
+    calendarInfoBadgeText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+
+    calendarLegend: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 20,
+        paddingVertical: 8,
+    },
+    legendItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    legendDot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+    },
+    legendText: {
+        fontSize: 12,
+        color: colors.textMuted,
+        fontWeight: '500',
+    },
+
     calendarWrapper: {
         flex: 1,
-        marginTop: 8,
+        marginTop: 4,
+        borderRadius: 16,
+        overflow: 'hidden',
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.border,
+        paddingVertical: 8,
     },
-    modalFooter: { flexDirection: 'row', gap: 12, marginTop: 12, paddingBottom: 8 },
-    modalResetButton: { flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
+    modalFooter: { flexDirection: 'row', gap: 12, marginTop: 8, paddingBottom: 8 },
+    modalResetButton: {
+        flex: 1,
+        paddingVertical: 14,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: colors.border,
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 6,
+    },
     modalResetText: { fontSize: 15, fontWeight: '600', color: colors.textSecondary },
-    modalDoneButton: { flex: 2, backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+    modalDoneButton: {
+        flex: 2,
+        backgroundColor: colors.primary,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 6,
+    },
     modalDoneButtonDisabled: { opacity: 0.5 },
     modalDoneText: { fontSize: 15, fontWeight: '600', color: colors.iconColorInverse },
 
-    // ─── ✨ CUSTOM MODAL STYLES ─────────────────────────────────────────────
+    // ─── ✨ CUSTOM MODAL STYLES (Za Success, Error, Warning modale) ─────────────
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.55)',
@@ -1230,14 +1421,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 8,
         elevation: 5,
-    },
-
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        textAlign: 'center',
-        marginBottom: 8,
-        letterSpacing: -0.3,
     },
     modalMessage: {
         fontSize: 14,
