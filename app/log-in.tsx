@@ -28,7 +28,7 @@ export default function LogInScreen() {
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
 
-    const styles = useMemo(() => makeStyles(colors), [scheme]);
+    const styles = useMemo(() => makeStyles(colors), [colors]);
 
     // 🔄 Prilikom otvaranja ekrana provjeri ima li zapamćenog Gmaila
     useEffect(() => {

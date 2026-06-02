@@ -8,28 +8,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import { uploadImages, createThing, createListing } from '@/src/api/itemsApi';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { uploadImages, updateThing, updateListing, getListingById } from '@/src/api/itemsApi';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
 import * as Haptics from 'expo-haptics';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const DRAFT_KEY = '@listing_draft';
 const categories = ['Tools', 'Camping', 'Tech', 'Games', 'Sports', 'Clothes'];
-
-type DraftData = {
-    title: string;
-    category: string;
-    description: string;
-    rate: string;
-    deposit: string;
-    location: string;
-    images: string[];
-};
 
 // ────────────────────────────────────────────────────────────────────────────
 // 🎨 CUSTOM MODAL TYPES
@@ -230,10 +219,11 @@ function CustomModal({
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// 📝 ADD SCREEN
+// 📝 EDIT LISTING SCREEN
 // ────────────────────────────────────────────────────────────────────────────
-export default function AddScreen() {
+export default function EditListingScreen() {
     const router = useRouter();
+    const { listingId } = useLocalSearchParams<{ listingId: string }>();
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -246,15 +236,23 @@ export default function AddScreen() {
     const [securityDeposit, setSecurityDeposit] = useState('');
     const [location, setLocation] = useState('');
     const [images, setImages] = useState<string[]>([]);
-    const [publishing, setPublishing] = useState(false);
+    const [originalImages, setOriginalImages] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [thingId, setThingId] = useState<number | null>(null);
 
-    // ✨ Custom modal state
     const [modal, setModal] = useState<CustomModalConfig>(DEFAULT_MODAL);
 
     const categorySheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['45%'], []);
 
-    // ✨ Modal helpers
+    const shimmerColors = useMemo(() =>
+            scheme === 'dark'
+                ? ['#2A2A2A', '#3A3A3A', '#2A2A2A']
+                : ['#E0E0E0', '#F5F5F5', '#E0E0E0'],
+        [scheme]
+    );
+
     const showModal = (cfg: Omit<CustomModalConfig, 'visible'>) => {
         setModal({ ...cfg, visible: true });
     };
@@ -263,53 +261,41 @@ export default function AddScreen() {
         setModal(prev => ({ ...prev, visible: false }));
     };
 
-    // Load draft on mount
     useEffect(() => {
+        if (!listingId) return;
+        let isActive = true;
         (async () => {
-            try {
-                const saved = await AsyncStorage.getItem(DRAFT_KEY);
-                if (saved) {
-                    const d: DraftData = JSON.parse(saved);
-                    setTitle(d.title || '');
-                    setSelectedCategory(d.category || 'Tools');
-                    setDescription(d.description || '');
-                    setDailyRate(d.rate || '');
-                    setSecurityDeposit(d.deposit || '');
-                    setLocation(d.location || '');
-                    setImages(d.images || []);
-                }
-            } catch (e) {
-                console.log('Draft load error:', e);
+            setLoading(true);
+            const result = await getListingById(Number(listingId));
+            if (!isActive) return;
+            if (result.success && result.data) {
+                const l = result.data;
+                setTitle(l.name || '');
+                setSelectedCategory(l.category ? l.category.charAt(0).toUpperCase() + l.category.slice(1) : 'Tools');
+                setDescription(l.description || '');
+                setDailyRate(l.price?.toString() || '');
+                setSecurityDeposit(l.securityDeposit?.toString() || '');
+                setLocation(l.location || '');
+                const urls = l.imageUrls || [];
+                setImages(urls);
+                setOriginalImages(urls);
+                setThingId(l.thingId ?? null);
+            } else {
+                showModal({
+                    type: 'error',
+                    title: t('common', 'error'),
+                    message: (result as any).message || 'Could not load listing.',
+                    primaryLabel: t('common', 'ok') || 'OK',
+                    onPrimaryPress: () => {
+                        hideModal();
+                        router.back();
+                    },
+                });
             }
+            setLoading(false);
         })();
-    }, []);
-
-    // Save draft with debounce
-    useEffect(() => {
-        const save = async () => {
-            const hasData = title || description || dailyRate || location || images.length > 0;
-            if (!hasData) {
-                await AsyncStorage.removeItem(DRAFT_KEY);
-                return;
-            }
-            const draft: DraftData = {
-                title,
-                category: selectedCategory,
-                description,
-                rate: dailyRate,
-                deposit: securityDeposit,
-                location,
-                images,
-            };
-            try {
-                await AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-            } catch (e) {
-                console.log('Draft save error:', e);
-            }
-        };
-        const timeout = setTimeout(save, 800);
-        return () => clearTimeout(timeout);
-    }, [title, selectedCategory, description, dailyRate, securityDeposit, location, images]);
+        return () => { isActive = false; };
+    }, [listingId]);
 
     const pickImage = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -328,8 +314,7 @@ export default function AddScreen() {
         setImages(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handlePublish = async () => {
-        // ── Validation ──────────────────────────────────────────────────
+    const handleSave = async () => {
         if (!title.trim()) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             showModal({
@@ -374,87 +359,99 @@ export default function AddScreen() {
             });
             return;
         }
+        if (!thingId) {
+            showModal({
+                type: 'error',
+                title: t('common', 'error'),
+                message: 'Listing data is incomplete.',
+                primaryLabel: t('common', 'ok') || 'OK',
+                onPrimaryPress: hideModal,
+            });
+            return;
+        }
 
-        setPublishing(true);
+        setSaving(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
-            // ── Upload images ───────────────────────────────────────────
-            let imageUrls: string[] = [];
-            if (images.length > 0) {
-                const uploadResult = await uploadImages(images);
-                if (!uploadResult.success) {
-                    setPublishing(false);
+            let finalImageUrls: string[] = [];
+
+            const existingUrls = images.filter(img => img.startsWith('http'));
+            const newLocalUris = images.filter(img => !img.startsWith('http'));
+
+            finalImageUrls = [...existingUrls];
+
+            if (newLocalUris.length > 0) {
+                const uploadResult = await uploadImages(newLocalUris);
+                if (uploadResult.success === false) {
+                    setSaving(false);
                     showModal({
                         type: 'error',
                         title: t('common', 'error'),
-                        message: (uploadResult as any).message || 'Image upload failed.',
+                        message: (uploadResult as any).message || 'Upload failed.',
                         primaryLabel: t('common', 'ok') || 'OK',
                         onPrimaryPress: hideModal,
                     });
                     return;
                 }
-                imageUrls = uploadResult.urls;
+                finalImageUrls = [...finalImageUrls, ...uploadResult.urls];
             }
 
-            // ── Create Thing ────────────────────────────────────────────
             const thingPayload = {
                 name: title.trim(),
                 category: selectedCategory.toLowerCase(),
                 description: description.trim(),
-                imageUrls,
+                imageUrls: finalImageUrls,
             };
-            const thingResult = await createThing(thingPayload);
+
+            const thingResult = await updateThing(thingId, thingPayload);
             if (thingResult.success === false) {
-                setPublishing(false);
+                setSaving(false);
                 showModal({
                     type: 'error',
                     title: t('common', 'error'),
-                    message: (thingResult as any).message || 'Failed to create item.',
+                    message: (thingResult as any).message || 'Failed to update item.',
                     primaryLabel: t('common', 'ok') || 'OK',
                     onPrimaryPress: hideModal,
                 });
                 return;
             }
-            const thingId: number = thingResult.data?.thingId ?? thingResult.data?.id;
 
-            // ── Create Listing ──────────────────────────────────────────
             const listingPayload = {
                 thingId,
                 price: Number(dailyRate),
                 securityDeposit: Math.max(0, Number(securityDeposit) || 0),
                 location: location.trim(),
             };
-            const listingResult = await createListing(listingPayload);
+
+            const listingResult = await updateListing(Number(listingId), listingPayload);
             if (listingResult.success === false) {
-                setPublishing(false);
+                setSaving(false);
                 showModal({
                     type: 'error',
                     title: t('common', 'error'),
-                    message: (listingResult as any).message || 'Failed to create listing.',
+                    message: (listingResult as any).message || 'Failed to update listing.',
                     primaryLabel: t('common', 'ok') || 'OK',
                     onPrimaryPress: hideModal,
                 });
                 return;
             }
 
-            // ── Success! ────────────────────────────────────────────────
-            setPublishing(false);
-            await AsyncStorage.removeItem(DRAFT_KEY);
+            setSaving(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
             showModal({
                 type: 'success',
-                title: t('add', 'publishSuccess') || 'Listing is Live! 🎉',
-                message: 'Your item has been successfully published and is now visible to the community.',
+                title: t('edit', 'saveSuccess') || 'Listing Updated!',
+                message: 'Your changes have been saved successfully and are now live.',
                 primaryLabel: t('common', 'ok') || 'Great!',
                 onPrimaryPress: () => {
                     hideModal();
-                    setTimeout(() => router.replace('/(tabs)/home'), 200);
+                    setTimeout(() => router.back(), 200);
                 },
             });
         } catch (e: any) {
-            setPublishing(false);
+            setSaving(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             showModal({
                 type: 'error',
@@ -466,6 +463,76 @@ export default function AddScreen() {
         }
     };
 
+    const handleDelete = () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        showModal({
+            type: 'warning',
+            title: t('edit', 'deleteListing') || 'Delete Listing?',
+            message: t('edit', 'deleteConfirm') || 'This will permanently remove your listing. This action cannot be undone.',
+            primaryLabel: t('common', 'delete'),
+            primaryDestructive: true,
+            onPrimaryPress: async () => {
+                hideModal();
+                setSaving(true);
+                try {
+                    const { deleteListing } = await import('@/src/api/itemsApi');
+                    const result = await deleteListing(Number(listingId));
+                    if (result.success) {
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        showModal({
+                            type: 'success',
+                            title: t('edit', 'deleteSuccess') || 'Listing Deleted',
+                            message: 'Your listing has been permanently removed.',
+                            primaryLabel: t('common', 'ok') || 'OK',
+                            onPrimaryPress: () => {
+                                hideModal();
+                                setTimeout(() => router.back(), 200);
+                            },
+                        });
+                    } else {
+                        showModal({
+                            type: 'error',
+                            title: t('common', 'error'),
+                            message: (result as any).message || 'Failed to delete listing.',
+                            primaryLabel: t('common', 'ok') || 'OK',
+                            onPrimaryPress: hideModal,
+                        });
+                    }
+                } catch (e: any) {
+                    showModal({
+                        type: 'error',
+                        title: t('common', 'error'),
+                        message: e.message || 'Failed to delete listing.',
+                        primaryLabel: t('common', 'ok') || 'OK',
+                        onPrimaryPress: hideModal,
+                    });
+                } finally {
+                    setSaving(false);
+                }
+            },
+            secondaryLabel: t('common', 'cancel'),
+            onSecondaryPress: hideModal,
+        });
+    };
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.header}>
+                        <ShimmerPlaceholder LinearGradient={LinearGradient} style={{ width: '60%', height: 30, borderRadius: 8 }} shimmerColors={shimmerColors} />
+                        <ShimmerPlaceholder LinearGradient={LinearGradient} style={{ width: '80%', height: 16, borderRadius: 6, marginTop: 8 }} shimmerColors={shimmerColors} />
+                    </View>
+                    <View style={styles.section}>
+                        <ShimmerPlaceholder LinearGradient={LinearGradient} style={{ width: '100%', height: 50, borderRadius: 12, marginBottom: 16 }} shimmerColors={shimmerColors} />
+                        <ShimmerPlaceholder LinearGradient={LinearGradient} style={{ width: '100%', height: 50, borderRadius: 12, marginBottom: 16 }} shimmerColors={shimmerColors} />
+                        <ShimmerPlaceholder LinearGradient={LinearGradient} style={{ width: '100%', height: 116, borderRadius: 12 }} shimmerColors={shimmerColors} />
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView
@@ -475,8 +542,12 @@ export default function AddScreen() {
             >
                 {/* HEADER */}
                 <View style={styles.header}>
-                    <Text style={styles.titleText}>{t('add', 'listThing')}</Text>
-                    <Text style={styles.bodyText}>{t('add', 'subtitle')}</Text>
+                    <View style={styles.headerRow}>
+                        <View style={{ flex:1, alignContent:'center'}}>
+                            <Text style={styles.titleText}>{t('edit', 'editListing') || 'Edit Listing'}</Text>
+                        </View>
+                    </View>
+                    <Text style={styles.bodyText}>{t('edit', 'subtitle') || 'Update your listing details below.'}</Text>
                 </View>
 
                 {/* BASIC INFO */}
@@ -485,7 +556,6 @@ export default function AddScreen() {
                         <MaterialIcons name="info" size={22} color={colors.primary} />
                         <Text style={styles.sectionTitle}>{t('add', 'basicInfo')}</Text>
                     </View>
-
                     <View style={styles.fieldGroup}>
                         <Text style={styles.labelText}>{t('add', 'itemTitle')}</Text>
                         <TextInput
@@ -495,12 +565,7 @@ export default function AddScreen() {
                             value={title}
                             onChangeText={setTitle}
                         />
-                        <View style={styles.hint}>
-                            <MaterialIcons name="lightbulb-outline" size={13} color={colors.primary} />
-                            <Text style={styles.hintText}>{t('add', 'titleHint')}</Text>
-                        </View>
                     </View>
-
                     <View style={styles.fieldGroup}>
                         <Text style={styles.labelText}>{t('add', 'category')}</Text>
                         <TouchableOpacity
@@ -514,7 +579,6 @@ export default function AddScreen() {
                             <MaterialIcons name="keyboard-arrow-down" size={22} color={colors.textMuted} />
                         </TouchableOpacity>
                     </View>
-
                     <View style={styles.fieldGroup}>
                         <Text style={styles.labelText}>{t('add', 'description')}</Text>
                         <TextInput
@@ -549,12 +613,6 @@ export default function AddScreen() {
                             <MaterialIcons name="add-a-photo" size={38} color={colors.primary} />
                             <Text style={styles.addImageText}>{t('add', 'addPhoto')}</Text>
                         </TouchableOpacity>
-                        {images.length === 0 && (
-                            <View style={styles.placeholderImage}>
-                                <MaterialIcons name="image" size={30} color={colors.textMuted} />
-                                <Text style={styles.placeholderText}>{t('add', 'preview')}</Text>
-                            </View>
-                        )}
                         {images.map((uri, i) => (
                             <View key={`${uri}-${i}`} style={styles.imageWrapper}>
                                 <Image source={{ uri }} style={styles.imageThumb} contentFit="cover" />
@@ -584,10 +642,6 @@ export default function AddScreen() {
                             <Text style={styles.removeAllText}>{t('add', 'removeAll')}</Text>
                         </TouchableOpacity>
                     )}
-                    <View style={styles.hint}>
-                        <MaterialIcons name="star-outline" size={13} color={colors.primary} />
-                        <Text style={styles.hintText}>{t('add', 'photoHint')}</Text>
-                    </View>
                 </View>
 
                 {/* PRICING */}
@@ -626,10 +680,6 @@ export default function AddScreen() {
                             </View>
                         </View>
                     </View>
-                    <View style={styles.hint}>
-                        <MaterialIcons name="lightbulb-outline" size={13} color={colors.primary} />
-                        <Text style={styles.hintText}>{t('add', 'depositHint')}</Text>
-                    </View>
                 </View>
 
                 {/* LOCATION */}
@@ -647,29 +697,34 @@ export default function AddScreen() {
                             value={location}
                             onChangeText={setLocation}
                         />
-                        <View style={styles.hint}>
-                            <MaterialIcons name="lock-outline" size={13} color={colors.primary} />
-                            <Text style={styles.hintText}>{t('add', 'locationHint')}</Text>
-                        </View>
                     </View>
                 </View>
 
                 {/* ACTIONS */}
                 <View style={styles.actions}>
                     <TouchableOpacity
-                        style={[styles.publishButton, publishing && { opacity: 0.7 }]}
-                        onPress={handlePublish}
-                        disabled={publishing}
+                        style={[styles.saveButton, saving && { opacity: 0.7 }]}
+                        onPress={handleSave}
+                        disabled={saving}
                     >
-                        {publishing
+                        {saving
                             ? <ActivityIndicator color="white" />
                             : <>
-                                <Text style={styles.publishButtonText}>{t('add', 'publish')}</Text>
-                                <MaterialIcons name="rocket-launch" size={15} color="white" />
+                                <Text style={styles.saveButtonText}>{t('edit', 'saveChanges') || 'Save Changes'}</Text>
+                                <MaterialIcons name="check-circle" size={18} color="white" />
                             </>
                         }
                     </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={handleDelete}
+                        disabled={saving}
+                    >
+                        <MaterialIcons name="delete-outline" size={18} color={colors.danger} />
+                        <Text style={styles.deleteButtonText}>{t('edit', 'deleteListing') || 'Delete Listing'}</Text>
+                    </TouchableOpacity>
                 </View>
+                <View style={{ height: 40 }} />
             </ScrollView>
 
             {/* CATEGORY BOTTOM SHEET */}
@@ -734,10 +789,12 @@ export default function AddScreen() {
 
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 50, gap: 0 },
-    header: { paddingTop: 20, paddingBottom: 28, alignItems: 'center', gap: 6 },
-    titleText: { fontSize: 30, fontWeight: '700', letterSpacing: -0.5, textAlign: 'center', color: colors.text },
-    bodyText: { fontSize: 15, fontWeight: '400', color: colors.textSecondary, textAlign: 'center', lineHeight: 22, maxWidth: 280 },
+    scrollContent: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 20, gap: 0 },
+    header: { paddingTop: 12, paddingBottom: 20, alignItems: 'center', gap: 6 },
+    headerRow: { flexDirection: 'row', alignItems: 'center', width: '100%', paddingHorizontal: 4, marginBottom: 6 },
+    backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+    titleText: { fontSize: 24, fontWeight: '700', letterSpacing: -0.5, textAlign: 'center', color: colors.text },
+    bodyText: { fontSize: 14, fontWeight: '400', color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
     section: { marginBottom: 4, paddingTop: 20, paddingBottom: 8, borderTopWidth: 1, borderTopColor: colors.border },
     sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 },
     sectionTitle: { fontSize: 17, fontWeight: '600', color: colors.text },
@@ -748,12 +805,8 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     charCount: { fontSize: 11, color: colors.textMuted, textAlign: 'right', marginTop: 4 },
     dropdownButton: { width: '100%', paddingVertical: 13, paddingHorizontal: 16, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     dropdownText: { fontSize: 15, color: colors.text },
-    hint: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 9, gap: 5 },
-    hintText: { fontStyle: 'italic', fontSize: 12, color: colors.textMuted, flex: 1, lineHeight: 17 },
     imageScroll: { marginBottom: 4 },
     imageScrollContent: { gap: 10, paddingRight: 4 },
-    placeholderImage: { width: 130, height: 130, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center', gap: 6 },
-    placeholderText: { color: colors.textMuted, fontSize: 12, fontWeight: '500', textAlign: 'center' },
     imageWrapper: { position: 'relative' },
     imageThumb: { width: 130, height: 130, borderRadius: 12, backgroundColor: colors.surface },
     removeButton: { position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 9999, padding: 4 },
@@ -769,9 +822,10 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     currencySymbol: { fontSize: 15, fontWeight: '600', color: colors.textMuted, marginRight: 4 },
     priceInput: { flex: 1, paddingVertical: 13, fontSize: 15, color: colors.text },
     actions: { marginTop: 28, gap: 10 },
-    publishButton: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 12, backgroundColor: colors.primary, borderWidth: 1, borderColor: colors.primary },
-    publishButtonText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
-    // Bottom Sheet styles
+    saveButton: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 12, backgroundColor: colors.primary },
+    saveButtonText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+    deleteButton: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 12, backgroundColor: colors.danger + '12', borderWidth: 1, borderColor: colors.danger + '30' },
+    deleteButtonText: { fontSize: 15, fontWeight: '600', color: colors.danger },
     sheetContent: { flex: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 32 },
     sheetHeader: { alignItems: 'center', paddingVertical: 12, marginBottom: 8 },
     sheetTitle: { fontSize: 18, fontWeight: '700', color: colors.text },

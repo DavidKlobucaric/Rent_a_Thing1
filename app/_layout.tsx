@@ -1,9 +1,8 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter, useSegments, Redirect, Href } from 'expo-router';
+import { Stack, useSegments, Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import 'react-native-reanimated';
+import { View, StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { LanguageProvider } from "@/src/context/languageContext";
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -11,13 +10,6 @@ import { AuthProvider, useAuth } from "@/src/context/authContext";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { getAuthToken, deleteAuthToken } from "@/src/storage/storageTokens";
-import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withTiming,
-    withSequence,
-} from 'react-native-reanimated';
 
 export const unstable_settings = {
     anchor: '(tabs)',
@@ -39,30 +31,15 @@ function RootNavigation() {
     const { token, isLoading, refreshAuth } = useAuth();
     const segments = useSegments();
     const [isReady, setIsReady] = useState(false);
+    const colorScheme = useColorScheme();
 
-    // Animirane točkice
-    const dot1 = useSharedValue(0.3);
-    const dot2 = useSharedValue(0.3);
-    const dot3 = useSharedValue(0.3);
-
-    useEffect(() => {
-        dot1.value = withRepeat(withSequence(withTiming(1, { duration: 400 }), withTiming(0.3, { duration: 400 })), -1, false);
-        setTimeout(() => { dot2.value = withRepeat(withSequence(withTiming(1, { duration: 400 }), withTiming(0.3, { duration: 400 })), -1, false); }, 200);
-        setTimeout(() => { dot3.value = withRepeat(withSequence(withTiming(1, { duration: 400 }), withTiming(0.3, { duration: 400 })), -1, false); }, 400);
-    }, []);
-
-    const d1 = useAnimatedStyle(() => ({ opacity: dot1.value }));
-    const d2 = useAnimatedStyle(() => ({ opacity: dot2.value }));
-    const d3 = useAnimatedStyle(() => ({ opacity: dot3.value }));
-
-    // Inicijalizacija auth-a
+    // Auth initialization
     useEffect(() => {
         const init = async () => {
             try {
                 if (refreshAuth) await refreshAuth();
                 const savedToken = await getAuthToken();
                 if (savedToken && isJWTExpired(savedToken)) {
-                    console.log('[AUTH] Token istekao - brisanje...');
                     await deleteAuthToken();
                     if (refreshAuth) await refreshAuth();
                 }
@@ -70,30 +47,17 @@ function RootNavigation() {
                 console.error('[AUTH] Init error:', error);
             } finally {
                 setIsReady(true);
-                await SplashScreen.hideAsync();
             }
         };
         init();
-    }, []);
+    }, [refreshAuth]);
 
-    // Loading overlay
+    // 🌟 Dok se auth učitava, prikaži splash holder (nema flasha)
     if (!isReady || isLoading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <View style={styles.loadingContent}>
-                    <ActivityIndicator size="large" color="#097F8C" />
-                    <View style={styles.loadingTextContainer}>
-                        <Animated.View style={[styles.loadingDot, d1]} />
-                        <Animated.View style={[styles.loadingDot, d2]} />
-                        <Animated.View style={[styles.loadingDot, d3]} />
-                    </View>
-                </View>
-            </View>
-        );
+        return <View style={colorScheme === 'dark' ? styles.splashHolderDark : styles.splashHolderLight} />;
     }
 
-    // ✅ ISPRAVLJENO: Kastiramo segments[0] u string da izbjegnemo TS2367 grešku
-    // typedRoutes generira strogi union tip, pa "(auth)" i "index" nisu prepoznati
+    // Auth je spreman - provjeri gdje je korisnik trenutno
     const currentSegment = segments[0] as string;
 
     const inAuthGroup = currentSegment === '(auth)' ||
@@ -109,35 +73,53 @@ function RootNavigation() {
         currentSegment === 'support' ||
         currentSegment === 'privacy' ||
         currentSegment === 'terms';
+        currentSegment === 'edit-listing' ||
+        currentSegment === 'my-listings';
 
-    // 🔹 Slučaj 1: Nema tokena, ali pokušavaš ući u app → Login
+    // 🌟 Ako korisnik treba redirect, prikaži Redirect UNUTAR splash holdera
+    // Tako splash ostaje vidljiv dok se ruta mijenja u pozadini
     if (!token && inAppGroup) {
-        console.log('[AUTH] 🔐 Nema tokena u app grupi → redirect na login');
-        return <Redirect href={"/" as Href} />;
+        return (
+            <View style={colorScheme === 'dark' ? styles.splashHolderDark : styles.splashHolderLight}>
+                <Redirect href="/" />
+            </View>
+        );
     }
 
-    // 🔹 Slučaj 2: Imaš token, ali si na auth ekranima → Home
     if (token && inAuthGroup) {
-        console.log('[AUTH] 🚀 Imaš token na auth ekranu → redirect na home');
-        return <Redirect href={"/(tabs)/home" as Href} />;
+        return (
+            <View style={colorScheme === 'dark' ? styles.splashHolderDark : styles.splashHolderLight}>
+                <Redirect href="/(tabs)/home" />
+            </View>
+        );
     }
 
-    // 🔹 Slučaj 3: Inače → DOPUSTI NORMALNU NAVIGACIJU
+    // 🌟 Korisnik je na pravoj ruti - prikaži Stack i sakrij splash kad se layouta
     return (
-        <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
-            <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
-            <Stack.Screen name="sign-in" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
-            <Stack.Screen name="log-in" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
-            <Stack.Screen name="Auth/verification" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
-            <Stack.Screen name="saved-items" options={{ title: 'Saved Items', animation: 'fade', animationDuration: 250 }} />
-            <Stack.Screen name="settings" options={{ title: 'Settings', animation: 'fade', animationDuration: 250 }} />
-            <Stack.Screen name="chat" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
-            <Stack.Screen name="support" options={{ title: 'Support', animation: 'fade', animationDuration: 250 }} />
-            <Stack.Screen name="privacy" options={{ title: 'Privacy', animation: 'slide_from_right', animationDuration: 250 }} />
-            <Stack.Screen name="terms" options={{ title: 'Terms', animation: 'slide_from_right', animationDuration: 250 }} />
-            <Stack.Screen name="item" options={{ headerShown: false, animation: 'slide_from_right', animationDuration: 250 }} />
-        </Stack>
+        <View
+            style={{ flex: 1 }}
+            onLayout={() => {
+                // Sakrij splash tek kad se prava ruta stvarno pojavi na ekranu
+                SplashScreen.hideAsync();
+            }}
+        >
+            <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="sign-in" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="log-in" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="Auth/verification" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="saved-items" options={{ title: 'Saved Items', animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="settings" options={{ title: 'Settings', animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="chat" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="support" options={{ title: 'Support', animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="privacy" options={{ title: 'Privacy', animation: 'slide_from_right', animationDuration: 250 }} />
+                <Stack.Screen name="terms" options={{ title: 'Terms', animation: 'slide_from_right', animationDuration: 250 }} />
+                <Stack.Screen name="item" options={{ headerShown: false, animation: 'slide_from_right', animationDuration: 250 }} />
+                <Stack.Screen name="edit-listing" options={{ title: 'Edit Listing', animation: 'slide_from_right', animationDuration: 250 }} />
+                <Stack.Screen name="my-listings" options={{ title: 'My Listings', animation: 'slide_from_right', animationDuration: 250 }} />
+            </Stack>
+        </View>
     );
 }
 
@@ -160,25 +142,12 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-    loadingContainer: {
+    splashHolderLight: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
         backgroundColor: '#ffffff',
     },
-    loadingContent: {
-        alignItems: 'center',
-        gap: 24,
-    },
-    loadingTextContainer: {
-        flexDirection: 'row',
-        gap: 8,
-        alignItems: 'center',
-    },
-    loadingDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#097F8C',
+    splashHolderDark: {
+        flex: 1,
+        backgroundColor: '#000000',
     },
 });

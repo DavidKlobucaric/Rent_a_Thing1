@@ -7,11 +7,13 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // ✅ NOVO
 
 export default function TabLayout() {
     const colorScheme = useColorScheme();
     const { t } = useLanguage();
     const colors = Colors[colorScheme ?? 'light'];
+    const insets = useSafeAreaInsets(); // ✅ NOVO: dohvaća safe area margine
 
     return (
         <Tabs
@@ -20,10 +22,18 @@ export default function TabLayout() {
                 tabBarInactiveTintColor: colors.textMuted,
                 headerShown: false,
                 tabBarButton: HapticTab,
-                // Ovdje definiramo stil za cijeli tab bar ako zatreba
                 tabBarStyle: {
-                    backgroundColor: colors.background, // ili colors.surface ovisno o tvom dizajnu
-                }
+                    backgroundColor: colors.background,
+                    // ✅ NOVO: padding za Android navigation bar
+                    paddingBottom: Math.max(insets.bottom, 8) + 4,
+                    paddingTop: 8,
+                    height: 60 + Math.max(insets.bottom, 8) + 4,
+                },
+                tabBarLabelStyle: {
+                    fontSize: 10,
+                    fontWeight: '600',
+                    letterSpacing: 0.3,
+                },
             }}>
 
             <Tabs.Screen
@@ -54,10 +64,10 @@ export default function TabLayout() {
                             backgroundColor: focused ? colors.primary : (colors.surface || colors.background),
                             justifyContent: 'center',
                             alignItems: 'center',
-                            marginTop: -30,
-
+                            marginTop: -40,
                             borderWidth: 1,
                             borderColor: focused ? colors.primary : (colors.border || '#E0E0E0'),
+
 
                         }}>
                             <MaterialIcons

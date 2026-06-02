@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback, memo } from 'react';
 import {
     StyleSheet, View, Text, TextInput, TouchableOpacity,
-    Keyboard, ScrollView, Alert,
+    Keyboard, ScrollView, Alert, Animated
 } from 'react-native';
 import { Image } from 'expo-image';
 import Mapbox, { MapView, Camera, PointAnnotation, MarkerView } from '@rnmapbox/maps';
@@ -11,15 +11,20 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
-import { getMapMarkers, resolveMarkerCoordinates, MapMarker } from '@/src/api/itemsApi';
 import { useAuth } from '@/src/context/authContext';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import {
+    getMapMarkers,
+    MapMarker
+} from '@/src/api/itemsApi';
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? '');
 
 const LIGHT_MAP_STYLE = 'mapbox://styles/mapbox/streets-v12';
 const DARK_MAP_STYLE = 'mapbox://styles/mapbox/dark-v11';
+
+
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -34,6 +39,7 @@ const CATEGORIES: {
     icon: IoniconName;
     iconActive: IoniconName;
 }[] = [
+    { id: 'all',     label: 'All',     icon: 'apps-outline',            iconActive: 'apps' },
     { id: 'tools',   label: 'Tools',   icon: 'hammer-outline',          iconActive: 'hammer' },
     { id: 'camping', label: 'Camping', icon: 'bonfire-outline',          iconActive: 'bonfire' },
     { id: 'tech',    label: 'Tech',    icon: 'laptop-outline',           iconActive: 'laptop' },
@@ -42,6 +48,7 @@ const CATEGORIES: {
 ];
 
 const CATEGORY_ICON_MAP: Record<string, { icon: IoniconName; iconActive: IoniconName }> = {
+    'all': { icon: 'apps-outline', iconActive: 'apps' },
     'tools': { icon: 'hammer-outline', iconActive: 'hammer' },
     'camping': { icon: 'bonfire-outline', iconActive: 'bonfire' },
     'tech': { icon: 'laptop-outline', iconActive: 'laptop' },
@@ -61,13 +68,11 @@ interface MapPinProps {
     marker: MapMarker;
     isSelected: boolean;
     primaryColor: string;
-    colors: typeof Colors.light;
     onPress: (marker: MapMarker) => void;
-    onCalloutPress: () => void;
     styles: ReturnType<typeof makeStyles>;
 }
 
-const MapPin = memo(({ marker, isSelected, primaryColor, colors, onPress, onCalloutPress, styles }: MapPinProps) => {
+const MapPin = memo(({ marker, isSelected, primaryColor, onPress, styles }: MapPinProps) => {
     const handlePress = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress(marker);
@@ -82,62 +87,25 @@ const MapPin = memo(({ marker, isSelected, primaryColor, colors, onPress, onCall
             anchor={{ x: 0.5, y: 1 }}
         >
             <View style={styles.markerWrapper}>
-
-                {/* 💬 POPUP PROZORČIĆ IZNAD IGLE */}
-                {isSelected && (
-                    <TouchableOpacity
-                        style={styles.floatingCallout}
-                        activeOpacity={0.92}
-                        onPress={onCalloutPress}
-                    >
-                        {marker.thumbnailUrl ? (
-                            <Image
-                                source={{ uri: marker.thumbnailUrl }}
-                                style={styles.calloutImage}
-                                contentFit="cover"
-                                cachePolicy="memory-disk"
-                                transition={200}
-                            />
-                        ) : (
-                            <View style={[styles.calloutImage, styles.calloutImagePlaceholder]}>
-                                <Ionicons name="image-outline" size={20} color={colors.textMuted} />
-                            </View>
-                        )}
-                        <View style={styles.calloutText}>
-                            <Text style={styles.calloutName} numberOfLines={1}>
-                                {marker.name}
-                            </Text>
-                            <Text style={styles.calloutPrice}>
-                                €{Number(marker.price).toFixed(0)} / day
-                            </Text>
-                        </View>
-                        <Ionicons
-                            name="chevron-forward"
-                            size={16}
-                            color={colors.textMuted}
-                            style={{ marginLeft: 4 }}
-                        />
-                    </TouchableOpacity>
-                )}
-
-                {/* 📍 PRIBADAČA SA CIJENOM */}
                 <TouchableOpacity
                     onPress={handlePress}
                     activeOpacity={0.85}
                     style={{ alignItems: 'center' }}
                 >
-                    <View
-                        style={[
-                            styles.pin,
-                            { backgroundColor: primaryColor },
-                            isSelected && styles.pinSelected,
-                        ]}
-                    >
-                        <View style={styles.pinContent}>
-                            <Ionicons name={categoryIcon} size={12} color="#FFFFFF" />
-                            <Text style={styles.pinPrice}>
-                                €{Number(marker.price).toFixed(0)}
-                            </Text>
+                    <View style={styles.pinShadow}>
+                        <View
+                            style={[
+                                styles.pin,
+                                { backgroundColor: primaryColor },
+                                isSelected && styles.pinSelected,
+                            ]}
+                        >
+                            <View style={styles.pinContent}>
+                                <Ionicons name={categoryIcon} size={12} color="#FFFFFF" />
+                                <Text style={styles.pinPrice}>
+                                    €{Number(marker.price).toFixed(0)}
+                                </Text>
+                            </View>
                         </View>
                     </View>
                     <View style={[styles.pinTail, { borderTopColor: primaryColor }]} />
@@ -157,6 +125,136 @@ const MapPin = memo(({ marker, isSelected, primaryColor, colors, onPress, onCall
 });
 
 // ═══════════════════════════════════════════════════════════════
+// 🎯 BOTTOM SHEET KARTICA S DETALJIMA
+// ═══════════════════════════════════════════════════════════════
+interface SelectedMarkerCardProps {
+    marker: MapMarker;
+    colors: typeof Colors.light;
+    styles: ReturnType<typeof makeStyles>;
+    isAnimatingOut: boolean;
+    onCloseRequest: () => void;
+    onAnimationComplete: () => void;
+    onViewDetails: () => void;
+}
+
+const SelectedMarkerCard = memo(({ marker, colors, styles, isAnimatingOut, onCloseRequest, onAnimationComplete, onViewDetails }: SelectedMarkerCardProps) => {
+    const slideAnim = useRef(new Animated.Value(300)).current;
+    const categoryIcon = getCategoryIcon(marker.category);
+    const prevMarkerRef = useRef<MapMarker | null>(null);
+
+    // Animiraj ulaz samo pri prvom mountu
+    useEffect(() => {
+        Animated.spring(slideAnim, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 65,
+            friction: 11,
+        }).start();
+        prevMarkerRef.current = marker;
+    }, []);
+
+    // Animiraj izlaz kada isAnimatingOut postane true
+    useEffect(() => {
+        if (isAnimatingOut) {
+            Animated.timing(slideAnim, {
+                toValue: 300,
+                duration: 200,
+                useNativeDriver: true,
+            }).start(() => {
+                onAnimationComplete();
+            });
+        }
+    }, [isAnimatingOut, slideAnim, onAnimationComplete]);
+
+    // 🎯 Kada se marker promijeni (drugi oglas), samo ažuriraj sadržaj bez animacije
+    useEffect(() => {
+        if (prevMarkerRef.current && prevMarkerRef.current.listingId !== marker.listingId) {
+            // Samo ažuriraj referencu, bez animacije - sadržaj će se re-renderati
+            prevMarkerRef.current = marker;
+        }
+    }, [marker]);
+
+    return (
+        <Animated.View
+            style={[
+                styles.bottomCard,
+                { transform: [{ translateY: slideAnim }] }
+            ]}
+        >
+            {/* Drag handle */}
+            <View style={styles.dragHandle} />
+
+            {/* Close button - pokreće animaciju zatvaranja */}
+            <TouchableOpacity
+                style={styles.closeButton}
+                onPress={onCloseRequest}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+                <Ionicons name="close-circle" size={28} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            <View style={styles.bottomCardContent}>
+                {/* Image */}
+                {marker.thumbnailUrl ? (
+                    <Image
+                        source={{ uri: marker.thumbnailUrl }}
+                        style={styles.bottomCardImage}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                        transition={200}
+                        key={`img-${marker.listingId}`}
+                    />
+                ) : (
+                    <View style={[styles.bottomCardImage, styles.bottomCardImagePlaceholder]}>
+                        <Ionicons name="image-outline" size={32} color={colors.textMuted} />
+                    </View>
+                )}
+
+                {/* Info */}
+                <View style={styles.bottomCardInfo}>
+                    {/* Category badge */}
+                    <View style={[styles.bottomCategoryBadge, { backgroundColor: colors.primary + '18' }]}>
+                        <Ionicons name={categoryIcon} size={12} color={colors.primary} />
+                        <Text style={[styles.bottomCategoryText, { color: colors.primary }]}>
+                            {marker.category.charAt(0).toUpperCase() + marker.category.slice(1)}
+                        </Text>
+                    </View>
+
+                    <Text style={styles.bottomCardName} numberOfLines={2} key={`name-${marker.listingId}`}>
+                        {marker.name}
+                    </Text>
+
+                    <View style={styles.bottomCardLocationRow}>
+                        <Ionicons name="location-outline" size={13} color={colors.textMuted} />
+                        <Text style={styles.bottomCardLocation} numberOfLines={1}>
+                            {marker.location || 'Location unavailable'}
+                        </Text>
+                    </View>
+                </View>
+            </View>
+
+            {/* Price and action */}
+            <View style={styles.bottomCardFooter}>
+                <View>
+                    <Text style={styles.bottomCardPriceLabel}>Price per day</Text>
+                    <Text style={[styles.bottomCardPrice, { color: colors.primary }]} key={`price-${marker.listingId}`}>
+                        €{Number(marker.price).toFixed(0)}
+                    </Text>
+                </View>
+                <TouchableOpacity
+                    style={[styles.viewDetailsButton, { backgroundColor: colors.primary }]}
+                    onPress={onViewDetails}
+                    activeOpacity={0.85}
+                >
+                    <Text style={styles.viewDetailsText}>View Details</Text>
+                    <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                </TouchableOpacity>
+            </View>
+        </Animated.View>
+    );
+});
+
+// ═══════════════════════════════════════════════════════════════
 export default function MapScreen() {
     const { t } = useLanguage();
     const { token, isLoading } = useAuth();
@@ -169,7 +267,8 @@ export default function MapScreen() {
     const [markers, setMarkers] = useState<MapMarker[]>([]);
     const [markersLoading, setMarkersLoading] = useState(false);
     const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null);
-    const [activeCategory, setActiveCategory] = useState<string | null>(null);
+    const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+    const [activeCategory, setActiveCategory] = useState<string>('all');
 
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
@@ -181,51 +280,111 @@ export default function MapScreen() {
                 : ['#E0E0E0', '#F5F5F5', '#E0E0E0'],
         [scheme]);
 
-    const loadMarkers = useCallback(async (category: string | null) => {
+    useEffect(() => {
+        console.log('MARKERS STATE UPDATED:', markers);
+    }, [markers]);
+
+    const loadMarkers = useCallback(async (category: string) => {
         setMarkersLoading(true);
-        console.log(`[MAP_DEBUG] Pokrećem dohvaćanje. Kategorija:`, category);
 
-        const result = await getMapMarkers(category || undefined);
-        if (!result.success) {
-            console.log('[MAP_DEBUG] Greška dohvaćanja:', result.message);
-            setMarkers([]);
-            setMarkersLoading(false);
-            return;
-        }
+        try {
+            const categoryParam =
+                category === 'all'
+                    ? undefined
+                    : category;
 
-        console.log(`[MAP_DEBUG] Povučeno s backenda stavki:`, result.data.length);
-        const resolved = await resolveMarkerCoordinates(result.data);
-        console.log(`[MAP_DEBUG] Stavki na mapi (s koordinatama):`, resolved.length);
+            const result = await getMapMarkers(categoryParam);
+            console.log(JSON.stringify(result, null, 2));
 
-        setMarkers(resolved);
-        setMarkersLoading(false);
-    }, []);
+            console.log('MAP API RESULT:', result);
 
-    // 🔒 SPOJENE KOČNICE: useFocusEffect sada samostalno upravlja i fokusom i promjenom kategorija.
-    // Stari useEffect je uklonjen kako bi se spriječilo duplo okidanje API-ja na inicijalnom loadu.
-    useFocusEffect(
-        useCallback(() => {
-            if (isLoading || !token) {
-                console.log("[MAP_DEBUG] Obustavljam dohvaćanje, čekam token...");
+            if (!result.success) {
+                console.log('API FAILED');
+                setMarkers([]);
                 return;
             }
+
+            console.log('RAW MARKERS:', result.data);
+
+            const validMarkers = result.data.filter(
+                marker =>
+                    marker.latitude !== null &&
+                    marker.latitude !== undefined &&
+                    marker.longitude !== null &&
+                    marker.longitude !== undefined
+            );
+
+            console.log('VALID MARKERS:', validMarkers);
+            console.log('VALID MARKERS COUNT:', validMarkers.length);
+
+            setMarkers(validMarkers);
+        } catch (e) {
+            console.log('[MAP_ERROR]', e);
+            setMarkers([]);
+        } finally {
+            setMarkersLoading(false);
+        }
+    }, []);
+
+
+
+    useFocusEffect(
+        useCallback(() => {
+            if (isLoading || !token) return;
             setSelectedMarker(null);
+            setIsAnimatingOut(false);
             loadMarkers(activeCategory);
         }, [activeCategory, loadMarkers, token, isLoading])
     );
 
+    // 🎯 KLJUČNA PROMJENA: Logika za klik na marker
     const handleMarkerPress = useCallback((marker: MapMarker) => {
         setSelectedMarker((prev) => {
-            const isClosing = prev?.listingId === marker.listingId;
-            if (!isClosing) {
+            // 🎯 Ako klikneš na ISTI marker -> zatvori s animacijom (toggle off)
+            if (prev?.listingId === marker.listingId) {
+                setIsAnimatingOut(true);
+                return prev; // vrati isti da animacija radi
+            }
+
+            // 🎯 Ako je već otvoren i klikneš na DRUGI marker -> samo ažuriraj (bez animacije)
+            if (prev) {
+                // Zoomaj kameru na novi marker
                 cameraRef.current?.setCamera({
                     centerCoordinate: [marker.longitude!, marker.latitude!],
                     animationDuration: 400,
                 });
+                // Vrati novi marker - SelectedMarkerCard će se re-renderati s novim podacima
+                return marker;
             }
-            return isClosing ? null : marker;
+
+            // 🎯 Ako nije otvoren -> otvori novi marker
+            cameraRef.current?.setCamera({
+                centerCoordinate: [marker.longitude!, marker.latitude!],
+                animationDuration: 400,
+            });
+            return marker;
         });
     }, []);
+
+    // 🎯 Pokreće animaciju zatvaranja (koristi se za X gumb i klik na mapu)
+    const handleCloseAnimation = useCallback(() => {
+        setIsAnimatingOut(true);
+    }, []);
+
+    // 🎯 Poziva se NAKON što animacija završi - briše state
+    const handleAnimationComplete = useCallback(() => {
+        setSelectedMarker(null);
+        setIsAnimatingOut(false);
+    }, []);
+
+    const handleViewDetails = useCallback(() => {
+        if (!selectedMarker) return;
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push({
+            pathname: '/item',
+            params: { listingId: String(selectedMarker.listingId) },
+        });
+    }, [selectedMarker, router]);
 
     const performSearch = useCallback(async () => {
         if (!searchText.trim()) return;
@@ -255,7 +414,6 @@ export default function MapScreen() {
                 Alert.alert(t('common', 'error'), t('map', 'locationNotFound'));
             }
         } catch (error) {
-            console.error('Search error:', error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(t('common', 'error'), t('map', 'searchError'));
         } finally {
@@ -271,21 +429,15 @@ export default function MapScreen() {
 
     const handleCategorySelect = useCallback((categoryId: string) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setActiveCategory((prev) => (prev === categoryId ? null : categoryId));
+        setActiveCategory(categoryId);
     }, []);
 
+    // 🎯 Klik na prazno područje mape -> zatvori s animacijom
     const handleMapPress = useCallback(() => {
-        setSelectedMarker(null);
-    }, []);
-
-    const handleCalloutPress = useCallback(() => {
-        if (!selectedMarker) return;
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push({
-            pathname: '/item',
-            params: { listingId: String(selectedMarker.listingId) },
-        });
-    }, [selectedMarker, router]);
+        if (selectedMarker && !isAnimatingOut) {
+            setIsAnimatingOut(true);
+        }
+    }, [selectedMarker, isAnimatingOut]);
 
     const markersWithState = useMemo(() =>
             markers.map(marker => ({
@@ -336,9 +488,7 @@ export default function MapScreen() {
                         marker={marker}
                         isSelected={isSelected}
                         primaryColor={colors.primary}
-                        colors={colors}
                         onPress={handleMarkerPress}
-                        onCalloutPress={handleCalloutPress}
                         styles={styles}
                     />
                 ))}
@@ -415,7 +565,7 @@ export default function MapScreen() {
                 })}
             </ScrollView>
 
-            {/* ⏳ INDIKATOR UČITAVANJA REZULTATA */}
+            {/* ⏳ INDIKATOR UČITAVANJA */}
             {markersLoading && (
                 <View style={styles.markersLoadingBadge}>
                     <View style={styles.shimmerRow}>
@@ -433,6 +583,19 @@ export default function MapScreen() {
                     </View>
                 </View>
             )}
+
+            {/* 🎯 BOTTOM SHEET - PRIKAZUJE SE KAD JE MARKER SELEKTIRAN */}
+            {selectedMarker && (
+                <SelectedMarkerCard
+                    marker={selectedMarker}
+                    colors={colors}
+                    styles={styles}
+                    isAnimatingOut={isAnimatingOut}
+                    onCloseRequest={handleCloseAnimation}
+                    onAnimationComplete={handleAnimationComplete}
+                    onViewDetails={handleViewDetails}
+                />
+            )}
         </View>
     );
 }
@@ -442,32 +605,29 @@ const makeStyles = (colors: typeof Colors.light) =>
         container: { flex: 1, backgroundColor: colors.background },
         map: { flex: 1 },
         markerWrapper: { alignItems: 'center', justifyContent: 'flex-end' },
-        floatingCallout: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: colors.surface,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: colors.border,
-            padding: 7,
-            width: 170,
-            marginBottom: 6,
-
-        },
-        calloutImage: { width: 38, height: 38, borderRadius: 6, marginRight: 8 },
-        calloutImagePlaceholder: { backgroundColor: colors.iconCircleBg, alignItems: 'center', justifyContent: 'center' },
-        calloutText: { flex: 1 },
-        calloutName: { fontSize: 12, fontWeight: '700', color: colors.text, marginBottom: 1 },
-        calloutPrice: { fontSize: 11, fontWeight: '600', color: colors.primary },
         searchPin: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary + '30', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.background },
         searchPinDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 1, borderColor: colors.background },
-        pin: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center'},
+        pinShadow: {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 4,
+            elevation: 5,
+        },
+        pin: {
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderRadius: 10,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
         pinContent: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-        pinSelected: { transform: [{ scale: 1.08 }]},
-        pinPrice: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+        pinSelected: { transform: [{ scale: 1.15 }] },
+        pinPrice: { color: '#FFFFFF', fontSize: 12, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 },
         pinTail: { alignSelf: 'center', width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderTopWidth: 7, borderLeftColor: 'transparent', borderRightColor: 'transparent', marginTop: -1 },
+
         searchContainer: { position: 'absolute', top: 55, paddingHorizontal: 13, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', zIndex: 10, width: '100%' },
-        inputWrapper: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 14 },
+        inputWrapper: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
         searchIcon: { fontSize: 18, marginRight: 8, alignSelf: 'center' },
         input: { flex: 1, height: 42, fontSize: 15, color: colors.text, fontWeight: '400' },
         clearButton: { padding: 6, marginLeft: 4 },
@@ -476,12 +636,126 @@ const makeStyles = (colors: typeof Colors.light) =>
         buttonDisabled: { opacity: 0.6 },
         categoryContainer: { position: 'absolute', top: 120, left: 0, right: 0, zIndex: 10 },
         categoryContent: { paddingHorizontal: 12, gap: 10, alignItems: 'center' },
-        CategoryButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 9, paddingHorizontal: 18, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, gap: 6 },
+        CategoryButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 9, paddingHorizontal: 18, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, gap: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
         CategoryButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
         categoryText: { fontSize: 13, fontWeight: '500', color: colors.textSecondary, letterSpacing: 0.3 },
         categoryTextActive: { color: colors.iconColorInverse, fontWeight: '600' },
-        markersLoadingBadge: { position: 'absolute', bottom: 30, right: 16, backgroundColor: colors.surface, borderRadius: 20, padding: 12, paddingHorizontal: 16 },
+        markersLoadingBadge: { position: 'absolute', bottom: 30, right: 16, backgroundColor: colors.surface, borderRadius: 20, padding: 12, paddingHorizontal: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 5 },
         shimmerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
         shimmerCircle: { width: 24, height: 24, borderRadius: 12 },
         shimmerLine: { width: 80, height: 14, borderRadius: 7 },
+
+        // 🎯 BOTTOM SHEET STYLES
+        bottomCard: {
+            position: 'absolute',
+            bottom: 20,
+            left: 16,
+            right: 16,
+            backgroundColor: colors.surface,
+            borderRadius: 20,
+            padding: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 12,
+            elevation: 10,
+            zIndex: 100,
+        },
+        dragHandle: {
+            width: 36,
+            height: 4,
+            borderRadius: 2,
+            backgroundColor: colors.border,
+            alignSelf: 'center',
+            marginBottom: 12,
+        },
+        closeButton: {
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            zIndex: 10,
+        },
+        bottomCardContent: {
+            flexDirection: 'row',
+            marginBottom: 14,
+        },
+        bottomCardImage: {
+            width: 80,
+            height: 80,
+            borderRadius: 12,
+            marginRight: 14,
+        },
+        bottomCardImagePlaceholder: {
+            backgroundColor: colors.iconCircleBg,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        bottomCardInfo: {
+            flex: 1,
+            justifyContent: 'center',
+        },
+        bottomCategoryBadge: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            alignSelf: 'flex-start',
+            gap: 4,
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+            borderRadius: 6,
+            marginBottom: 6,
+        },
+        bottomCategoryText: {
+            fontSize: 10,
+            fontWeight: '700',
+            textTransform: 'uppercase',
+            letterSpacing: 0.4,
+        },
+        bottomCardName: {
+            fontSize: 16,
+            fontWeight: '700',
+            color: colors.text,
+            marginBottom: 4,
+            lineHeight: 20,
+        },
+        bottomCardLocationRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+        },
+        bottomCardLocation: {
+            fontSize: 12,
+            color: colors.textMuted,
+            flex: 1,
+        },
+        bottomCardFooter: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+            paddingTop: 14,
+        },
+        bottomCardPriceLabel: {
+            fontSize: 11,
+            color: colors.textMuted,
+            marginBottom: 2,
+        },
+        bottomCardPrice: {
+            fontSize: 20,
+            fontWeight: '700',
+            letterSpacing: -0.3,
+        },
+        viewDetailsButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingHorizontal: 18,
+            paddingVertical: 12,
+            borderRadius: 12,
+        },
+        viewDetailsText: {
+            color: '#FFFFFF',
+            fontSize: 14,
+            fontWeight: '600',
+        },
     });

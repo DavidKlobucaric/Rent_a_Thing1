@@ -1,8 +1,7 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import * as Linking from 'expo-linking';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, TouchableOpacity,
-    Alert, Dimensions, Share, Platform, StatusBar,
+    StyleSheet, View, Text, TextInput, TouchableOpacity,
+    Keyboard, ScrollView, Alert, ActivityIndicator, Platform, Dimensions, Share, StatusBar,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,9 +10,13 @@ import { Calendar } from 'react-native-calendars';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import * as Linking from 'expo-linking';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
+import { useAuth } from '@/src/context/authContext';
+import * as Haptics from 'expo-haptics';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import {
     getListingById,
     addFavourite,
@@ -26,8 +29,6 @@ import {
     createBookingRequest,
 } from '@/src/api/chatApi';
 import type { Listing, BlockedPeriod } from '@/src/api/itemsApi';
-import * as Haptics from 'expo-haptics';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLACEHOLDER_IMAGE = 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png';
@@ -37,14 +38,12 @@ export default function ListingDetailScreen() {
     const router = useRouter();
     const { listingId } = useLocalSearchParams<{ listingId: string }>();
     const { t } = useLanguage();
+    const { user: me } = useAuth();
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
     const isDark = scheme === 'dark';
     const styles = useMemo(() => makeStyles(colors), [colors]);
-
-    // ✅ NOVO: Dohvaćamo sigurne margine ekrana (za Android navigation bar i iOS home indicator)
     const insets = useSafeAreaInsets();
-
     const shimmerColors = useMemo(() =>
             scheme === 'dark'
                 ? ['#2A2A2A', '#3A3A3A', '#2A2A2A']
@@ -63,9 +62,13 @@ export default function ListingDetailScreen() {
     const [selectingStart, setSelectingStart] = useState(true);
     const [booking, setBooking] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(TODAY);
-
     const calendarSheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['75%', '90%'], []);
+
+    const isOwnListing = useMemo(() => {
+        if (!listing?.userId || !me?.userId) return false;
+        return listing.userId === me.userId;
+    }, [listing?.userId, me?.userId]);
 
     useEffect(() => {
         if (!listingId) return;
@@ -147,27 +150,55 @@ export default function ListingDetailScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }, []);
 
+    const isDateBlocked = useCallback((date: string) => {
+        return blockedPeriods.some(period => {
+            const d = new Date(date);
+            const start = new Date(period.startDate);
+            const end = new Date(period.endDate);
+            return d >= start && d <= end;
+        });
+    }, [blockedPeriods]);
+
     const handleDayPress = useCallback((day: { dateString: string }) => {
         Haptics.selectionAsync();
+        const selectedDate = day.dateString;
+
+        if (isDateBlocked(selectedDate)) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            return;
+        }
 
         if (selectingStart) {
-            setStartDate(day.dateString);
+            setStartDate(selectedDate);
             setEndDate(null);
             setSelectingStart(false);
         } else {
-            if (startDate && day.dateString >= startDate) {
-                setEndDate(day.dateString);
+            if (startDate && selectedDate >= startDate) {
+                let hasBlocked = false;
+                let current = new Date(startDate);
+                const end = new Date(selectedDate);
+                while (current <= end) {
+                    if (isDateBlocked(current.toISOString().split('T')[0])) {
+                        hasBlocked = true;
+                        break;
+                    }
+                    current.setDate(current.getDate() + 1);
+                }
+                if (hasBlocked) {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                    return;
+                }
+                setEndDate(selectedDate);
                 setSelectingStart(true);
             } else {
-                setStartDate(day.dateString);
+                setStartDate(selectedDate);
                 setEndDate(null);
             }
         }
-    }, [selectingStart, startDate]);
+    }, [selectingStart, startDate, isDateBlocked]);
 
     const markedDates = useMemo(() => {
         const marked: any = {};
-
         blockedPeriods.forEach(({ startDate: s, endDate: e }) => {
             let current = new Date(s);
             const end = new Date(e);
@@ -182,7 +213,6 @@ export default function ListingDetailScreen() {
                 current.setDate(current.getDate() + 1);
             }
         });
-
         if (startDate && endDate) {
             marked[startDate] = {
                 startingDay: true,
@@ -194,7 +224,6 @@ export default function ListingDetailScreen() {
                 color: colors.primary,
                 textColor: colors.iconColorInverse
             };
-
             let current = new Date(startDate);
             const end = new Date(endDate);
             current.setDate(current.getDate() + 1);
@@ -213,13 +242,17 @@ export default function ListingDetailScreen() {
                 textColor: colors.iconColorInverse
             };
         }
-
         return marked;
     }, [startDate, endDate, colors, blockedPeriods]);
 
     const handleContactHost = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         if (!listing) return;
+        if (isOwnListing) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            Alert.alert('Your Listing', 'You cannot contact yourself on your own listing.');
+            return;
+        }
         router.push({
             pathname: '/chat',
             params: {
@@ -229,22 +262,25 @@ export default function ListingDetailScreen() {
                 itemName: listing.name,
             },
         });
-    }, [listing, router]);
+    }, [listing, router, isOwnListing]);
 
     const handleBook = useCallback(() => {
         if (!listing) return;
+        if (isOwnListing) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            Alert.alert('Your Listing', 'You cannot book your own listing.');
+            return;
+        }
         if (!startDate || !endDate) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             Alert.alert(t('listing', 'selectDates'), t('listing', 'selectDatesFirst'));
             return;
         }
-
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         const dayWord = numberOfDays === 1 ? t('listing', 'day') : t('listing', 'days');
-
         Alert.alert(
             t('listing', 'confirmBooking'),
-            `Book ${listing.name} for ${numberOfDays} ${dayWord}?\n\n${t('listing', 'total')}: $${total}`,
+            `Book ${listing.name} for ${numberOfDays} ${dayWord}?\n${t('listing', 'total')}: $${total}`,
             [
                 { text: t('common', 'cancel'), style: 'cancel' },
                 {
@@ -252,23 +288,19 @@ export default function ListingDetailScreen() {
                     onPress: async () => {
                         setBooking(true);
                         const convResult = await getOrCreateConversation(listing.listingId);
-
                         if (!convResult.success || !convResult.data) {
                             setBooking(false);
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                            Alert.alert(t('common', 'error'), convResult.message || 'Failed to start conversation');
+                            Alert.alert(t('common', 'error'), (convResult as any).message || 'Failed to start conversation');
                             return;
                         }
-
                         const bookingResult = await createBookingRequest(
                             convResult.data.conversationId,
                             listing.listingId,
                             startDate!,
                             endDate!
                         );
-
                         setBooking(false);
-
                         if (bookingResult.success) {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             Alert.alert(
@@ -281,13 +313,13 @@ export default function ListingDetailScreen() {
                             );
                         } else {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                            Alert.alert(t('common', 'error'), bookingResult.message);
+                            Alert.alert(t('common', 'error'), (bookingResult as any).message || 'Booking failed.');
                         }
                     },
                 },
             ]
         );
-    }, [listing, startDate, endDate, numberOfDays, total, t, router]);
+    }, [listing, startDate, endDate, numberOfDays, total, t, router, isOwnListing]);
 
     const handleShare = useCallback(async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -330,6 +362,15 @@ export default function ListingDetailScreen() {
         calendarSheetRef.current?.close();
     }, []);
 
+    const handleEditListing = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        if (!listing) return;
+        router.push({
+            pathname: '/edit-listing',
+            params: { listingId: listing.listingId.toString() },
+        });
+    }, [listing, router]);
+
     if (loading) {
         return (
             <SafeAreaView style={styles.container} edges={['top']}>
@@ -365,7 +406,6 @@ export default function ListingDetailScreen() {
         <View style={styles.container}>
             <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor="transparent" translucent />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-
                 {/* IMAGE GALLERY */}
                 <View style={styles.imageGallery}>
                     <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={handleGalleryScroll} scrollEventThrottle={16}>
@@ -381,9 +421,11 @@ export default function ListingDetailScreen() {
                             <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
                                 <Ionicons name="share-outline" size={20} color={colors.text} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.headerButton} onPress={handleToggleFavourite}>
-                                <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={22} color={isFavorite ? colors.danger : colors.text} />
-                            </TouchableOpacity>
+                            {!isOwnListing && (
+                                <TouchableOpacity style={styles.headerButton} onPress={handleToggleFavourite}>
+                                    <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={22} color={isFavorite ? colors.danger : colors.text} />
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </View>
                     {images.length > 1 && (
@@ -399,6 +441,12 @@ export default function ListingDetailScreen() {
                         <View style={styles.categoryBadge}>
                             <Text style={styles.categoryText}>{listing.category}</Text>
                         </View>
+                        {isOwnListing && (
+                            <View style={styles.ownBadgePill}>
+                                <Ionicons name="person" size={11} color={colors.primary} />
+                                <Text style={styles.ownBadgePillText}>YOUR LISTING</Text>
+                            </View>
+                        )}
                     </View>
                     <Text style={styles.title}>{listing.name}</Text>
                     <View style={styles.locationRow}>
@@ -410,7 +458,6 @@ export default function ListingDetailScreen() {
                         <Text style={styles.perDay}>{t('listing', 'perDay')}</Text>
                     </View>
                     <View style={styles.divider} />
-
                     <Text style={styles.sectionTitle}>{t('listing', 'description')}</Text>
                     <Text style={styles.description}>{listing.description}</Text>
                     <View style={styles.divider} />
@@ -421,23 +468,27 @@ export default function ListingDetailScreen() {
                         <View style={styles.hostInfo}>
                             <Image source={{ uri: `https://i.pravatar.cc/150?u=${listing.userId ?? listing.userName}` }} style={styles.hostAvatar} cachePolicy="memory-disk" />
                             <View style={styles.hostTextContainer}>
-                                <Text style={styles.hostName}>{listing.userName}</Text>
+                                <Text style={styles.hostName}>
+                                    {isOwnListing ? 'You' : listing.userName}
+                                </Text>
                                 <View style={styles.hostBadges}>
                                     <Ionicons name="shield-checkmark" size={14} color={colors.success} />
                                     <Text style={styles.hostVerified}>{t('listing', 'verifiedHost')}</Text>
                                 </View>
                             </View>
                         </View>
-                        <TouchableOpacity style={styles.contactButton} onPress={handleContactHost}>
-                            <Ionicons name="chatbubble-outline" size={16} color={colors.primary} />
-                            <Text style={styles.contactButtonText}>{t('listing', 'contact')}</Text>
-                        </TouchableOpacity>
+                        {!isOwnListing && (
+                            <TouchableOpacity style={styles.contactButton} onPress={handleContactHost}>
+                                <Ionicons name="chatbubble-outline" size={16} color={colors.primary} />
+                                <Text style={styles.contactButtonText}>{t('listing', 'contact')}</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                     <View style={styles.divider} />
 
                     {/* DATE PICKER */}
                     <Text style={styles.sectionTitle}>{t('listing', 'selectDates')}</Text>
-                    <TouchableOpacity style={styles.datePickerButton} onPress={openCalendar} disabled={!listing.isAvailable}>
+                    <TouchableOpacity style={styles.datePickerButton} onPress={openCalendar} disabled={!listing.isAvailable || isOwnListing}>
                         <View style={styles.dateColumn}>
                             <Text style={styles.dateLabel}>{t('listing', 'checkIn')}</Text>
                             <Text style={styles.dateValue}>{formatDate(startDate)}</Text>
@@ -451,7 +502,7 @@ export default function ListingDetailScreen() {
                     </TouchableOpacity>
 
                     {/* BREAKDOWN */}
-                    {numberOfDays > 0 && (
+                    {numberOfDays > 0 && !isOwnListing && (
                         <View style={styles.priceBreakdown}>
                             <View style={styles.breakdownRow}>
                                 <Text style={styles.breakdownLabel}>${listing.price} × {numberOfDays} {numberOfDays === 1 ? t('listing', 'day') : t('listing', 'days')}</Text>
@@ -470,21 +521,69 @@ export default function ListingDetailScreen() {
                         </View>
                     )}
 
-                    {/* 🔄 PROMIJENJENO: Spacer na dnu scrollview-a sada dinamički računa visinu bottom bara + insete */}
+                    {/* ✅ OWNER MANAGEMENT PANEL — Per Day + Deposit + Info (bez Share gumba) */}
+                    {isOwnListing && (
+                        <View style={styles.ownerPanel}>
+                            <View style={styles.ownerPanelHeader}>
+                                <Ionicons name="settings-outline" size={18} color={colors.primary} />
+                                <Text style={styles.ownerPanelTitle}>Manage Your Listing</Text>
+                            </View>
+                            <View style={styles.ownerStatsRow}>
+                                <View style={styles.ownerStatBox}>
+                                    <Text style={styles.ownerStatValue}>${listing.price}</Text>
+                                    <Text style={styles.ownerStatLabel}>Per Day</Text>
+                                </View>
+                                <View style={styles.ownerStatDivider} />
+                                <View style={styles.ownerStatBox}>
+                                    <Text style={styles.ownerStatValue}>{deposit > 0 ? `$${deposit}` : '—'}</Text>
+                                    <Text style={styles.ownerStatLabel}>Deposit</Text>
+                                </View>
+                            </View>
+                            <View style={styles.ownerInfoBox}>
+                                <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
+                                <Text style={styles.ownerInfoText}>
+                                    You cannot book or contact yourself on your own listing. Use the edit button below to make changes.
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
                     <View style={{ height: 100 + Math.max(insets.bottom, 12) }} />
                 </View>
             </ScrollView>
 
-            {/* 🔄 PROMIJENJENO: STICKY BOTTOM BAR s dinamičkim paddingom za Android/iOS */}
-            <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-                <View style={styles.bottomPriceInfo}>
-                    <Text style={styles.bottomPrice}>${listing.price}</Text>
-                    <Text style={styles.bottomPerDay}>{t('listing', 'perDay')}</Text>
+            {/* ✅ BOTTOM BAR — jedini Edit gumb za vlastite listinge */}
+            {isOwnListing ? (
+                <View style={[styles.bottomBar, styles.bottomBarOwn, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+                    <View style={styles.bottomBarOwnInfo}>
+                        <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                        <Text style={styles.bottomBarOwnText}>Your Listing</Text>
+                    </View>
+                    <TouchableOpacity
+                        style={styles.bottomBarOwnButton}
+                        onPress={handleEditListing}
+                    >
+                        <Ionicons name="create-outline" size={18} color="white" />
+                        <Text style={styles.bottomBarOwnButtonText}>Edit</Text>
+                    </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={[styles.bookButton, (!listing.isAvailable || booking) && styles.bookButtonDisabled]} onPress={handleBook} disabled={!listing.isAvailable || booking}>
-                    <Text style={styles.bookButtonText}>{t('listing', 'bookNow')}</Text>
-                </TouchableOpacity>
-            </View>
+            ) : (
+                <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+                    <View style={styles.bottomPriceInfo}>
+                        <Text style={styles.bottomPrice}>${listing.price}</Text>
+                        <Text style={styles.bottomPerDay}>{t('listing', 'perDay')}</Text>
+                    </View>
+                    <TouchableOpacity
+                        style={[styles.bookButton, (!listing.isAvailable || booking) && styles.bookButtonDisabled]}
+                        onPress={handleBook}
+                        disabled={!listing.isAvailable || booking}
+                    >
+                        <Text style={styles.bookButtonText}>
+                            {!listing.isAvailable ? t('listing', 'unavailable') : t('listing', 'bookNow')}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {/* KALENDAR */}
             <BottomSheet
@@ -511,8 +610,6 @@ export default function ListingDetailScreen() {
                             <Ionicons name="close" size={26} color={colors.text} />
                         </TouchableOpacity>
                     </View>
-
-                    {/* INFO BAR */}
                     <View style={styles.calendarInfoBar}>
                         <View style={styles.calendarInfoItem}>
                             <Text style={styles.calendarInfoLabel}>{t('listing', 'checkIn')}</Text>
@@ -537,8 +634,6 @@ export default function ListingDetailScreen() {
                             </>
                         )}
                     </View>
-
-                    {/* KALENDAR - PERIOD MARKING */}
                     <View style={styles.calendarWrapper}>
                         <Calendar
                             current={currentMonth}
@@ -563,7 +658,6 @@ export default function ListingDetailScreen() {
                             }}
                         />
                     </View>
-
                     <View style={styles.modalFooter}>
                         <TouchableOpacity style={styles.modalResetButton} onPress={resetDates}>
                             <Text style={styles.modalResetText}>{t('common', 'reset')}</Text>
@@ -596,10 +690,30 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     headerButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border },
     imageCounter: { position: 'absolute', bottom: 16, right: 16, backgroundColor: 'rgba(0,0,0,0.65)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14 },
     imageCounterText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+
     contentContainer: { paddingHorizontal: 20, paddingTop: 24 },
     topInfoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
     categoryBadge: { backgroundColor: colors.border, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
     categoryText: { color: colors.textSecondary, fontSize: 11, fontWeight: '700' },
+
+    ownBadgePill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: colors.primary + '15',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: colors.primary + '30',
+    },
+    ownBadgePillText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: colors.primary,
+        letterSpacing: 0.5,
+    },
+
     title: { fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: 8 },
     locationRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
     locationText: { fontSize: 14, color: colors.textMuted },
@@ -631,7 +745,70 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     breakdownTotalLabel: { fontSize: 15, fontWeight: '700', color: colors.text },
     breakdownTotalValue: { fontSize: 18, fontWeight: '700', color: colors.primary },
 
-    // 🔄 AŽURIRANO: Maknut fiksni height i hardcoded paddingBottom, dodan paddingTop za balans
+    ownerPanel: {
+        backgroundColor: colors.surface,
+        borderRadius: 16,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: colors.primary + '30',
+        marginTop: 16,
+        gap: 14,
+    },
+    ownerPanelHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    ownerPanelTitle: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: colors.text,
+    },
+    ownerStatsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.background,
+        borderRadius: 12,
+        paddingVertical: 14,
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+    ownerStatBox: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    ownerStatValue: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: colors.text,
+    },
+    ownerStatLabel: {
+        fontSize: 10,
+        color: colors.textMuted,
+        fontWeight: '600',
+        marginTop: 2,
+        textTransform: 'uppercase',
+        letterSpacing: 0.3,
+    },
+    ownerStatDivider: {
+        width: 1,
+        height: 24,
+        backgroundColor: colors.border,
+    },
+    ownerInfoBox: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 8,
+        paddingTop: 4,
+    },
+    ownerInfoText: {
+        flex: 1,
+        fontSize: 12,
+        color: colors.textMuted,
+        lineHeight: 17,
+    },
+
     bottomBar: {
         position: 'absolute',
         bottom: 0,
@@ -645,6 +822,34 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingTop: 12
+    },
+    bottomBarOwn: {
+        gap: 12,
+    },
+    bottomBarOwnInfo: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    bottomBarOwnText: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: colors.text,
+    },
+    bottomBarOwnButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: colors.primary,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+    },
+    bottomBarOwnButtonText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '600',
     },
     bottomPriceInfo: { flexDirection: 'row', alignItems: 'baseline' },
     bottomPrice: { fontSize: 22, fontWeight: '700', color: colors.text },

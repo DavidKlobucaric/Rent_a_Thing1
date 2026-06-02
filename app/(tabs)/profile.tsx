@@ -5,14 +5,14 @@ import {
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import  ShimmerPlaceholder  from 'react-native-shimmer-placeholder';
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/src/context/authContext';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
-import { getMyProfile, UserProfile } from '@/src/api/itemsApi';
+import { getMyProfile, getMyListings, UserProfile } from '@/src/api/itemsApi';
 import * as Haptics from 'expo-haptics';
 
 type MenuItemProps = {
@@ -24,10 +24,8 @@ type MenuItemProps = {
     showSeparator?: boolean;
 };
 
-// ✅ Memoizirana MenuItem komponenta - ne re-rendera se nepotrebno
 const MenuItem = React.memo(({ iconName, title, subtitle, onPress, colors, showSeparator = true }: MenuItemProps) => {
     const styles = useMemo(() => makeStyles(colors), [colors]);
-
     const handlePress = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
@@ -64,10 +62,7 @@ export default function ProfileScreen() {
     const colors = Colors[scheme];
     const isDark = scheme === 'dark';
 
-    // ✅ Stabilan styles - ovisi o scheme (primitive), ne o colors objektu
     const styles = useMemo(() => makeStyles(colors), [scheme]);
-
-    // ✅ Shimmer boje ovisno o temi
     const shimmerColors = useMemo(() =>
             scheme === 'dark'
                 ? ['#2A2A2A', '#3A3A3A', '#2A2A2A']
@@ -76,15 +71,24 @@ export default function ProfileScreen() {
 
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [myListingCount, setMyListingCount] = useState(0);
 
     useFocusEffect(
         useCallback(() => {
             let active = true;
             (async () => {
                 setLoading(true);
-                const result = await getMyProfile();
-                if (active && result.success) {
-                    setProfile(result.data);
+                const [profileResult, listingsResult] = await Promise.all([
+                    getMyProfile(),
+                    getMyListings(),
+                ]);
+                if (active) {
+                    if (profileResult.success) {
+                        setProfile(profileResult.data);
+                    }
+                    if (listingsResult.success) {
+                        setMyListingCount(listingsResult.data.length);
+                    }
                 }
                 if (active) setLoading(false);
             })();
@@ -92,14 +96,13 @@ export default function ProfileScreen() {
         }, [])
     );
 
-    // ✅ Memoiziran handleLogout
     const handleLogout = useCallback(async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         await logout();
         router.replace('/');
     }, [logout, router]);
 
-    // ✅ Memoizirani router handleri za MenuItem
+    const handleMyListingsPress = useCallback(() => router.push('/my-listings'), [router]);
     const handleSavedItemsPress = useCallback(() => router.push('/saved-items'), [router]);
     const handleSettingsPress = useCallback(() => router.push('/settings'), [router]);
     const handleSupportPress = useCallback(() => router.push('/support'), [router]);
@@ -108,11 +111,7 @@ export default function ProfileScreen() {
     const rating = profile?.rating ?? 0;
     const ratingCount = profile?.ratingCount ?? 0;
     const favouriteCount = profile?.favouriteCount ?? 0;
-    const listingCount = profile?.listingCount ?? 0;
 
-    // ═══════════════════════════════════════════════════════════════
-    // ✨ SHIMMER LOADING STATE - premium UX
-    // ═══════════════════════════════════════════════════════════════
     if (loading) {
         return (
             <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -121,7 +120,6 @@ export default function ProfileScreen() {
                     backgroundColor={colors.background}
                 />
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                    {/* Hero Header Skeleton */}
                     <View style={styles.heroHeader}>
                         <ShimmerPlaceholder
                             LinearGradient={LinearGradient}
@@ -146,8 +144,6 @@ export default function ProfileScreen() {
                             />
                         </View>
                     </View>
-
-                    {/* Stats Row Skeleton */}
                     <View style={styles.statsRowContainer}>
                         <View style={styles.statBox}>
                             <ShimmerPlaceholder
@@ -188,8 +184,6 @@ export default function ProfileScreen() {
                             />
                         </View>
                     </View>
-
-                    {/* Menu Items Skeleton */}
                     <View style={styles.menuSection}>
                         <ShimmerPlaceholder
                             LinearGradient={LinearGradient}
@@ -197,7 +191,7 @@ export default function ProfileScreen() {
                             shimmerColors={shimmerColors}
                         />
                         <View style={styles.menuGroup}>
-                            {[1, 2, 3].map((i) => (
+                            {[1, 2, 3, 4].map((i) => (
                                 <View key={i} style={styles.menuItem}>
                                     <View style={styles.menuLeft}>
                                         <ShimmerPlaceholder
@@ -240,7 +234,21 @@ export default function ProfileScreen() {
                 {/* HERO HEADER */}
                 <View style={styles.heroHeader}>
                     <View style={styles.avatarPlaceholder}>
-                        <Ionicons name="person" size={56} color={colors.textMuted} />
+                        {profile?.avatarUrl ? (
+                            <Image
+                                source={{ uri: profile.avatarUrl }}
+                                style={styles.avatarImage}
+                                cachePolicy="memory-disk"
+                                transition={200}
+                                contentFit="cover"
+                            />
+                        ) : (
+                            <View style={styles.avatarInitials}>
+                                <Text style={styles.avatarInitialsText}>
+                                    {(displayName?.charAt(0)?.toUpperCase() ?? 'U')}
+                                </Text>
+                            </View>
+                        )}
                     </View>
                     <View style={styles.heroDetails}>
                         <Text style={styles.userName} numberOfLines={2}>{displayName}</Text>
@@ -275,8 +283,8 @@ export default function ProfileScreen() {
                     </View>
                     <View style={styles.statDivider} />
                     <View style={styles.statBox}>
-                        <Text style={styles.statValue}>{listingCount}</Text>
-                        <Text style={styles.statLabel}>{t('profile', 'rentals')}</Text>
+                        <Text style={styles.statValue}>{myListingCount}</Text>
+                        <Text style={styles.statLabel}>{t('profile', 'myListings')}</Text>
                     </View>
                 </View>
 
@@ -284,6 +292,13 @@ export default function ProfileScreen() {
                 <View style={styles.menuSection}>
                     <Text style={styles.sectionTitle}>{t('profile', 'accountSettings')}</Text>
                     <View style={styles.menuGroup}>
+                        <MenuItem
+                            colors={colors}
+                            iconName="cube-outline"
+                            title={t('profile', 'myListings')}
+                            subtitle={`${myListingCount} ${myListingCount === 1 ? (t('profile', 'listing') || 'listing') : (t('profile', 'listings') || 'listings')}`}
+                            onPress={handleMyListingsPress}
+                        />
                         <MenuItem
                             colors={colors}
                             iconName="heart-outline"
@@ -327,7 +342,10 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     scrollContent: { flexGrow: 1, paddingBottom: 40, paddingHorizontal: 16 },
     heroHeader: { flexDirection: 'row', alignItems: 'center', paddingTop: 32, paddingBottom: 32, gap: 20 },
-    avatarPlaceholder: { width: 106, height: 106, borderRadius: 53, borderWidth: 0.5, borderColor: colors.border, backgroundColor: colors.surface || colors.background, justifyContent: 'center', alignItems: 'center' },
+    avatarPlaceholder: { width: 106, height: 106, borderRadius: 53, borderWidth: 0.5, borderColor: colors.border, backgroundColor: colors.surface || colors.background, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+    avatarImage: { width: '100%', height: '100%', borderRadius: 53 },
+    avatarInitials: { width: '100%', height: '100%', borderRadius: 53, backgroundColor: colors.primary + '20', justifyContent: 'center', alignItems: 'center' },
+    avatarInitialsText: { fontSize: 36, fontWeight: '700', color: colors.primary },
     heroDetails: { flex: 1, gap: 6 },
     userName: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -0.8, lineHeight: 34 },
     ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },

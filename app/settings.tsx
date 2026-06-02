@@ -1,12 +1,13 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import {
-    StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Alert,
+    View, Text, TextInput, TouchableOpacity,
+    StyleSheet, ScrollView, Switch, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router'; // ✅ Ostaje import
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
-import { useRouter } from 'expo-router';
 import { useLanguage, SUPPORTED_LANGUAGES } from '@/src/context/languageContext';
 import { LANGUAGE_NAMES, LANGUAGE_FLAGS } from '@/src/i18n/translations';
 import * as Haptics from 'expo-haptics';
@@ -24,7 +25,7 @@ type SettingItemProps = {
     colors: typeof Colors.light;
 };
 
-const router = useRouter();
+// ❌ UKLONJENO: const router = useRouter(); — hook ne smije biti na top-levelu
 
 const SettingItem = ({
                          iconName,
@@ -37,6 +38,8 @@ const SettingItem = ({
                          isDestructive = false,
                          colors,
                      }: SettingItemProps) => {
+// ✅ router se sada dohvaća unutar komponente ako je potreban
+    const router = useRouter();
     const styles = makeStyles(colors);
     const handlePress = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -107,11 +110,9 @@ export default function SettingsScreen() {
     const colors = Colors[scheme];
     const styles = useMemo(() => makeStyles(colors), [colors]);
     const { language, setLanguage, t } = useLanguage();
-
-    // Bottom Sheet ref
+    const router = useRouter(); // ✅ router sada unutar komponente
     const langSheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['55%'], []);
-
     const [notifications, setNotifications] = useState({
         pushEnabled: true,
         emailEnabled: true,
@@ -120,31 +121,25 @@ export default function SettingsScreen() {
         reminders: true,
         promotions: false,
     });
-
     const [privacy, setPrivacy] = useState({
         profileVisibility: 'Public',
         showPhoneNumber: false,
         showEmail: false,
         locationSharing: true,
     });
-
     const accountInfo = {
         email: 'alex.neighbor@email.com',
         phone: '+1 (555) 123-4567',
     };
-
     const toggleNotification = (key: keyof typeof notifications) => {
         setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
     };
-
     const togglePrivacy = (key: keyof typeof privacy) => {
         setPrivacy(prev => ({ ...prev, [key]: !prev[key] }));
     };
-
     const handleLinkPress = (label: string) => {
         Alert.alert(label, `Open ${label} screen`);
     };
-
     const handleDeleteAccount = () => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         Alert.alert(
@@ -163,7 +158,6 @@ export default function SettingsScreen() {
             ]
         );
     };
-
     return (
         <SafeAreaView style={styles.container} edges={['left', 'right']}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -176,7 +170,6 @@ export default function SettingsScreen() {
                     <SettingItem colors={colors} iconName="time" title={t('settings', 'reminders')} description={t('settings', 'remindersDesc')} type="toggle" value={notifications.reminders} onToggle={() => toggleNotification('reminders')} />
                     <SettingItem colors={colors} iconName="pricetag" title={t('settings', 'promotions')} description={t('settings', 'promotionsDesc')} type="toggle" value={notifications.promotions} onToggle={() => toggleNotification('promotions')} />
                 </View>
-
                 <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
                     {t('settings', 'privacy')}
                 </Text>
@@ -185,7 +178,6 @@ export default function SettingsScreen() {
                     <SettingItem colors={colors} iconName="call" title={t('settings', 'showPhone')} description={t('settings', 'showPhoneDesc')} type="toggle" value={privacy.showPhoneNumber} onToggle={() => togglePrivacy('showPhoneNumber')} />
                     <SettingItem colors={colors} iconName="location" title={t('settings', 'locationSharing')} description={t('settings', 'locationSharingDesc')} type="toggle" value={privacy.locationSharing} onToggle={() => togglePrivacy('locationSharing')} />
                 </View>
-
                 <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
                     {t('settings', 'account')}
                 </Text>
@@ -206,7 +198,6 @@ export default function SettingsScreen() {
                         }}
                     />
                 </View>
-
                 <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
                     {t('settings', 'legal')}
                 </Text>
@@ -214,7 +205,6 @@ export default function SettingsScreen() {
                     <SettingItem colors={colors} iconName="document-text" title={t('settings', 'terms')} description={t('settings', 'termsDesc')} type="link" onPress={() => router.push('/terms')} />
                     <SettingItem colors={colors} iconName="shield-checkmark" title={t('settings', 'privacyPolicy')} description={t('settings', 'privacyPolicyDesc')} type="link" onPress={() => router.push('/privacy')} />
                 </View>
-
                 <Text style={[styles.sectionTitle, { color: colors.danger }]}>
                     {t('settings', 'dangerZone')}
                 </Text>
@@ -229,13 +219,10 @@ export default function SettingsScreen() {
                         onPress={handleDeleteAccount}
                     />
                 </View>
-
                 <Text style={[styles.versionText, { color: colors.textMuted }]}>
                     {t('settings', 'version')} 1.0.0
                 </Text>
             </ScrollView>
-
-            {/* LANGUAGE BOTTOM SHEET */}
             <BottomSheet
                 ref={langSheetRef}
                 index={-1}
@@ -295,7 +282,6 @@ export default function SettingsScreen() {
         </SafeAreaView>
     );
 }
-
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     scrollContent: { paddingVertical: 10, paddingHorizontal: 16 },
@@ -311,7 +297,6 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
     settingDescription: { fontSize: 12, color: colors.textMuted, lineHeight: 16 },
     switch: { transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] },
     versionText: { textAlign: 'center', fontSize: 12, marginTop: 10, marginBottom: 30 },
-    // Sheet styles
     sheetContent: { flex: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 32 },
     sheetHeader: { alignItems: 'center', paddingVertical: 12, marginBottom: 8 },
     sheetTitle: { fontSize: 18, fontWeight: '700', color: colors.text },

@@ -63,7 +63,7 @@ export const translations = {
             search: 'Search...', recommended: 'Recommended for You',
             noRecommendations: 'No recommendations for now.',
             noResults: 'No results for:', noItemsCategory: 'No items in category:',
-            noItems: 'No items available right now.', // ✅ NOVO
+            noItems: 'No items available right now.',
             perDay: '/day',
             errorNetwork: 'Connection lost. Please check your internet and try again.',
             errorNoResults: "We couldn't find anything matching your search.",
@@ -92,6 +92,16 @@ export const translations = {
             missingLocation: 'Please enter a location.',
             publishSuccess: 'Your item has been listed!',
         },
+        edit: {
+            editListing: 'Edit Listing',
+            subtitle: 'Update your listing details below.',
+            saveChanges: 'Save Changes',
+            saveSuccess: 'Listing updated successfully!',
+            deleteListing: 'Delete Listing',
+            deleteConfirm: 'This will permanently remove your listing. This action cannot be undone.',
+            deleteSuccess: 'Listing deleted.',
+            edit: 'Edit',
+        },
         inbox: {
             search: 'Search conversations...', all: 'All', unread: 'Unread', archived: 'Archived',
             noResults: 'No results found', tryDifferent: 'Try a different search term',
@@ -111,6 +121,9 @@ export const translations = {
             hostContact: 'The host will contact you shortly.',
             days: 'days', day: 'day', selectDate: 'Select date',
             goToInbox: 'Go to Inbox', requestSent: 'Request Sent!', requestSentSub: 'Your booking request has been sent. The owner will confirm shortly.',
+            cannotBookOwn: 'Your Listing', cannotBookOwnSub: 'You cannot book your own listing.',
+            yourListing: 'Your Listing',
+            datesUnavailable: 'Dates Unavailable', selectDifferentDates: 'The selected range includes blocked dates. Please choose different dates.',
         },
         map: {
             searchPlaceholder: 'Search (e.g. Zagreb, Rijeka...)',
@@ -124,6 +137,12 @@ export const translations = {
             support: 'Support', supportSub: 'FAQs and direct help center',
             signOut: 'Sign Out', verifiedMember: 'Verified Member',
             rentals: 'Rentals', response: 'Response', reviews: 'Reviews',
+            myListings: 'My Listings',
+            listing: 'listing',
+            listings: 'listings',
+            noListings: 'No Listings Yet',
+            noListingsSub: 'Tap the + button to create your first listing and start earning.',
+            createListing: 'Create Listing',
         },
         saved: {
             header: 'saved items', noSaved: 'No Saved Items',
@@ -152,6 +171,9 @@ export const translations = {
             dangerZone: 'Danger Zone', deleteAccount: 'Delete Account',
             deleteAccountDesc: 'Permanently delete all your data',
             version: 'Version', selectLanguage: 'Select Language',
+            comingSoon: 'Coming Soon', featureComingSoon: 'This feature will be available soon.',
+            deleteAccountConfirm: 'This action cannot be undone. All your data will be permanently removed.',
+            deleteFailed: 'Failed to delete account. Please try again.',
         },
         support: {
             heroTitle: 'How can we help?',
@@ -235,7 +257,6 @@ export const translations = {
             privacy4Text: 'You have the right to: access your data, correct inaccuracies, delete your account, export your data, and opt out of marketing communications. Contact us to exercise these rights.',
         },
     },
-
     hr: {
         common: {
             cancel: 'Odustani', save: 'Spremi', delete: 'Obriši', remove: 'Ukloni',
@@ -277,7 +298,7 @@ export const translations = {
             search: 'Pretraži...', recommended: 'Preporučeno za tebe',
             noRecommendations: 'Trenutno nema preporuka.',
             noResults: 'Nema rezultata za:', noItemsCategory: 'Nema stavki u kategoriji:',
-            noItems: 'Trenutno nema dostupnih predmeta.', // ✅ NOVO
+            noItems: 'Trenutno nema dostupnih predmeta.',
             perDay: '/dan',
             errorNetwork: 'Veza je prekinuta. Provjerite internet i pokušajte ponovo.',
             errorNoResults: 'Nismo pronašli ništa što odgovara vašoj pretrazi.',
@@ -306,6 +327,16 @@ export const translations = {
             missingLocation: 'Molimo unesite lokaciju.',
             publishSuccess: 'Vaš predmet je objavljen!',
         },
+        edit: {
+            editListing: 'Uredi oglas',
+            subtitle: 'Ažuriraj detalje svog oglasa.',
+            saveChanges: 'Spremi promjene',
+            saveSuccess: 'Oglas uspješno ažuriran!',
+            deleteListing: 'Obriši oglas',
+            deleteConfirm: 'Ovo će trajno ukloniti vaš oglas. Ova radnja se ne može poništiti.',
+            deleteSuccess: 'Oglas obrisan.',
+            edit: 'Uredi',
+        },
         inbox: {
             search: 'Pretraži razgovore...', all: 'Sve', unread: 'Nepročitano',
             archived: 'Arhivirano', noResults: 'Nema rezultata',
@@ -331,6 +362,9 @@ export const translations = {
             hostContact: 'Domaćin će vas uskoro kontaktirati.',
             days: 'dana', day: 'dan', selectDate: 'Odaberi datum',
             goToInbox: 'Idi na poruke', requestSent: 'Zahtjev poslan!', requestSentSub: 'Vaš zahtjev za rezervaciju je poslan. Vlasnik će ga uskoro potvrditi.',
+            cannotBookOwn: 'Vaš oglas', cannotBookOwnSub: 'Ne možete rezervirati vlastiti oglas.',
+            yourListing: 'Vaš oglas',
+            datesUnavailable: 'Datumi nedostupni', selectDifferentDates: 'Odabrani raspon uključuje blokirane datume. Molimo odaberite druge datume.',
         },
         map: {
             searchPlaceholder: 'Pretraži (npr. Zagreb, Rijeka...)',
@@ -344,6 +378,12 @@ export const translations = {
             support: 'Podrška', supportSub: 'Česta pitanja i centar za pomoć',
             signOut: 'Odjava', verifiedMember: 'Potvrđeni član',
             rentals: 'Najmovi', response: 'Odgovor', reviews: 'Recenzije',
+            myListings: 'Moji oglasi',
+            listing: 'oglas',
+            listings: 'oglasa',
+            noListings: 'Nemaš oglasa',
+            noListingsSub: 'Klikni + gumb za kreiranje prvog oglasa i počni zarađivati.',
+            createListing: 'Kreiraj oglas',
         },
         saved: {
             header: 'spremljenih predmeta', noSaved: 'Nema spremljenih predmeta',
@@ -379,6 +419,9 @@ export const translations = {
             dangerZone: 'Opasna zona', deleteAccount: 'Obriši račun',
             deleteAccountDesc: 'Trajno obriši sve podatke',
             version: 'Verzija', selectLanguage: 'Odaberi jezik',
+            comingSoon: 'Uskoro dostupno', featureComingSoon: 'Ova funkcija će uskoro biti dostupna.',
+            deleteAccountConfirm: 'Ova radnja se ne može poništiti. Svi vaši podaci bit će trajno uklonjeni.',
+            deleteFailed: 'Brisanje računa nije uspjelo. Pokušajte ponovo.',
         },
         support: {
             heroTitle: 'Kako možemo pomoći?',
@@ -462,7 +505,6 @@ export const translations = {
             privacy4Text: 'Imate pravo na: pristup svojim podacima, ispravak netočnosti, brisanje računa, izvoz podataka i odustajanje od marketinških komunikacija. Kontaktirajte nas za ostvarivanje ovih prava.',
         },
     },
-
     de: {
         common: {
             cancel: 'Abbrechen', save: 'Speichern', delete: 'Löschen', remove: 'Entfernen',
@@ -504,7 +546,7 @@ export const translations = {
             search: 'Suchen...', recommended: 'Für dich empfohlen',
             noRecommendations: 'Momentan keine Empfehlungen.',
             noResults: 'Keine Ergebnisse für:', noItemsCategory: 'Keine Artikel in Kategorie:',
-            noItems: 'Derzeit keine Artikel verfügbar.', // ✅ NOVO
+            noItems: 'Derzeit keine Artikel verfügbar.',
             perDay: '/Tag',
             errorNetwork: 'Verbindung verloren. Bitte überprüfen Sie Ihr Internet.',
             errorNoResults: 'Wir konnten nichts finden, das Ihrer Suche entspricht.',
@@ -533,6 +575,16 @@ export const translations = {
             missingLocation: 'Bitte gib einen Standort ein.',
             publishSuccess: 'Dein Artikel wurde eingestellt!',
         },
+        edit: {
+            editListing: 'Anzeige bearbeiten',
+            subtitle: 'Aktualisiere die Details deiner Anzeige.',
+            saveChanges: 'Änderungen speichern',
+            saveSuccess: 'Anzeige erfolgreich aktualisiert!',
+            deleteListing: 'Anzeige löschen',
+            deleteConfirm: 'Dies wird deine Anzeige dauerhaft entfernen. Diese Aktion kann nicht rückgängig gemacht werden.',
+            deleteSuccess: 'Anzeige gelöscht.',
+            edit: 'Bearbeiten',
+        },
         inbox: {
             search: 'Unterhaltungen suchen...', all: 'Alle', unread: 'Ungelesen',
             archived: 'Archiviert', noResults: 'Keine Ergebnisse',
@@ -558,6 +610,9 @@ export const translations = {
             hostContact: 'Der Gastgeber wird dich in Kürze kontaktieren.',
             days: 'Tage', day: 'Tag', selectDate: 'Datum wählen',
             goToInbox: 'Zum Posteingang', requestSent: 'Anfrage gesendet!', requestSentSub: 'Deine Buchungsanfrage wurde gesendet. Der Eigentümer wird bald bestätigen.',
+            cannotBookOwn: 'Deine Anzeige', cannotBookOwnSub: 'Du kannst deine eigene Anzeige nicht buchen.',
+            yourListing: 'Deine Anzeige',
+            datesUnavailable: 'Daten nicht verfügbar', selectDifferentDates: 'Der gewählte Zeitraum enthält gesperrte Daten. Bitte wähle andere Daten.',
         },
         map: {
             searchPlaceholder: 'Suchen (z.B. Berlin, München...)',
@@ -571,6 +626,12 @@ export const translations = {
             support: 'Support', supportSub: 'FAQs und Hilfscenter',
             signOut: 'Abmelden', verifiedMember: 'Verifiziertes Mitglied',
             rentals: 'Vermietungen', response: 'Antwort', reviews: 'Bewertungen',
+            myListings: 'Meine Anzeigen',
+            listing: 'Anzeige',
+            listings: 'Anzeigen',
+            noListings: 'Noch keine Anzeigen',
+            noListingsSub: 'Tippe auf +, um deine erste Anzeige zu erstellen und Geld zu verdienen.',
+            createListing: 'Anzeige erstellen',
         },
         saved: {
             header: 'gespeicherte Artikel', noSaved: 'Keine gespeicherten Artikel',
@@ -604,6 +665,9 @@ export const translations = {
             dangerZone: 'Gefahrenzone', deleteAccount: 'Konto löschen',
             deleteAccountDesc: 'Alle Daten dauerhaft löschen',
             version: 'Version', selectLanguage: 'Sprache wählen',
+            comingSoon: 'Demnächst verfügbar', featureComingSoon: 'Diese Funktion wird bald verfügbar sein.',
+            deleteAccountConfirm: 'Diese Aktion kann nicht rückgängig gemacht werden. Alle deine Daten werden dauerhaft entfernt.',
+            deleteFailed: 'Konto konnte nicht gelöscht werden. Bitte erneut versuchen.',
         },
         support: {
             heroTitle: 'Wie können wir helfen?',
@@ -687,7 +751,6 @@ export const translations = {
             privacy4Text: 'Sie haben das Recht auf: Zugriff auf Ihre Daten, Berichtigung von Ungenauigkeiten, Löschung Ihres Kontos, Export Ihrer Daten und Abmeldung von Marketingkommunikation. Kontaktieren Sie uns, um diese Rechte auszuüben.',
         },
     },
-
     zh: {
         common: {
             cancel: '取消', save: '保存', delete: '删除', remove: '移除',
@@ -728,7 +791,7 @@ export const translations = {
             search: '搜索...', recommended: '为你推荐',
             noRecommendations: '暂无推荐。',
             noResults: '没有找到:', noItemsCategory: '该分类下没有物品:',
-            noItems: '目前没有可用物品。', // ✅ NOVO
+            noItems: '目前没有可用物品。',
             perDay: '/天',
             errorNetwork: '连接丢失。请检查您的互联网并重试。',
             errorNoResults: '我们找不到与您的搜索匹配的内容。',
@@ -757,6 +820,16 @@ export const translations = {
             missingLocation: '请输入位置。',
             publishSuccess: '您的物品已发布!',
         },
+        edit: {
+            editListing: '编辑列表',
+            subtitle: '更新下方列表详情。',
+            saveChanges: '保存更改',
+            saveSuccess: '列表更新成功！',
+            deleteListing: '删除列表',
+            deleteConfirm: '这将永久删除您的列表。此操作无法撤消。',
+            deleteSuccess: '列表已删除。',
+            edit: '编辑',
+        },
         inbox: {
             search: '搜索对话...', all: '全部', unread: '未读', archived: '已归档',
             noResults: '未找到结果', tryDifferent: '尝试不同的搜索词',
@@ -776,6 +849,9 @@ export const translations = {
             hostContact: '房东将很快与您联系。',
             days: '天', day: '天', selectDate: '选择日期',
             goToInbox: '去消息', requestSent: '请求已发送！', requestSentSub: '您的预订请求已发送。所有者将很快确认。',
+            cannotBookOwn: '您的列表', cannotBookOwnSub: '您不能预订自己的列表。',
+            yourListing: '您的列表',
+            datesUnavailable: '日期不可用', selectDifferentDates: '所选范围包含被阻止的日期。请选择其他日期。',
         },
         map: {
             searchPlaceholder: '搜索(例如:北京,上海...)',
@@ -789,6 +865,12 @@ export const translations = {
             support: '支持', supportSub: '常见问题和帮助中心',
             signOut: '退出登录', verifiedMember: '认证会员',
             rentals: '租赁', response: '响应', reviews: '评价',
+            myListings: '我的列表',
+            listing: '列表',
+            listings: '列表',
+            noListings: '还没有列表',
+            noListingsSub: '点击+按钮创建您的第一个列表并开始赚钱。',
+            createListing: '创建列表',
         },
         saved: {
             header: '收藏物品', noSaved: '没有收藏物品',
@@ -819,6 +901,9 @@ export const translations = {
             dangerZone: '危险区域', deleteAccount: '删除账户',
             deleteAccountDesc: '永久删除所有数据',
             version: '版本', selectLanguage: '选择语言',
+            comingSoon: '即将推出', featureComingSoon: '此功能即将推出。',
+            deleteAccountConfirm: '此操作无法撤消。您的所有数据将被永久删除。',
+            deleteFailed: '删除账户失败。请重试。',
         },
         support: {
             heroTitle: '我们能帮什么?',
@@ -902,7 +987,6 @@ export const translations = {
             privacy4Text: '您有权:访问您的数据、更正不准确之处、删除您的账户、导出您的数据以及选择退出营销通讯。联系我们以行使这些权利。',
         },
     },
-
     es: {
         common: {
             cancel: 'Cancelar', save: 'Guardar', delete: 'Eliminar', remove: 'Quitar',
@@ -944,7 +1028,7 @@ export const translations = {
             search: 'Buscar...', recommended: 'Recomendado para ti',
             noRecommendations: 'Sin recomendaciones por ahora.',
             noResults: 'Sin resultados para:', noItemsCategory: 'Sin artículos en categoría:',
-            noItems: 'No hay artículos disponibles en este momento.', // ✅ NOVO
+            noItems: 'No hay artículos disponibles en este momento.',
             perDay: '/día',
             errorNetwork: 'Conexión perdida. Por favor, revisa tu internet e intenta de nuevo.',
             errorNoResults: 'No pudimos encontrar nada que coincida con tu búsqueda.',
@@ -973,6 +1057,16 @@ export const translations = {
             missingLocation: 'Por favor ingresa una ubicación.',
             publishSuccess: '¡Tu artículo ha sido publicado!',
         },
+        edit: {
+            editListing: 'Editar anuncio',
+            subtitle: 'Actualiza los detalles de tu anuncio.',
+            saveChanges: 'Guardar cambios',
+            saveSuccess: '¡Anuncio actualizado con éxito!',
+            deleteListing: 'Eliminar anuncio',
+            deleteConfirm: 'Esto eliminará permanentemente tu anuncio. Esta acción no se puede deshacer.',
+            deleteSuccess: 'Anuncio eliminado.',
+            edit: 'Editar',
+        },
         inbox: {
             search: 'Buscar conversaciones...', all: 'Todo', unread: 'No leído',
             archived: 'Archivado', noResults: 'Sin resultados',
@@ -998,6 +1092,9 @@ export const translations = {
             hostContact: 'El anfitrión te contactará pronto.',
             days: 'días', day: 'día', selectDate: 'Seleccionar fecha',
             goToInbox: 'Ir a bandeja', requestSent: '¡Solicitud enviada!', requestSentSub: 'Tu solicitud de reserva fue enviada. El propietario confirmará pronto.',
+            cannotBookOwn: 'Tu anuncio', cannotBookOwnSub: 'No puedes reservar tu propio anuncio.',
+            yourListing: 'Tu anuncio',
+            datesUnavailable: 'Fechas no disponibles', selectDifferentDates: 'El rango seleccionado incluye fechas bloqueadas. Por favor elige otras fechas.',
         },
         map: {
             searchPlaceholder: 'Buscar (ej. Madrid, Barcelona...)',
@@ -1011,6 +1108,12 @@ export const translations = {
             support: 'Soporte', supportSub: 'FAQs y centro de ayuda',
             signOut: 'Cerrar sesión', verifiedMember: 'Miembro verificado',
             rentals: 'Alquileres', response: 'Respuesta', reviews: 'Reseñas',
+            myListings: 'Mis anuncios',
+            listing: 'anuncio',
+            listings: 'anuncios',
+            noListings: 'Sin anuncios aún',
+            noListingsSub: 'Toca el botón + para crear tu primer anuncio y empezar a ganar.',
+            createListing: 'Crear anuncio',
         },
         saved: {
             header: 'artículos guardados', noSaved: 'Sin artículos guardados',
@@ -1042,6 +1145,9 @@ export const translations = {
             dangerZone: 'Zona peligrosa', deleteAccount: 'Eliminar cuenta',
             deleteAccountDesc: 'Eliminar permanentemente todos tus datos',
             version: 'Versión', selectLanguage: 'Seleccionar idioma',
+            comingSoon: 'Próximamente', featureComingSoon: 'Esta función estará disponible pronto.',
+            deleteAccountConfirm: 'Esta acción no se puede deshacer. Todos tus datos serán eliminados permanentemente.',
+            deleteFailed: 'Error al eliminar la cuenta. Por favor intenta de nuevo.',
         },
         support: {
             heroTitle: '¿Cómo podemos ayudar?',
@@ -1125,7 +1231,6 @@ export const translations = {
             privacy4Text: 'Tienes derecho a: acceder a tus datos, corregir inexactitudes, eliminar tu cuenta, exportar tus datos y optar por no recibir comunicaciones de marketing. Contáctanos para ejercer estos derechos.',
         },
     },
-
     fr: {
         common: {
             cancel: 'Annuler', save: 'Enregistrer', delete: 'Supprimer', remove: 'Retirer',
@@ -1167,7 +1272,7 @@ export const translations = {
             search: 'Rechercher...', recommended: 'Recommandé pour vous',
             noRecommendations: 'Pas de recommandations pour le moment.',
             noResults: 'Aucun résultat pour:', noItemsCategory: 'Aucun article dans la catégorie:',
-            noItems: 'Aucun article disponible pour le moment.', // ✅ NOVO
+            noItems: 'Aucun article disponible pour le moment.',
             perDay: '/jour',
             errorNetwork: 'Connexion perdue. Veuillez vérifier votre internet et réessayer.',
             errorNoResults: "Nous n'avons rien trouvé correspondant à votre recherche.",
@@ -1196,6 +1301,16 @@ export const translations = {
             missingLocation: 'Veuillez entrer un emplacement.',
             publishSuccess: 'Votre article a été publié!',
         },
+        edit: {
+            editListing: "Modifier l'annonce",
+            subtitle: 'Mettez à jour les détails de votre annonce ci-dessous.',
+            saveChanges: 'Enregistrer les modifications',
+            saveSuccess: 'Annonce mise à jour avec succès !',
+            deleteListing: "Supprimer l'annonce",
+            deleteConfirm: 'Cela supprimera définitivement votre annonce. Cette action est irréversible.',
+            deleteSuccess: 'Annonce supprimée.',
+            edit: 'Modifier',
+        },
         inbox: {
             search: 'Rechercher des conversations...', all: 'Tout', unread: 'Non lu',
             archived: 'Archivé', noResults: 'Aucun résultat',
@@ -1222,6 +1337,9 @@ export const translations = {
             hostContact: "L'hôte vous contactera bientôt.",
             days: 'jours', day: 'jour', selectDate: 'Sélectionner une date',
             goToInbox: 'Aller à la boîte', requestSent: 'Demande envoyée!', requestSentSub: 'Votre demande de réservation a été envoyée. Le propriétaire confirmera bientôt.',
+            cannotBookOwn: 'Votre annonce', cannotBookOwnSub: 'Vous ne pouvez pas réserver votre propre annonce.',
+            yourListing: 'Votre annonce',
+            datesUnavailable: 'Dates indisponibles', selectDifferentDates: "La plage sélectionnée inclut des dates bloquées. Veuillez choisir d'autres dates.",
         },
         map: {
             searchPlaceholder: 'Rechercher (ex. Paris, Lyon...)',
@@ -1235,6 +1353,12 @@ export const translations = {
             support: 'Support', supportSub: "FAQs et centre d'aide",
             signOut: 'Se déconnecter', verifiedMember: 'Membre vérifié',
             rentals: 'Locations', response: 'Réponse', reviews: 'Avis',
+            myListings: 'Mes annonces',
+            listing: 'annonce',
+            listings: 'annonces',
+            noListings: "Pas encore d'annonces",
+            noListingsSub: 'Appuyez sur le bouton + pour créer votre première annonce et commencer à gagner.',
+            createListing: 'Créer une annonce',
         },
         saved: {
             header: 'articles sauvegardés', noSaved: 'Aucun article sauvegardé',
@@ -1269,6 +1393,9 @@ export const translations = {
             dangerZone: 'Zone dangereuse', deleteAccount: 'Supprimer le compte',
             deleteAccountDesc: 'Supprimer définitivement toutes vos données',
             version: 'Version', selectLanguage: 'Choisir la langue',
+            comingSoon: 'Bientôt disponible', featureComingSoon: 'Cette fonctionnalité sera bientôt disponible.',
+            deleteAccountConfirm: 'Cette action est irréversible. Toutes vos données seront supprimées définitivement.',
+            deleteFailed: 'Échec de la suppression du compte. Veuillez réessayer.',
         },
         support: {
             heroTitle: 'Comment pouvons-nous aider?',
@@ -1335,13 +1462,13 @@ export const translations = {
             terms1Title: '1. Acceptation des Conditions',
             terms1Text: "En téléchargeant, accédant ou utilisant l'application Rent-a-Thing, vous acceptez d'être lié par ces Conditions d'Utilisation. Si vous n'êtes pas d'accord, veuillez ne pas utiliser l'application.",
             terms2Title: '2. Comptes Utilisateur',
-            terms2Text: 'Vous devez fournir des informations exactes lors de la création d\'un compte. Vous êtes responsable de maintenir la confidentialité de vos identifiants et de toutes les activités sous votre compte.',
+            terms2Text: "Vous devez fournir des informations exactes lors de la création d'un compte. Vous êtes responsable de maintenir la confidentialité de vos identifiants et de toutes les activités sous votre compte.",
             terms3Title: '3. Locations et Transactions',
             terms3Text: "Rent-a-Thing agit comme une plateforme connectant locataires et propriétaires. Nous ne sommes pas partie aux accords de location. Les utilisateurs sont responsables de l'état, du retour et du paiement des articles loués.",
             terms4Title: '4. Activités Interdites',
             terms4Text: "Vous acceptez de ne pas : usurper votre identité, lister des articles illégaux, endommager des biens loués, utiliser la plateforme à des fins commerciales sans autorisation, ou harceler d'autres utilisateurs.",
             terms5Title: '5. Limitation de Responsabilité',
-            terms5Text: 'Rent-a-Thing est fourni "tel quel" sans garanties. Nous ne sommes pas responsables des dommages résultant de votre utilisation de l\'application, des locations ou des interactions avec d\'autres utilisateurs.',
+            terms5Text: "Rent-a-Thing est fourni \"tel quel\" sans garanties. Nous ne sommes pas responsables des dommages résultant de votre utilisation de l'application, des locations ou des interactions avec d'autres utilisateurs.",
             privacy1Title: '1. Informations que Nous Collectons',
             privacy1Text: "Nous collectons les informations que vous fournissez directement : nom, email, numéro de téléphone, photo de profil et données de localisation lors de l'utilisation de l'application. Nous collectons également automatiquement des données d'utilisation et des informations sur l'appareil.",
             privacy2Title: '2. Comment Nous Utilisons Vos Données',
@@ -1352,7 +1479,6 @@ export const translations = {
             privacy4Text: "Vous avez le droit : d'accéder à vos données, de corriger les inexactitudes, de supprimer votre compte, d'exporter vos données et de vous désinscrire des communications marketing. Contactez-nous pour exercer ces droits.",
         },
     },
-
     it: {
         common: {
             cancel: 'Annulla', save: 'Salva', delete: 'Elimina', remove: 'Rimuovi',
@@ -1396,7 +1522,7 @@ export const translations = {
             noRecommendations: 'Nessun consiglio al momento.',
             noResults: 'Nessun risultato per:',
             noItemsCategory: 'Nessun articolo nella categoria:',
-            noItems: 'Nessun articolo disponibile al momento.', // ✅ NOVO
+            noItems: 'Nessun articolo disponibile al momento.',
             perDay: '/giorno',
             errorNetwork: 'Connessione persa. Controlla la tua connessione e riprova.',
             errorNoResults: 'Non abbiamo trovato nulla che corrisponda alla tua ricerca.',
@@ -1425,6 +1551,16 @@ export const translations = {
             missingLocation: 'Inserisci una posizione.',
             publishSuccess: 'Il tuo articolo è stato pubblicato!',
         },
+        edit: {
+            editListing: "Modifica annuncio",
+            subtitle: 'Aggiorna i dettagli del tuo annuncio qui sotto.',
+            saveChanges: 'Salva modifiche',
+            saveSuccess: 'Annuncio aggiornato con successo!',
+            deleteListing: 'Elimina annuncio',
+            deleteConfirm: 'Questo rimuoverà permanentemente il tuo annuncio. Questa azione non può essere annullata.',
+            deleteSuccess: 'Annuncio eliminato.',
+            edit: 'Modifica',
+        },
         inbox: {
             search: 'Cerca conversazioni...', all: 'Tutto', unread: 'Non letto',
             archived: 'Archiviato', noResults: 'Nessun risultato',
@@ -1451,6 +1587,9 @@ export const translations = {
             hostContact: "L'host ti contatterà presto.",
             days: 'giorni', day: 'giorno', selectDate: 'Seleziona data',
             goToInbox: 'Vai alla posta', requestSent: 'Richiesta inviata!', requestSentSub: 'La tua richiesta di prenotazione è stata inviata. Il proprietario confermerà a breve.',
+            cannotBookOwn: 'Il tuo annuncio', cannotBookOwnSub: 'Non puoi prenotare il tuo stesso annuncio.',
+            yourListing: 'Il tuo annuncio',
+            datesUnavailable: 'Date non disponibili', selectDifferentDates: "L'intervallo selezionato include date bloccate. Scegli altre date.",
         },
         map: {
             searchPlaceholder: 'Cerca (es. Roma, Milano...)',
@@ -1464,6 +1603,12 @@ export const translations = {
             support: 'Supporto', supportSub: 'FAQ e centro assistenza',
             signOut: 'Esci', verifiedMember: 'Membro verificato',
             rentals: 'Noleggi', response: 'Risposta', reviews: 'Recensioni',
+            myListings: 'I miei annunci',
+            listing: 'annuncio',
+            listings: 'annunci',
+            noListings: 'Nessun annuncio ancora',
+            noListingsSub: 'Tocca il pulsante + per creare il tuo primo annuncio e iniziare a guadagnare.',
+            createListing: 'Crea annuncio',
         },
         saved: {
             header: 'articoli salvati', noSaved: 'Nessun articolo salvato',
@@ -1498,6 +1643,9 @@ export const translations = {
             dangerZone: 'Zona pericolosa', deleteAccount: 'Elimina account',
             deleteAccountDesc: 'Elimina permanentemente tutti i dati',
             version: 'Versione', selectLanguage: 'Seleziona lingua',
+            comingSoon: 'Prossimamente', featureComingSoon: 'Questa funzione sarà disponibile presto.',
+            deleteAccountConfirm: 'Questa azione non può essere annullata. Tutti i tuoi dati verranno eliminati permanentemente.',
+            deleteFailed: "Impossibile eliminare l'account. Riprova.",
         },
         support: {
             heroTitle: 'Come possiamo aiutare?',
@@ -1570,7 +1718,7 @@ export const translations = {
             terms4Title: '4. Attività Proibite',
             terms4Text: "Accetti di non: travisare la tua identità, elencare articoli illegali, danneggiare proprietà in affitto, utilizzare la piattaforma per scopi commerciali senza autorizzazione, o molestare altri utenti.",
             terms5Title: '5. Limitazione di Responsabilità',
-            terms5Text: 'Rent-a-Thing è fornito "così com\'è" senza garanzie. Non siamo responsabili per danni derivanti dal tuo utilizzo dell\'app, dei noleggi o delle interazioni con altri utenti.',
+            terms5Text: "Rent-a-Thing è fornito \"così com'è\" senza garanzie. Non siamo responsabili per danni derivanti dal tuo utilizzo dell'app, dei noleggi o delle interazioni con altri utenti.",
             privacy1Title: '1. Informazioni che Raccogliamo',
             privacy1Text: "Raccogliamo informazioni che fornisci direttamente: nome, email, numero di telefono, foto del profilo e dati sulla posizione durante l'utilizzo dell'app. Raccogliamo anche automaticamente dati di utilizzo e informazioni sul dispositivo.",
             privacy2Title: '2. Come Utilizziamo i Tuoi Dati',

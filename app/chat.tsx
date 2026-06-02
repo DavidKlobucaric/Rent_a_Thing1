@@ -37,7 +37,6 @@ type ChatParams = {
 
 const avatarUri = (userId: string | number) => `https://i.pravatar.cc/150?u=${userId}`;
 
-// ── COUNTDOWN HOOK ──────────────────────────────────────────────────
 const useCountdown = (expiresAt?: string) => {
     const [timeLeft, setTimeLeft] = useState<{
         hours: number;
@@ -166,21 +165,16 @@ export default function Chat() {
             try {
                 const msgResult = await getMessages(conversationId);
                 if (msgResult.success && msgResult.data) {
-                    setMessages((prevMessages) => {
-                        const newMessages = msgResult.data ?? [];
+                    const lastId = (msgs: ChatMessage[]) => msgs[msgs.length - 1]?.id ?? -1;
+                    const lastStatus = (msgs: ChatMessage[]) =>
+                        [...msgs].reverse().find(m => m.bookingDetails)?.bookingDetails?.status;
 
-                        if (newMessages.length !== prevMessages.length) {
-                            return newMessages;
+                    setMessages(prev => {
+                        const next = msgResult.data ?? [];
+                        if (lastId(next) !== lastId(prev) || lastStatus(next) !== lastStatus(prev)) {
+                            return next;
                         }
-
-                        const prevLastBooking = [...prevMessages].reverse().find(m => m.bookingDetails)?.bookingDetails?.status;
-                        const newLastBooking = [...newMessages].reverse().find(m => m.bookingDetails)?.bookingDetails?.status;
-
-                        if (prevLastBooking !== newLastBooking) {
-                            return newMessages;
-                        }
-
-                        return prevMessages;
+                        return prev;
                     });
                 }
             } catch (err) {
@@ -335,7 +329,6 @@ export default function Chat() {
         }
     };
 
-
     const handleConfirmPickup = async (bookingId: number) => {
         const pinString = pinInput.join('');
         if (pinString.length !== 4) {
@@ -393,7 +386,7 @@ export default function Chat() {
         if (timeLeft.total <= 0) {
             return (
                 <View style={styles.countdownExpired}>
-                    <Ionicons name="time-outline" size={14} color={colors.danger} />
+                    <View style={[styles.countdownDot, { backgroundColor: colors.danger }]} />
                     <Text style={[styles.countdownText, { color: colors.danger }]}>
                         {String(t('chat', 'expired'))}
                     </Text>
@@ -402,17 +395,19 @@ export default function Chat() {
         }
         const urgencyColor =
             timeLeft.hours >= 12
-                ? '#34C759'
+                ? colors.success
                 : timeLeft.hours >= 6
                     ? '#FF9500'
-                    : '#FF3B30';
+                    : colors.danger;
         const pad = (n: number) => n.toString().padStart(2, '0');
         return (
-            <View style={[styles.countdownContainer, { borderColor: urgencyColor + '40' }]}>
-                <Ionicons name="time" size={14} color={urgencyColor} />
-                <Text style={[styles.countdownText, { color: urgencyColor }]}>
-                    {String(t('chat', 'autoDeclinesIn'))} {pad(timeLeft.hours)}:
-                    {pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}
+            <View style={styles.countdownContainer}>
+                <View style={[styles.countdownDot, { backgroundColor: urgencyColor }]} />
+                <Text style={[styles.countdownLabel]}>
+                    {String(t('chat', 'autoDeclinesIn'))}
+                </Text>
+                <Text style={[styles.countdownTime, { color: urgencyColor }]}>
+                    {pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}
                 </Text>
             </View>
         );
@@ -425,27 +420,42 @@ export default function Chat() {
 
         const pin = booking.pickupPin || pins[booking.bookingId];
 
+        // 🎨 PROFESIONALNIJE IKONE - kontekstualno prilagođene
         const statusConfig = {
-            pending: { color: '#FF9500', bg: '#FF950015', icon: 'time-outline' as const },
-            confirmed: { color: '#34C759', bg: '#34C75915', icon: 'checkmark-circle' as const },
-            active: { color: '#007AFF', bg: '#007AFF15', icon: 'swap-horizontal' as const },
-            completed: { color: '#8E8E93', bg: '#8E8E9315', icon: 'checkmark-done' as const },
-            declined: { color: '#FF3B30', bg: '#FF3B3015', icon: 'close-circle' as const },
-            cancelled: { color: '#FF3B30', bg: '#FF3B3015', icon: 'close-circle' as const },
-            expired: { color: '#8E8E93', bg: '#8E8E9315', icon: 'time-outline' as const },
+            pending: { color: '#FF9500', bg: '#FF950015', icon: 'hourglass-outline' as const },
+            confirmed: { color: colors.success, bg: colors.success + '18', icon: 'shield-checkmark-outline' as const },
+            active: { color: colors.primary, bg: colors.primary + '18', icon: 'play-circle-outline' as const },
+            completed: { color: colors.textMuted, bg: colors.textMuted + '18', icon: 'ribbon-outline' as const },
+            declined: { color: colors.danger, bg: colors.danger + '15', icon: 'close-circle-outline' as const },
+            cancelled: { color: colors.danger, bg: colors.danger + '15', icon: 'ban-outline' as const },
+            expired: { color: colors.textMuted, bg: colors.textMuted + '18', icon: 'timer-outline' as const },
         };
         const cfg = statusConfig[booking.status];
 
         return (
             <View style={styles.bookingCard}>
-                <View style={styles.bookingCardHeader}>
-                    <Ionicons name="calendar" size={18} color={colors.primary} />
-                    <Text style={styles.bookingCardTitle}>
-                        {booking.status === 'pending'
-                            ? String(t('chat', 'bookingRequested'))
-                            : String(booking.listingName || '')}
-                    </Text>
+                <View style={styles.bookingCardTopRow}>
+                    <View style={[styles.bookingStatusBadge, { backgroundColor: cfg.bg }]}>
+                        <Ionicons name={cfg.icon} size={12} color={cfg.color} />
+                        <Text style={[styles.bookingStatusText, { color: cfg.color }]}>
+                            {booking.status === 'expired'
+                                ? String(t('chat', 'expired'))
+                                : String(booking.status.charAt(0).toUpperCase() + booking.status.slice(1))}
+                        </Text>
+                    </View>
+                    {booking.status === 'pending' && booking.expiresAt && (
+                        <CountdownTimer expiresAt={booking.expiresAt} />
+                    )}
                 </View>
+
+                <Text style={styles.bookingCardTitle}>
+                    {booking.status === 'pending'
+                        ? String(t('chat', 'bookingRequested'))
+                        : String(booking.listingName || '')}
+                </Text>
+                <Text style={styles.bookingCardSubtitle}>
+                    {isRenter ? `Booking from ${otherPerson}` : `Booking for ${otherPerson}`}
+                </Text>
 
                 <View style={styles.bookingItemRow}>
                     <Image
@@ -454,20 +464,19 @@ export default function Chat() {
                         contentFit="cover"
                     />
                     <View style={styles.bookingItemInfo}>
-                        <Text style={styles.bookingItemName} numberOfLines={1}>
+                        <Text style={styles.bookingItemName} numberOfLines={2}>
                             {String(booking.listingName || '')}
                         </Text>
-                        <View style={styles.bookingDateRow}>
-                            <Ionicons name="calendar-outline" size={12} color={colors.textMuted} />
-                            <Text style={styles.bookingDateText}>
-                                {formatDateShort(booking.startDate)} →{' '}
-                                {formatDateShort(booking.endDate)}
+                        <View style={styles.bookingInfoRow}>
+                            <Ionicons name="calendar-clear-outline" size={13} color={colors.textMuted} />
+                            <Text style={styles.bookingInfoText}>
+                                {formatDateShort(booking.startDate)} → {formatDateShort(booking.endDate)}
                             </Text>
                         </View>
-                        <View style={styles.bookingDateRow}>
-                            <Ionicons name="person-outline" size={12} color={colors.textMuted} />
-                            <Text style={styles.bookingDateText}>
-                                {isRenter ? `From ${otherPerson}` : `To ${otherPerson}`}
+                        <View style={styles.bookingInfoRow}>
+                            <Ionicons name="person-circle-outline" size={13} color={colors.textMuted} />
+                            <Text style={styles.bookingInfoText}>
+                                {isRenter ? `Owner: ${otherPerson}` : `Renter: ${otherPerson}`}
                             </Text>
                         </View>
                     </View>
@@ -475,89 +484,97 @@ export default function Chat() {
 
                 <View style={styles.bookingPriceBox}>
                     <View style={styles.bookingPriceRow}>
-                        <Text style={styles.bookingPriceLabel}>
-                            ${booking.dailyRate} × {booking.numberOfDays}{' '}
-                            {booking.numberOfDays === 1 ? String(t('chat', 'day')) : String(t('chat', 'days'))}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Ionicons name="pricetag-outline" size={13} color={colors.textMuted} />
+                            <Text style={styles.bookingPriceLabel}>
+                                ${booking.dailyRate} × {booking.numberOfDays} {booking.numberOfDays === 1 ? String(t('chat', 'day')) : String(t('chat', 'days'))}
+                            </Text>
+                        </View>
                         <Text style={styles.bookingPriceValue}>
                             ${booking.dailyRate * booking.numberOfDays}
                         </Text>
                     </View>
                     {booking.deposit > 0 && (
                         <View style={styles.bookingPriceRow}>
-                            <Text style={styles.bookingPriceLabel}>Deposit</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                <Ionicons name="shield-outline" size={13} color={colors.textMuted} />
+                                <Text style={styles.bookingPriceLabel}>Deposit</Text>
+                            </View>
                             <Text style={styles.bookingPriceValue}>${booking.deposit}</Text>
                         </View>
                     )}
-                    <View style={[styles.bookingPriceRow, styles.bookingPriceTotal]}>
+                    <View style={styles.bookingPriceDivider} />
+                    <View style={styles.bookingPriceRow}>
                         <Text style={styles.bookingTotalLabel}>{String(t('chat', 'totalCost'))}</Text>
                         <Text style={styles.bookingTotalValue}>${booking.totalPrice}</Text>
                     </View>
                 </View>
 
-                {booking.status === 'pending' && booking.expiresAt && (
-                    <CountdownTimer expiresAt={booking.expiresAt} />
+                {booking.status === 'pending' && isOwner && (
+                    <View style={styles.ownerWarningBox}>
+                        <View style={[styles.infoIconCircle, { backgroundColor: colors.primary + '18' }]}>
+                            <Ionicons name="shield-checkmark-outline" size={14} color={colors.primary} />
+                        </View>
+                        <Text style={styles.ownerWarningText}>
+                            {String(t('chat', 'ownerWarning'))}
+                        </Text>
+                    </View>
                 )}
 
-                <View style={[styles.bookingStatusBadge, { backgroundColor: cfg.bg }]}>
-                    <Ionicons name={cfg.icon} size={14} color={cfg.color} />
-                    <Text style={[styles.bookingStatusText, { color: cfg.color }]}>
-                        {booking.status === 'expired'
-                            ? String(t('chat', 'expired'))
-                            : String(booking.status.charAt(0).toUpperCase() + booking.status.slice(1))}
-                    </Text>
-                </View>
-
                 {booking.status === 'pending' && isOwner && (
-                    <>
-                        <View style={styles.ownerWarningBox}>
-                            <Ionicons name="information-circle" size={16} color={colors.primary} />
-                            <Text style={styles.ownerWarningText}>
-                                {String(t('chat', 'ownerWarning'))}
-                            </Text>
-                        </View>
-                        <View style={styles.bookingActions}>
-                            <TouchableOpacity
-                                style={[styles.bookingBtn, styles.bookingBtnDecline]}
-                                onPress={() => handleDeclineBooking(booking.bookingId)}
-                                disabled={actionLoading}
-                            >
-                                {actionLoading ? (
-                                    <ActivityIndicator size="small" />
-                                ) : (
-                                    <Text style={styles.bookingBtnDeclineText}>
+                    <View style={styles.bookingActions}>
+                        <TouchableOpacity
+                            style={styles.bookingBtnSecondary}
+                            onPress={() => handleDeclineBooking(booking.bookingId)}
+                            disabled={actionLoading}
+                        >
+                            {actionLoading ? (
+                                <ActivityIndicator size="small" color={colors.textMuted} />
+                            ) : (
+                                <>
+                                    <Ionicons name="close-circle-outline" size={18} color={colors.textMuted} />
+                                    <Text style={styles.bookingBtnSecondaryText}>
                                         {String(t('chat', 'declineBooking'))}
                                     </Text>
-                                )}
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.bookingBtn, styles.bookingBtnConfirm]}
-                                onPress={() => handleConfirmBooking(booking.bookingId)}
-                                disabled={actionLoading}
-                            >
-                                <Ionicons name="checkmark" size={18} color="white" />
-                                <Text style={styles.bookingBtnConfirmText}>
-                                    {String(t('chat', 'confirmBooking'))}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    </>
+                                </>
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.bookingBtnPrimary}
+                            onPress={() => handleConfirmBooking(booking.bookingId)}
+                            disabled={actionLoading}
+                        >
+                            {actionLoading ? (
+                                <ActivityIndicator size="small" color="white" />
+                            ) : (
+                                <>
+                                    <Ionicons name="checkmark-circle-outline" size={18} color="white" />
+                                    <Text style={styles.bookingBtnPrimaryText}>
+                                        {String(t('chat', 'confirmBooking'))}
+                                    </Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+                    </View>
                 )}
 
                 {booking.status === 'pending' && isRenter && (
-                    <View style={styles.bookingWaitingBox}>
-                        <ActivityIndicator size="small" color={cfg.color} />
-                        <Text style={styles.bookingWaitingText}>
+                    <View style={styles.bookingActionBox}>
+                        <View style={[styles.actionIconCircle, { backgroundColor: '#FF950018' }]}>
+                            <Ionicons name="hourglass-outline" size={22} color="#FF9500" />
+                        </View>
+                        <Text style={styles.actionBoxTitle}>
                             {String(t('chat', 'waitingForConfirmation'))}
                         </Text>
-                        <Text style={styles.bookingWaitingSubtext}>
+                        <Text style={styles.actionBoxSubtitle}>
                             {String(t('chat', 'willAutoDecline'))}
                         </Text>
                         <TouchableOpacity
-                            style={styles.bookingCancelLink}
+                            style={styles.bookingTextBtn}
                             onPress={() => handleCancelBooking(booking.bookingId)}
                         >
-                            <Text style={styles.bookingCancelText}>
+                            <Ionicons name="close-circle-outline" size={14} color={colors.danger} />
+                            <Text style={styles.bookingTextBtnText}>
                                 {String(t('chat', 'cancelBooking'))}
                             </Text>
                         </TouchableOpacity>
@@ -565,17 +582,19 @@ export default function Chat() {
                 )}
 
                 {booking.status === 'expired' && (
-                    <View style={styles.bookingExpiredBox}>
-                        <Ionicons name="time-outline" size={28} color={colors.textMuted} />
-                        <Text style={styles.bookingExpiredTitle}>
+                    <View style={styles.bookingActionBox}>
+                        <View style={[styles.actionIconCircle, { backgroundColor: colors.textMuted + '18' }]}>
+                            <Ionicons name="timer-outline" size={22} color={colors.textMuted} />
+                        </View>
+                        <Text style={styles.actionBoxTitle}>
                             {String(t('chat', 'requestExpired'))}
                         </Text>
-                        <Text style={styles.bookingExpiredText}>
+                        <Text style={styles.actionBoxSubtitle}>
                             {isRenter ? String(t('chat', 'expiredRenter')) : String(t('chat', 'expiredOwner'))}
                         </Text>
                         {isRenter && (
                             <TouchableOpacity
-                                style={styles.bookingRetryBtn}
+                                style={styles.bookingBtnSecondary}
                                 onPress={() => {
                                     router.push({
                                         pathname: '/item',
@@ -583,7 +602,8 @@ export default function Chat() {
                                     });
                                 }}
                             >
-                                <Text style={styles.bookingRetryBtnText}>
+                                <Ionicons name="refresh-outline" size={18} color={colors.primary} />
+                                <Text style={[styles.bookingBtnSecondaryText, { color: colors.primary }]}>
                                     {String(t('chat', 'tryAgain'))}
                                 </Text>
                             </TouchableOpacity>
@@ -592,15 +612,15 @@ export default function Chat() {
                 )}
 
                 {booking.status === 'confirmed' && isOwner && pin && (
-                    <View style={styles.bookingPinBox}>
-                        <View style={styles.bookingPinHeader}>
-                            <Ionicons name="key" size={18} color={colors.primary} />
-                            <Text style={styles.bookingPinTitle}>
-                                {String(t('chat', 'pinGenerated'))}
-                            </Text>
+                    <View style={styles.bookingActionBox}>
+                        <View style={[styles.actionIconCircle, { backgroundColor: colors.primary + '18' }]}>
+                            <Ionicons name="keypad-outline" size={22} color={colors.primary} />
                         </View>
-                        <Text style={styles.bookingPinSubtitle}>
-                            {`${String(t('chat', 'sharePinWith'))} ${booking.renterName} ${String(t('chat', 'atPickup'))}`}
+                        <Text style={styles.actionBoxTitle}>
+                            {String(t('chat', 'pinGenerated'))}
+                        </Text>
+                        <Text style={styles.actionBoxSubtitle}>
+                            {`Share this PIN with ${booking.renterName} at pickup`}
                         </Text>
                         <View style={styles.bookingPinDisplay}>
                             <Text style={styles.bookingPinCode}>{pin}</Text>
@@ -609,34 +629,39 @@ export default function Chat() {
                 )}
 
                 {booking.status === 'confirmed' && isOwner && !pin && (
-                    <View style={styles.bookingWaitingBox}>
-                        <Ionicons name="key-outline" size={20} color={colors.primary} />
-                        <Text style={styles.bookingWaitingText}>
-                            PIN will be generated automatically. Share it with the renter at pickup.
+                    <View style={styles.bookingActionBox}>
+                        <View style={[styles.actionIconCircle, { backgroundColor: colors.primary + '18' }]}>
+                            <Ionicons name="keypad-outline" size={22} color={colors.primary} />
+                        </View>
+                        <Text style={styles.actionBoxTitle}>
+                            Generating PIN...
+                        </Text>
+                        <Text style={styles.actionBoxSubtitle}>
+                            Share it with the renter at pickup.
                         </Text>
                     </View>
                 )}
 
                 {booking.status === 'confirmed' && isRenter && (
-                    <View style={styles.bookingPinBox}>
-                        <View style={styles.bookingPinHeader}>
-                            <Ionicons name="key-outline" size={18} color={colors.primary} />
-                            <Text style={styles.bookingPinTitle}>
-                                {String(t('chat', 'yourPickupPin'))}
-                            </Text>
+                    <View style={styles.bookingActionBox}>
+                        <View style={[styles.actionIconCircle, { backgroundColor: colors.primary + '18' }]}>
+                            <Ionicons name="keypad-outline" size={22} color={colors.primary} />
                         </View>
-                        <Text style={styles.bookingPinSubtitle}>
+                        <Text style={styles.actionBoxTitle}>
+                            {String(t('chat', 'yourPickupPin'))}
+                        </Text>
+                        <Text style={styles.actionBoxSubtitle}>
                             {String(t('chat', 'askOwnerForPin'))}
                         </Text>
                         <TouchableOpacity
-                            style={styles.bookingPickupBtn}
+                            style={styles.bookingBtnPrimary}
                             onPress={() => {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                                 pickupSheetRef.current?.expand();
                             }}
                         >
-                            <Ionicons name="checkmark-circle" size={18} color="white" />
-                            <Text style={styles.bookingPickupBtnText}>
+                            <Ionicons name="checkmark-done-outline" size={18} color="white" />
+                            <Text style={styles.bookingBtnPrimaryText}>
                                 {String(t('chat', 'confirmPickup'))}
                             </Text>
                         </TouchableOpacity>
@@ -644,40 +669,75 @@ export default function Chat() {
                 )}
 
                 {booking.status === 'active' && (
-                    <View style={styles.bookingActiveBox}>
-                        <Ionicons name="swap-horizontal" size={20} color={colors.primary} />
-                        <Text style={styles.bookingActiveText}>
+                    <View style={styles.bookingActionBox}>
+                        <View style={[styles.actionIconCircle, { backgroundColor: colors.primary + '18' }]}>
+                            <Ionicons name="play-circle-outline" size={22} color={colors.primary} />
+                        </View>
+                        <Text style={styles.actionBoxTitle}>
                             {isRenter ? String(t('chat', 'itemInUse')) : String(t('chat', 'waitingForReturn'))}
+                        </Text>
+                        <Text style={styles.actionBoxSubtitle}>
+                            {isRenter ? 'Enjoy your rental!' : 'Waiting for the renter to return the item.'}
                         </Text>
                         {isOwner && (
                             <TouchableOpacity
-                                style={styles.bookingReturnBtn}
+                                style={[styles.bookingBtnPrimary, { backgroundColor: colors.success }]}
                                 onPress={() => handleMarkReturned(booking.bookingId)}
                                 disabled={actionLoading}
                             >
-                                <Ionicons name="checkmark-done" size={18} color="white" />
-                                <Text style={styles.bookingReturnBtnText}>
-                                    {String(t('chat', 'markReturned'))}
-                                </Text>
+                                {actionLoading ? (
+                                    <ActivityIndicator size="small" color="white" />
+                                ) : (
+                                    <>
+                                        <Ionicons name="return-down-back-outline" size={18} color="white" />
+                                        <Text style={styles.bookingBtnPrimaryText}>
+                                            {String(t('chat', 'markReturned'))}
+                                        </Text>
+                                    </>
+                                )}
                             </TouchableOpacity>
                         )}
                     </View>
                 )}
 
                 {booking.status === 'completed' && (
-                    <View style={styles.bookingCompletedBox}>
-                        <Ionicons name="checkmark-done-circle" size={24} color={colors.success} />
-                        <Text style={styles.bookingCompletedText}>
+                    <View style={styles.bookingActionBox}>
+                        <View style={[styles.actionIconCircle, { backgroundColor: colors.success + '18' }]}>
+                            <Ionicons name="ribbon-outline" size={24} color={colors.success} />
+                        </View>
+                        <Text style={[styles.actionBoxTitle, { color: colors.success }]}>
                             {String(t('chat', 'returnConfirmed'))}
+                        </Text>
+                        <Text style={styles.actionBoxSubtitle}>
+                            This booking has been successfully completed.
                         </Text>
                     </View>
                 )}
 
                 {booking.status === 'declined' && (
-                    <View style={styles.bookingDeclinedBox}>
-                        <Ionicons name="close-circle" size={24} color={colors.danger} />
-                        <Text style={styles.bookingDeclinedText}>
+                    <View style={styles.bookingActionBox}>
+                        <View style={[styles.actionIconCircle, { backgroundColor: colors.danger + '15' }]}>
+                            <Ionicons name="close-circle-outline" size={24} color={colors.danger} />
+                        </View>
+                        <Text style={[styles.actionBoxTitle, { color: colors.danger }]}>
                             {isRenter ? String(t('chat', 'ownerDeclined')) : String(t('chat', 'youDeclined'))}
+                        </Text>
+                        <Text style={styles.actionBoxSubtitle}>
+                            {isRenter ? 'The owner was unable to accept your request.' : 'You have declined this booking request.'}
+                        </Text>
+                    </View>
+                )}
+
+                {booking.status === 'cancelled' && (
+                    <View style={styles.bookingActionBox}>
+                        <View style={[styles.actionIconCircle, { backgroundColor: colors.danger + '15' }]}>
+                            <Ionicons name="ban-outline" size={24} color={colors.danger} />
+                        </View>
+                        <Text style={[styles.actionBoxTitle, { color: colors.danger }]}>
+                            Booking Cancelled
+                        </Text>
+                        <Text style={styles.actionBoxSubtitle}>
+                            This booking has been cancelled.
                         </Text>
                     </View>
                 )}
@@ -695,7 +755,7 @@ export default function Chat() {
             if (latestMessageIdForBooking[bId] !== msg.id) {
                 return (
                     <View key={msg.id} style={styles.historyUpdateRow}>
-                        <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} />
+                        <Ionicons name="pulse-outline" size={14} color={colors.textMuted} />
                         <Text style={styles.historyUpdateText}>
                             {String(msg.content || 'Booking status updated.')} ({formatTime(msg.sentAt)})
                         </Text>
@@ -754,7 +814,7 @@ export default function Chat() {
         >
             <View style={styles.header}>
                 <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={26} color={colors.text} />
+                    <Ionicons name="chevron-back" size={26} color={colors.text} />
                 </TouchableOpacity>
                 <Image
                     source={{ uri: avatarUri(params.ownerId ?? '0') }}
@@ -778,7 +838,7 @@ export default function Chat() {
                 </View>
             ) : error ? (
                 <View style={styles.centered}>
-                    <Ionicons name="alert-circle-outline" size={40} color={colors.textMuted} />
+                    <Ionicons name="cloud-offline-outline" size={40} color={colors.textMuted} />
                     <Text style={styles.emptyText}>{String(error)}</Text>
                 </View>
             ) : (
@@ -792,7 +852,7 @@ export default function Chat() {
                 >
                     {messages.length === 0 ? (
                         <View style={styles.centered}>
-                            <Ionicons name="chatbubbles-outline" size={48} color={colors.textMuted} />
+                            <Ionicons name="chatbox-ellipses-outline" size={48} color={colors.textMuted} />
                             <Text style={styles.emptyText}>{String(t('chat', 'noMessages'))}</Text>
                         </View>
                     ) : (
@@ -820,7 +880,7 @@ export default function Chat() {
                         {sending ? (
                             <ActivityIndicator size="small" color="white" />
                         ) : (
-                            <Ionicons name="send" size={20} color="white" />
+                            <Ionicons name="paper-plane-outline" size={20} color="white" />
                         )}
                     </TouchableOpacity>
                 </View>
@@ -829,12 +889,15 @@ export default function Chat() {
             <BottomSheet
                 ref={pickupSheetRef}
                 index={-1}
-                snapPoints={['40%']}
+                snapPoints={['45%']}
                 enablePanDownToClose
                 backgroundStyle={{ backgroundColor: colors.background }}
                 handleIndicatorStyle={{ backgroundColor: colors.textMuted }}
             >
                 <BottomSheetView style={styles.sheetContent}>
+                    <View style={[styles.sheetIconCircle, { backgroundColor: colors.primary + '18' }]}>
+                        <Ionicons name="keypad-outline" size={24} color={colors.primary} />
+                    </View>
                     <Text style={styles.sheetTitle}>{String(t('chat', 'enterPickupPin'))}</Text>
                     <Text style={styles.sheetSubtitle}>
                         Ask the owner for the 4-digit code to confirm you have received the item.
@@ -923,85 +986,300 @@ const makeStyles = (colors: any) =>
             alignItems: 'center',
             justifyContent: 'center',
             marginVertical: 8,
-            paddingHorizontal: 16,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
             alignSelf: 'center',
             backgroundColor: colors.surface,
-            paddingVertical: 4,
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: colors.border
+            borderColor: colors.border,
+            gap: 6,
         },
         historyUpdateText: {
             fontSize: 12,
             color: colors.textMuted,
-            marginLeft: 4,
         },
 
         systemMessageRow: { width: '100%', marginVertical: 12, alignItems: 'center' },
-        bookingCard: { width: '100%', backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
-        bookingCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-        bookingCardTitle: { fontSize: 15, fontWeight: '600', color: colors.text, marginLeft: 8 },
-        bookingItemRow: { flexDirection: 'row', marginBottom: 16 },
-        bookingItemImage: { width: 60, height: 60, borderRadius: 10, backgroundColor: colors.background },
-        bookingItemInfo: { flex: 1, marginLeft: 12, justifyContent: 'center' },
-        bookingItemName: { fontSize: 15, fontWeight: '600', color: colors.text, marginBottom: 4 },
-        bookingDateRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
-        bookingDateText: { fontSize: 12, color: colors.textMuted, marginLeft: 6 },
-        bookingPriceBox: { backgroundColor: colors.background, borderRadius: 12, padding: 12, marginBottom: 14 },
-        bookingPriceRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-        bookingPriceLabel: { fontSize: 13, color: colors.textMuted },
-        bookingPriceValue: { fontSize: 13, fontWeight: '500', color: colors.text },
-        bookingPriceTotal: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 6, marginTop: 4, marginBottom: 0 },
-        bookingTotalLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
-        bookingTotalValue: { fontSize: 16, fontWeight: '700', color: colors.primary },
-        bookingStatusBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 12 },
-        bookingStatusText: { fontSize: 12, fontWeight: '600', marginLeft: 4 },
 
-        bookingActions: { flexDirection: 'row', gap: 12, marginTop: 4 },
-        bookingBtn: { flex: 1, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 6 },
-        bookingBtnDecline: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border },
-        bookingBtnDeclineText: { color: colors.danger, fontWeight: '600', fontSize: 14 },
-        bookingBtnConfirm: { backgroundColor: colors.primary },
-        bookingBtnConfirmText: { color: 'white', fontWeight: '600', fontSize: 14 },
-        ownerWarningBox: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12, backgroundColor: colors.primary + '10', padding: 10, borderRadius: 10 },
-        ownerWarningText: { flex: 1, fontSize: 12, color: colors.primary, lineHeight: 16 },
-        bookingWaitingBox: { alignItems: 'center', paddingVertical: 8 },
-        bookingWaitingText: { fontSize: 14, fontWeight: '500', color: colors.text, marginTop: 6, textAlign: 'center' },
-        bookingWaitingSubtext: { fontSize: 12, color: colors.textMuted, marginTop: 2, textAlign: 'center' },
-        bookingCancelLink: { marginTop: 10, padding: 4 },
-        bookingCancelText: { fontSize: 13, color: colors.danger, fontWeight: '500' },
-        bookingExpiredBox: { alignItems: 'center', paddingVertical: 12 },
-        bookingExpiredTitle: { fontSize: 15, fontWeight: '600', color: colors.text, marginTop: 8 },
-        bookingExpiredText: { fontSize: 13, color: colors.textMuted, textAlign: 'center', marginTop: 4, paddingHorizontal: 16 },
-        bookingRetryBtn: { marginTop: 12, backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-        bookingRetryBtnText: { color: 'white', fontWeight: '600', fontSize: 13 },
-        bookingPinBox: { backgroundColor: colors.primary + '08', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.primary + '20', alignItems: 'center' },
-        bookingPinHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-        bookingPinTitle: { fontSize: 14, fontWeight: '600', color: colors.primary },
-        bookingPinSubtitle: { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginBottom: 10 },
-        bookingPinDisplay: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.primary + '30', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 10 },
-        bookingPinCode: { fontSize: 22, fontWeight: '700', color: colors.primary, letterSpacing: 4 },
-        bookingPickupBtn: { width: '100%', height: 40, backgroundColor: colors.primary, borderRadius: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4 },
-        bookingPickupBtnText: { color: 'white', fontWeight: '600', fontSize: 14 },
-        bookingActiveBox: { alignItems: 'center', paddingVertical: 4 },
-        bookingActiveText: { fontSize: 14, fontWeight: '500', color: colors.text, marginBottom: 8 },
-        bookingReturnBtn: { width: '100%', height: 40, backgroundColor: colors.success, borderRadius: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-        bookingReturnBtnText: { color: 'white', fontWeight: '600', fontSize: 14 },
-        bookingCompletedBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 4 },
-        bookingCompletedText: { fontSize: 14, fontWeight: '600', color: colors.success },
-        bookingDeclinedBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 4 },
-        bookingDeclinedText: { fontSize: 14, fontWeight: '600', color: colors.danger },
+        bookingCard: {
+            width: '100%',
+            backgroundColor: colors.card,
+            borderRadius: 18,
+            padding: 16,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+        bookingCardTopRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 10,
+        },
+        bookingStatusBadge: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            borderRadius: 8,
+            gap: 6,
+        },
+        statusDot: {
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+        },
+        bookingStatusText: {
+            fontSize: 11,
+            fontWeight: '700',
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+        },
+        bookingCardTitle: {
+            fontSize: 17,
+            fontWeight: '700',
+            color: colors.text,
+            letterSpacing: -0.3,
+            marginBottom: 2,
+        },
+        bookingCardSubtitle: {
+            fontSize: 12,
+            color: colors.textMuted,
+            marginBottom: 14,
+        },
+        bookingItemRow: {
+            flexDirection: 'row',
+            marginBottom: 14,
+            padding: 10,
+            backgroundColor: colors.background,
+            borderRadius: 12,
+        },
+        bookingItemImage: {
+            width: 56,
+            height: 56,
+            borderRadius: 10,
+            backgroundColor: colors.border,
+        },
+        bookingItemInfo: {
+            flex: 1,
+            marginLeft: 12,
+            justifyContent: 'center',
+        },
+        bookingItemName: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: colors.text,
+            marginBottom: 6,
+            lineHeight: 18,
+        },
+        bookingInfoRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 5,
+            marginTop: 3,
+        },
+        bookingInfoText: {
+            fontSize: 12,
+            color: colors.textMuted,
+        },
 
-        countdownContainer: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, marginBottom: 12, alignSelf: 'flex-start' },
-        countdownText: { fontSize: 12, fontWeight: '600' },
-        countdownExpired: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 12 },
+        bookingPriceBox: {
+            backgroundColor: colors.background,
+            borderRadius: 12,
+            padding: 14,
+            marginBottom: 14,
+        },
+        bookingPriceRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 6,
+        },
+        bookingPriceLabel: {
+            fontSize: 13,
+            color: colors.textMuted,
+        },
+        bookingPriceValue: {
+            fontSize: 13,
+            fontWeight: '600',
+            color: colors.text,
+        },
+        bookingPriceDivider: {
+            height: 1,
+            backgroundColor: colors.border,
+            marginVertical: 8,
+        },
+        bookingTotalLabel: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: colors.text,
+        },
+        bookingTotalValue: {
+            fontSize: 18,
+            fontWeight: '700',
+            color: colors.primary,
+            letterSpacing: -0.3,
+        },
+
+        countdownContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+        },
+        countdownDot: {
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+        },
+        countdownLabel: {
+            fontSize: 11,
+            color: colors.textMuted,
+            fontWeight: '500',
+        },
+        countdownTime: {
+            fontSize: 12,
+            fontWeight: '700',
+            fontVariant: ['tabular-nums'],
+        },
+        countdownExpired: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+        },
+        countdownText: {
+            fontSize: 12,
+            fontWeight: '600',
+        },
+
+        bookingActionBox: {
+            alignItems: 'center',
+            paddingVertical: 12,
+            paddingHorizontal: 12,
+            marginTop: 4,
+        },
+        actionIconCircle: {
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 10,
+        },
+        actionBoxTitle: {
+            fontSize: 15,
+            fontWeight: '700',
+            color: colors.text,
+            textAlign: 'center',
+            marginBottom: 4,
+            letterSpacing: -0.2,
+        },
+        actionBoxSubtitle: {
+            fontSize: 12,
+            color: colors.textMuted,
+            textAlign: 'center',
+            lineHeight: 17,
+            marginBottom: 12,
+            paddingHorizontal: 8,
+        },
+
+        bookingActions: {
+            flexDirection: 'row',
+            gap: 10,
+            marginTop: 4,
+        },
+        bookingBtnPrimary: {
+            width: '100%',
+            height: 44,
+            borderRadius: 12,
+            backgroundColor: colors.primary,
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexDirection: 'row',
+            gap: 6,
+        },
+        bookingBtnPrimaryText: {
+            color: 'white',
+            fontWeight: '600',
+            fontSize: 14,
+        },
+        bookingBtnSecondary: {
+            flex: 1,
+            height: 44,
+            borderRadius: 12,
+            backgroundColor: colors.background,
+            borderWidth: 1,
+            borderColor: colors.border,
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexDirection: 'row',
+            gap: 6,
+        },
+        bookingBtnSecondaryText: {
+            color: colors.textMuted,
+            fontWeight: '600',
+            fontSize: 14,
+        },
+        bookingTextBtn: {
+            paddingVertical: 6,
+            paddingHorizontal: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 5,
+        },
+        bookingTextBtnText: {
+            fontSize: 13,
+            color: colors.danger,
+            fontWeight: '600',
+        },
+
+        ownerWarningBox: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            marginBottom: 12,
+            backgroundColor: colors.primary + '10',
+            padding: 12,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.primary + '25',
+        },
+        infoIconCircle: {
+            width: 28,
+            height: 28,
+            borderRadius: 14,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        ownerWarningText: {
+            flex: 1,
+            fontSize: 12,
+            color: colors.primary,
+            lineHeight: 17,
+            fontWeight: '500',
+        },
+
+        bookingPinDisplay: {
+            backgroundColor: colors.card,
+            borderWidth: 1,
+            borderColor: colors.primary + '40',
+            paddingHorizontal: 28,
+            paddingVertical: 12,
+            borderRadius: 12,
+            marginTop: 4,
+        },
+        bookingPinCode: {
+            fontSize: 26,
+            fontWeight: '700',
+            color: colors.primary,
+            letterSpacing: 8,
+            fontVariant: ['tabular-nums'],
+        },
 
         inputContainer: {
             paddingHorizontal: 16,
             paddingTop: 12,
             borderTopColor: colors.border,
             backgroundColor: colors.background,
-
         },
         inputWrapper: {
             flexDirection: 'row',
@@ -1012,7 +1290,7 @@ const makeStyles = (colors: any) =>
             borderColor: colors.border,
             paddingHorizontal: 6,
             paddingVertical: 6,
-            marginBottom:3
+            marginBottom: 3,
         },
         input: {
             flex: 1,
@@ -1037,21 +1315,46 @@ const makeStyles = (colors: any) =>
             backgroundColor: colors.textMuted + '40',
         },
 
-        sheetContent: { flex: 1, padding: 24, alignItems: 'center' },
-        sheetTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 6 },
-        sheetSubtitle: { fontSize: 13, color: colors.textMuted, textAlign: 'center', marginBottom: 20, lineHeight: 18 },
+        sheetContent: {
+            flex: 1,
+            padding: 24,
+            alignItems: 'center',
+        },
+        sheetIconCircle: {
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 12,
+        },
+        sheetTitle: {
+            fontSize: 18,
+            fontWeight: '700',
+            color: colors.text,
+            marginBottom: 6,
+            letterSpacing: -0.3,
+        },
+        sheetSubtitle: {
+            fontSize: 13,
+            color: colors.textMuted,
+            textAlign: 'center',
+            marginBottom: 24,
+            lineHeight: 18,
+            paddingHorizontal: 12,
+        },
         pinContainer: {
             flexDirection: 'row',
             justifyContent: 'center',
             gap: 12,
-            marginBottom: 24,
+            marginBottom: 28,
         },
         pinDigit: {
             width: 56,
             height: 64,
-            borderWidth: 2,
+            borderWidth: 1.5,
             borderColor: colors.border,
-            borderRadius: 12,
+            borderRadius: 14,
             fontSize: 28,
             fontWeight: '700',
             color: colors.text,
@@ -1060,23 +1363,24 @@ const makeStyles = (colors: any) =>
             textAlignVertical: 'center',
             padding: 0,
             includeFontPadding: false,
+            fontVariant: ['tabular-nums'],
         },
         pinDigitFilled: {
             borderColor: colors.primary,
             backgroundColor: colors.primary + '10',
+            color: colors.primary,
         },
-        pinInput: {
+        sheetBtn: {
+            backgroundColor: colors.primary,
             width: '100%',
-            height: '100%',
-            textAlign: 'center',
-            textAlignVertical: 'center',
-            fontSize: 24,
-            fontWeight: '700',
-            color: colors.text,
-            padding: 0,
-            paddingHorizontal: 0,
-            includeFontPadding: false,
+            height: 52,
+            borderRadius: 14,
+            justifyContent: 'center',
+            alignItems: 'center',
         },
-        sheetBtn: { backgroundColor: colors.primary, width: '100%', height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-        sheetBtnText: { color: 'white', fontWeight: '600', fontSize: 16 },
+        sheetBtnText: {
+            color: 'white',
+            fontWeight: '600',
+            fontSize: 16,
+        },
     });

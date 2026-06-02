@@ -25,8 +25,8 @@ export default function SignUpScreen() {
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
 
-    // ✅ Stabilan styles - ovisi o scheme (primitive), ne o colors objektu
-    const styles = useMemo(() => makeStyles(colors), [scheme]);
+
+    const styles = useMemo(() => makeStyles(colors), [colors]);
 
     // ✅ Memoiziran handleSignUp
     const handleSignUp = useCallback(async () => {

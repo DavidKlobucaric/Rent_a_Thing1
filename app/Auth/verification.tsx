@@ -33,8 +33,7 @@ export default function VerificationScreen() {
     const colors = Colors[scheme];
 
     // ✅ Stabilan styles - ovisi o scheme (primitive), ne o colors objektu
-    const styles = useMemo(() => makeStyles(colors), [scheme]);
-
+    const styles = useMemo(() => makeStyles(colors), [colors]);
     // ✅ Optimiziran timer - useCallback za interval cleanup
     useEffect(() => {
         if (timer > 0) {
