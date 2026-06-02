@@ -383,6 +383,7 @@ export default function AddScreen() {
             let imageUrls: string[] = [];
             if (images.length > 0) {
                 const uploadResult = await uploadImages(images);
+                console.log('Upload result:', JSON.stringify(uploadResult)); // ADD THIS
                 if (!uploadResult.success) {
                     setPublishing(false);
                     showModal({
