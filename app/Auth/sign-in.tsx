@@ -68,7 +68,7 @@ export default function SignUpScreen() {
 
     const handleLoginPress = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push('/log-in');
+        router.push('/Auth/log-in');
     }, [router]);
 
     return (

@@ -82,14 +82,14 @@ export default function Index() {
                 <View style={styles.bottom}>
                     <TouchableOpacity
                         style={styles.btnPrimary}
-                        onPress={() => router.push('/sign-in')}
+                        onPress={() => router.push('/Auth/sign-in')}
                         activeOpacity={0.9}
                     >
                         <Text style={styles.btnPrimaryText}>{t('index', 'signIn')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.btnSecondary}
-                        onPress={() => router.push('/log-in')}
+                        onPress={() => router.push('/Auth/log-in')}
                         activeOpacity={0.9}
                     >
                         <Text style={styles.btnSecondaryText}>{t('index', 'logIn')}</Text>
