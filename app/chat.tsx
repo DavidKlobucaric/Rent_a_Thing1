@@ -13,6 +13,7 @@ import { useLanguage } from '@/src/context/languageContext';
 import { useAuth } from '@/src/context/authContext';
 import * as Haptics from 'expo-haptics';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // ✅ DODANO
 import {
     getOrCreateConversation,
     getMessages,
@@ -23,6 +24,7 @@ import {
     confirmReturn,
     cancelBooking,
     getBookingPin,
+    getMyConversations, // ✅ DODANO
     type ChatMessage,
     type BookingDetails,
 } from '@/src/api/chatApi';
@@ -120,6 +122,19 @@ export default function Chat() {
         };
     }, []);
 
+    // ✅ NOVO: Funkcija za ažuriranje unread count-a u AsyncStorage
+    const updateUnreadCount = useCallback(async () => {
+        try {
+            const result = await getMyConversations();
+            if (result.success && result.data) {
+                const totalUnread = result.data.reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0);
+                await AsyncStorage.setItem('@app_unread_count', totalUnread.toString());
+            }
+        } catch (e) {
+            console.log('Error updating unread count:', e);
+        }
+    }, []);
+
     useEffect(() => {
         if (!params.listingId) return;
         let isActive = true;
@@ -151,12 +166,16 @@ export default function Chat() {
                 return;
             }
             await markConversationRead(cid);
+
+            // ✅ NOVO: Ažuriraj unread count nakon što se označi kao pročitano
+            await updateUnreadCount();
+
             if (isActive) setLoading(false);
         })();
         return () => {
             isActive = false;
         };
-    }, [params.listingId, params.conversationId]);
+    }, [params.listingId, params.conversationId, updateUnreadCount]);
 
     useEffect(() => {
         if (!conversationId) return;
@@ -246,13 +265,15 @@ export default function Chat() {
             setMessages((prev) =>
                 prev.map((m) => (m.id === optimistic.id ? result.data! : m))
             );
+            // ✅ NOVO: Ažuriraj unread count nakon slanja poruke
+            updateUnreadCount();
         } else {
             setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
             setInput(text);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
         setSending(false);
-    }, [input, conversationId, sending, me]);
+    }, [input, conversationId, sending, me, updateUnreadCount]);
 
     const handleConfirmBooking = async (bookingId: number) => {
         setActionLoading(true);
@@ -263,6 +284,8 @@ export default function Chat() {
             if (conversationId) {
                 const msgResult = await getMessages(conversationId);
                 if (msgResult.success) setMessages(msgResult.data ?? []);
+                // ✅ NOVO
+                updateUnreadCount();
             }
         } else {
             Alert.alert(t('common', 'error'), result.message);
@@ -284,6 +307,8 @@ export default function Chat() {
                         if (conversationId) {
                             const msgResult = await getMessages(conversationId);
                             if (msgResult.success) setMessages(msgResult.data ?? []);
+                            // ✅ NOVO
+                            updateUnreadCount();
                         }
                     } else {
                         Alert.alert(t('common', 'error'), result.message);
@@ -307,6 +332,8 @@ export default function Chat() {
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                         const msgResult = await getMessages(conversationId);
                         if (msgResult.success) setMessages(msgResult.data ?? []);
+                        // ✅ NOVO
+                        updateUnreadCount();
                     }
                 },
             },
@@ -345,6 +372,8 @@ export default function Chat() {
             if (conversationId) {
                 const msgResult = await getMessages(conversationId);
                 if (msgResult.success) setMessages(msgResult.data ?? []);
+                // ✅ NOVO
+                updateUnreadCount();
             }
         } else {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -366,6 +395,8 @@ export default function Chat() {
                         if (conversationId) {
                             const msgResult = await getMessages(conversationId);
                             if (msgResult.success) setMessages(msgResult.data ?? []);
+                            // ✅ NOVO
+                            updateUnreadCount();
                         }
                     }
                 },
@@ -420,7 +451,6 @@ export default function Chat() {
 
         const pin = booking.pickupPin || pins[booking.bookingId];
 
-        // 🎨 PROFESIONALNIJE IKONE - kontekstualno prilagođene
         const statusConfig = {
             pending: { color: '#FF9500', bg: '#FF950015', icon: 'hourglass-outline' as const },
             confirmed: { color: colors.success, bg: colors.success + '18', icon: 'shield-checkmark-outline' as const },
