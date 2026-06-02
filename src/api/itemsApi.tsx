@@ -466,7 +466,28 @@ export const getMapMarkers = async (category?: string): Promise<ApiResult<MapMar
         const params: Record<string, string> = {};
         if (category) params.category = category;
         const response = await api.get<any[]>('/listings/map-markers', { params });
-        return { success: true, data: response.data.map(normalizeMapMarker) };
+
+        const normalized = response.data.map(normalizeMapMarker);
+
+        // Geocode all unique locations in parallel
+        const uniqueLocations = [...new Set(normalized.map(m => m.location).filter(Boolean))];
+        const coordsMap = new Map<string, GeoCoords>();
+
+        await Promise.all(
+            uniqueLocations.map(async (loc) => {
+                const coords = await geocodeLocation(loc);
+                coordsMap.set(loc, coords);
+            })
+        );
+
+        const withCoords = normalized.map(marker => {
+            const coords = coordsMap.get(marker.location);
+            return coords
+                ? { ...marker, latitude: coords.latitude, longitude: coords.longitude }
+                : marker;
+        });
+
+        return { success: true, data: withCoords };
     } catch (error: any) {
         console.log('[AXIOS_MAP_ERROR]', error.message, error.response?.status);
         return { success: false, message: error.response?.data?.message || 'Could not load map markers.' };
