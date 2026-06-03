@@ -99,8 +99,7 @@ export default function ProfileScreen() {
     const handleLogout = useCallback(async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         await logout();
-        router.replace('/');
-    }, [logout, router]);
+    }, [logout]);
 
     const handleMyListingsPress = useCallback(() => router.push('/my-listings'), [router]);
     const handleSavedItemsPress = useCallback(() => router.push('/saved-items'), [router]);
@@ -338,36 +337,235 @@ export default function ProfileScreen() {
     );
 }
 
-const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { flexGrow: 1, paddingBottom: 40, paddingHorizontal: 16 },
-    heroHeader: { flexDirection: 'row', alignItems: 'center', paddingTop: 32, paddingBottom: 32, gap: 20 },
-    avatarPlaceholder: { width: 106, height: 106, borderRadius: 53, borderWidth: 0.5, borderColor: colors.border, backgroundColor: colors.surface || colors.background, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
-    avatarImage: { width: '100%', height: '100%', borderRadius: 53 },
-    avatarInitials: { width: '100%', height: '100%', borderRadius: 53, backgroundColor: colors.primary + '20', justifyContent: 'center', alignItems: 'center' },
-    avatarInitialsText: { fontSize: 36, fontWeight: '700', color: colors.primary },
-    heroDetails: { flex: 1, gap: 6 },
-    userName: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -0.8, lineHeight: 34 },
-    ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-    ratingText: { fontSize: 16, fontWeight: '800', color: colors.text },
-    ratingCount: { fontSize: 13, color: colors.textMuted, fontWeight: '500' },
-    verifiedBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: (colors.success || '#000') + '15', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, alignSelf: 'flex-start', gap: 5, marginTop: 2 },
-    verifiedText: { fontSize: 12, fontWeight: '700', color: colors.success },
-    statsRowContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface || colors.background, paddingVertical: 18, borderRadius: 20, borderWidth: 0.5, borderColor: colors.border, marginBottom: 40 },
-    statBox: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    statValue: { fontSize: 22, fontWeight: '800', color: colors.text, letterSpacing: -0.3 },
-    statLabel: { fontSize: 11, color: colors.textMuted, fontWeight: '600', marginTop: 2 },
-    statDivider: { width: 0.5, height: 24, backgroundColor: colors.border },
-    menuSection: { marginBottom: 40 },
-    sectionTitle: { fontSize: 12, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, paddingLeft: 4 },
-    menuGroup: { backgroundColor: colors.card || colors.background, borderRadius: 20, borderWidth: 0.5, borderColor: colors.border, overflow: 'hidden' },
-    menuItem: { paddingHorizontal: 16, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', position: 'relative' },
-    menuLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-    iconBox: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.primary + '10', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
-    menuTitle: { fontSize: 15, fontWeight: '600', color: colors.text, marginBottom: 2 },
-    menuSubtitle: { fontSize: 13, color: colors.textMuted },
-    menuRightSide: { justifyContent: 'center', alignItems: 'center' },
-    menuSeparator: { position: 'absolute', bottom: 0, left: 70, right: 16, height: 0.5, backgroundColor: colors.border },
-    logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.logoutBg || colors.background, borderWidth: 0.5, borderColor: colors.logoutBorder || colors.border, paddingVertical: 16, borderRadius: 28, gap: 8, marginTop: 'auto' },
-    logoutText: { fontSize: 15, fontWeight: '600', color: colors.danger },
-});
+const makeStyles = (colors: typeof Colors.light) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+
+        scrollContent: {
+            flexGrow: 1,
+            paddingBottom: 40,
+            paddingHorizontal: 16,
+        },
+
+        heroHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingTop: 32,
+            paddingBottom: 32,
+            gap: 20,
+        },
+
+        avatarPlaceholder: {
+            width: 106,
+            height: 106,
+            borderRadius: 53,
+            borderWidth: 0.5,
+            borderColor: colors.border,
+            backgroundColor: colors.surface || colors.background,
+            justifyContent: 'center',
+            alignItems: 'center',
+            overflow: 'hidden',
+        },
+
+        avatarImage: {
+            width: '100%',
+            height: '100%',
+            borderRadius: 53,
+        },
+
+        avatarInitials: {
+            width: '100%',
+            height: '100%',
+            borderRadius: 53,
+            backgroundColor: colors.primary + '20',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+
+        avatarInitialsText: {
+            fontSize: 36,
+            fontWeight: '700',
+            color: colors.primary,
+        },
+
+        heroDetails: {
+            flex: 1,
+            gap: 6,
+        },
+
+        userName: {
+            fontSize: 28,
+            fontWeight: '900',
+            color: colors.text,
+            letterSpacing: -0.8,
+            lineHeight: 34,
+        },
+
+        ratingRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 5,
+        },
+
+        ratingText: {
+            fontSize: 16,
+            fontWeight: '800',
+            color: colors.text,
+        },
+
+        ratingCount: {
+            fontSize: 13,
+            color: colors.textMuted,
+            fontWeight: '500',
+        },
+
+        verifiedBadge: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: (colors.success || '#000') + '15',
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            borderRadius: 10,
+            alignSelf: 'flex-start',
+            gap: 5,
+            marginTop: 2,
+        },
+
+        verifiedText: {
+            fontSize: 12,
+            fontWeight: '700',
+            color: colors.success,
+        },
+
+        statsRowContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surface || colors.background,
+            paddingVertical: 18,
+            borderRadius: 20,
+            borderWidth: 0.5,
+            borderColor: colors.border,
+            marginBottom: 40,
+        },
+
+        statBox: {
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+
+        statValue: {
+            fontSize: 22,
+            fontWeight: '800',
+            color: colors.text,
+            letterSpacing: -0.3,
+        },
+
+        statLabel: {
+            fontSize: 11,
+            color: colors.textMuted,
+            fontWeight: '600',
+            marginTop: 2,
+        },
+
+        statDivider: {
+            width: 0.5,
+            height: 24,
+            backgroundColor: colors.border,
+        },
+
+        menuSection: {
+            marginBottom: 40,
+        },
+
+        sectionTitle: {
+            fontSize: 12,
+            fontWeight: '700',
+            color: colors.textMuted,
+            textTransform: 'uppercase',
+            letterSpacing: 1,
+            marginBottom: 12,
+            paddingLeft: 4,
+        },
+
+        menuGroup: {
+            backgroundColor: colors.card || colors.background,
+            borderRadius: 20,
+            borderWidth: 0.5,
+            borderColor: colors.border,
+            overflow: 'hidden',
+        },
+
+        menuItem: {
+            paddingHorizontal: 16,
+            paddingVertical: 18,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            position: 'relative',
+        },
+
+        menuLeft: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            flex: 1,
+        },
+
+        iconBox: {
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            backgroundColor: colors.primary + '10',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 14,
+        },
+
+        menuTitle: {
+            fontSize: 15,
+            fontWeight: '600',
+            color: colors.text,
+            marginBottom: 2,
+        },
+
+        menuSubtitle: {
+            fontSize: 13,
+            color: colors.textMuted,
+        },
+
+        menuRightSide: {
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+
+        menuSeparator: {
+            position: 'absolute',
+            bottom: 0,
+            left: 70,
+            right: 16,
+            height: 0.5,
+            backgroundColor: colors.border,
+        },
+
+        logoutButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.logoutBg || colors.background,
+            borderWidth: 0.5,
+            borderColor: colors.logoutBorder || colors.border,
+            paddingVertical: 16,
+            borderRadius: 28,
+            gap: 8,
+            marginTop: 'auto',
+        },
+
+        logoutText: {
+            fontSize: 15,
+            fontWeight: '600',
+            color: colors.danger,
+        },
+    });

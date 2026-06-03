@@ -13,7 +13,7 @@ import { useLanguage } from '@/src/context/languageContext';
 import { useAuth } from '@/src/context/authContext';
 import * as Haptics from 'expo-haptics';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // ✅ DODANO
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     getOrCreateConversation,
     getMessages,
@@ -24,7 +24,7 @@ import {
     confirmReturn,
     cancelBooking,
     getBookingPin,
-    getMyConversations, // ✅ DODANO
+    getMyConversations,
     type ChatMessage,
     type BookingDetails,
 } from '@/src/api/chatApi';
@@ -122,7 +122,7 @@ export default function Chat() {
         };
     }, []);
 
-    // ✅ NOVO: Funkcija za ažuriranje unread count-a u AsyncStorage
+
     const updateUnreadCount = useCallback(async () => {
         try {
             const result = await getMyConversations();
@@ -167,7 +167,6 @@ export default function Chat() {
             }
             await markConversationRead(cid);
 
-            // ✅ NOVO: Ažuriraj unread count nakon što se označi kao pročitano
             await updateUnreadCount();
 
             if (isActive) setLoading(false);
@@ -265,13 +264,15 @@ export default function Chat() {
             setMessages((prev) =>
                 prev.map((m) => (m.id === optimistic.id ? result.data! : m))
             );
-            // ✅ NOVO: Ažuriraj unread count nakon slanja poruke
+
             updateUnreadCount();
+
         } else {
             setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
             setInput(text);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
+
         setSending(false);
     }, [input, conversationId, sending, me, updateUnreadCount]);
 
@@ -279,12 +280,15 @@ export default function Chat() {
         setActionLoading(true);
         const result = await respondToBooking(bookingId, 'confirm');
         setActionLoading(false);
+
         if (result.success) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
             if (conversationId) {
                 const msgResult = await getMessages(conversationId);
+
                 if (msgResult.success) setMessages(msgResult.data ?? []);
-                // ✅ NOVO
+
                 updateUnreadCount();
             }
         } else {
@@ -307,7 +311,7 @@ export default function Chat() {
                         if (conversationId) {
                             const msgResult = await getMessages(conversationId);
                             if (msgResult.success) setMessages(msgResult.data ?? []);
-                            // ✅ NOVO
+
                             updateUnreadCount();
                         }
                     } else {
@@ -332,7 +336,7 @@ export default function Chat() {
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                         const msgResult = await getMessages(conversationId);
                         if (msgResult.success) setMessages(msgResult.data ?? []);
-                        // ✅ NOVO
+
                         updateUnreadCount();
                     }
                 },
@@ -372,7 +376,7 @@ export default function Chat() {
             if (conversationId) {
                 const msgResult = await getMessages(conversationId);
                 if (msgResult.success) setMessages(msgResult.data ?? []);
-                // ✅ NOVO
+
                 updateUnreadCount();
             }
         } else {
@@ -395,7 +399,7 @@ export default function Chat() {
                         if (conversationId) {
                             const msgResult = await getMessages(conversationId);
                             if (msgResult.success) setMessages(msgResult.data ?? []);
-                            // ✅ NOVO
+
                             updateUnreadCount();
                         }
                     }
@@ -978,9 +982,25 @@ export default function Chat() {
 
 const makeStyles = (colors: any) =>
     StyleSheet.create({
-        container: { flex: 1, backgroundColor: colors.background },
-        centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-        emptyText: { marginTop: 8, fontSize: 14, color: colors.textMuted, textAlign: 'center' },
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+
+        centered: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 24,
+        },
+
+        emptyText: {
+            marginTop: 8,
+            fontSize: 14,
+            color: colors.textMuted,
+            textAlign: 'center',
+        },
+
         header: {
             flexDirection: 'row',
             alignItems: 'center',
@@ -990,26 +1010,111 @@ const makeStyles = (colors: any) =>
             borderBottomColor: colors.border,
             backgroundColor: colors.background,
         },
-        backButton: { paddingRight: 12 },
-        avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface },
-        headerText: { flex: 1, marginLeft: 12 },
-        headerName: { fontSize: 16, fontWeight: '600', color: colors.text },
-        headerItem: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
-        messagesContainer: { flex: 1, backgroundColor: colors.background },
-        messagesContent: { padding: 16, paddingBottom: 32 },
 
-        messageRowMe: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 16 },
-        messageRowThem: { flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 16 },
-        msgAvatar: { width: 28, height: 28, borderRadius: 14, marginRight: 8, alignSelf: 'flex-end', backgroundColor: colors.surface },
-        messageBubble: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, maxWidth: '75%' },
-        messageBubbleMe: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
-        messageBubbleThem: { backgroundColor: colors.surface, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: colors.border },
-        messageText: { fontSize: 15, lineHeight: 20 },
-        messageTextMe: { color: 'white' },
-        messageTextThem: { color: colors.text },
-        messageTime: { fontSize: 10, marginTop: 4, alignSelf: 'flex-end' },
-        messageTimeMe: { color: 'rgba(255,255,255,0.7)' },
-        messageTimeThem: { color: colors.textMuted },
+        backButton: {
+            paddingRight: 12,
+        },
+
+        avatar: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: colors.surface,
+        },
+
+        headerText: {
+            flex: 1,
+            marginLeft: 12,
+        },
+
+        headerName: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: colors.text,
+        },
+
+        headerItem: {
+            fontSize: 12,
+            color: colors.textMuted,
+            marginTop: 1,
+        },
+
+        messagesContainer: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+
+        messagesContent: {
+            padding: 16,
+            paddingBottom: 32,
+        },
+
+        messageRowMe: {
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            marginBottom: 16,
+        },
+
+        messageRowThem: {
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            marginBottom: 16,
+        },
+
+        msgAvatar: {
+            width: 28,
+            height: 28,
+            borderRadius: 14,
+            marginRight: 8,
+            alignSelf: 'flex-end',
+            backgroundColor: colors.surface,
+        },
+
+        messageBubble: {
+            borderRadius: 20,
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            maxWidth: '75%',
+        },
+
+        messageBubbleMe: {
+            backgroundColor: colors.primary,
+            borderBottomRightRadius: 4,
+        },
+
+        messageBubbleThem: {
+            backgroundColor: colors.surface,
+            borderBottomLeftRadius: 4,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+
+        messageText: {
+            fontSize: 15,
+            lineHeight: 20,
+        },
+
+        messageTextMe: {
+            color: 'white',
+        },
+
+        messageTextThem: {
+            color: colors.text,
+        },
+
+        messageTime: {
+            fontSize: 10,
+            marginTop: 4,
+            alignSelf: 'flex-end',
+        },
+
+        messageTimeMe: {
+            color: 'rgba(255,255,255,0.7)',
+        },
+
+        messageTimeThem: {
+            color: colors.textMuted,
+        },
 
         historyUpdateRow: {
             flexDirection: 'row',
@@ -1030,7 +1135,11 @@ const makeStyles = (colors: any) =>
             color: colors.textMuted,
         },
 
-        systemMessageRow: { width: '100%', marginVertical: 12, alignItems: 'center' },
+        systemMessageRow: {
+            width: '100%',
+            marginVertical: 12,
+            alignItems: 'center'
+        },
 
         bookingCard: {
             width: '100%',

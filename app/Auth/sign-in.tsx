@@ -3,7 +3,7 @@ import {
     View, Text, TextInput, TouchableOpacity,
     StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
-import { Image } from 'expo-image'; // ✅ expo-image umjesto RN Image (brže, s cachingom)
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
@@ -28,7 +28,7 @@ export default function SignUpScreen() {
 
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
-    // ✅ Memoiziran handleSignUp
+
     const handleSignUp = useCallback(async () => {
         if (!agreed) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -56,7 +56,7 @@ export default function SignUpScreen() {
         }
     }, [agreed, username, email, password, t, router]);
 
-    // ✅ Memoizirani manji handleri
+
     const toggleAgreed = useCallback(() => {
         Haptics.selectionAsync();
         setAgreed(prev => !prev);
@@ -145,7 +145,7 @@ export default function SignUpScreen() {
                         <Image
                             source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png' }}
                             style={styles.socialIcon}
-                            cachePolicy="memory-disk" // ✅ Brže ponovno učitavanje
+                            cachePolicy="memory-disk"
                             transition={200}
                         />
                         <Text style={[styles.mediumText, { color: colors.googleButtonText }]}>
@@ -180,31 +180,200 @@ export default function SignUpScreen() {
     );
 }
 
-const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    header: { alignItems: 'center', justifyContent: 'center', paddingTop: 16, paddingBottom: 8 },
-    titleText: { fontWeight: "600", fontSize: 32, letterSpacing: -0.5, color: colors.text },
-    subtitleContainer: { alignItems: 'center', paddingHorizontal: 10, paddingBottom: 20 },
-    subtitleText: { fontSize: 15, fontWeight: "400", textAlign: "center", lineHeight: 24, color: colors.textSecondary },
-    card: { width: '100%', borderRadius: 14, padding: 20, paddingTop: 0, alignSelf: 'center' },
-    labelText: { fontSize: 12, fontWeight: "600", color: colors.text, paddingTop: 16, paddingBottom: 8, letterSpacing: 0.4, textTransform: 'uppercase' },
-    input: { width: '100%', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 0.5, borderColor: colors.border, fontSize: 14, color: colors.text },
-    termsRow: { paddingTop: 16, paddingBottom: 8 },
-    termsContainer: { flexDirection: "row", alignItems: "center", gap: 6 },
-    smallText: { fontSize: 13, flex: 1 },
-    mediumText: { fontSize: 15, color: colors.textSecondary },
-    primaryButton: { width: '100%', alignItems: "center", justifyContent: "center", paddingVertical: 10, paddingHorizontal: 20, borderRadius: 14, backgroundColor: colors.primary, marginTop: 20 },
-    primaryButtonText: { fontSize: 16, fontWeight: "600", color: colors.iconColorInverse },
-    dividerContainer: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 20, gap: 12 },
-    dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
-    dividerText: { fontSize: 11, color: colors.textMuted, fontWeight: "500", letterSpacing: 0.5 },
-    socialContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 8 },
-    socialButton: { width: '100%', flexDirection: "row", alignItems: "center", gap: 8, justifyContent: "center", paddingVertical: 10, paddingHorizontal: 20, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 0.5, borderColor: colors.border },
-    socialIcon: { width: 22, height: 22 },
-    signUpContainer: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingTop: 24, gap: 6 },
-    trustContainer: { alignItems: 'center', paddingTop: 32, paddingBottom: 20 },
-    badgeRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 56, paddingBottom: 12 },
-    iconCircle: { width: 56, height: 56, borderRadius: 9999, backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', marginBottom: 5, borderWidth: 1, borderColor: colors.borderLight },
-    badgeLabels: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 28 },
-    badgeText: { fontSize: 11, color: colors.textMuted, fontWeight: "500", textAlign: "center" },
-});
+const makeStyles = (colors: typeof Colors.light) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+
+        header: {
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingTop: 16,
+            paddingBottom: 8,
+        },
+
+        titleText: {
+            fontWeight: "600",
+            fontSize: 32,
+            letterSpacing: -0.5,
+            color: colors.text,
+        },
+
+        subtitleContainer: {
+            alignItems: 'center',
+            paddingHorizontal: 10,
+            paddingBottom: 20,
+        },
+
+        subtitleText: {
+            fontSize: 15,
+            fontWeight: "400",
+            textAlign: "center",
+            lineHeight: 24,
+            color: colors.textSecondary,
+        },
+
+        card: {
+            width: '100%',
+            borderRadius: 14,
+            padding: 20,
+            paddingTop: 0,
+            alignSelf: 'center',
+        },
+
+        labelText: {
+            fontSize: 12,
+            fontWeight: "600",
+            color: colors.text,
+            paddingTop: 16,
+            paddingBottom: 8,
+            letterSpacing: 0.4,
+            textTransform: 'uppercase',
+        },
+
+        input: {
+            width: '100%',
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 14,
+            backgroundColor: colors.surface,
+            borderWidth: 0.5,
+            borderColor: colors.border,
+            fontSize: 14,
+            color: colors.text,
+        },
+
+        termsRow: {
+            paddingTop: 16,
+            paddingBottom: 8,
+        },
+
+        termsContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+        },
+
+        smallText: {
+            fontSize: 13,
+            flex: 1,
+        },
+
+        mediumText: {
+            fontSize: 15,
+            color: colors.textSecondary,
+        },
+
+        primaryButton: {
+            width: '100%',
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 14,
+            backgroundColor: colors.primary,
+            marginTop: 20,
+        },
+
+        primaryButtonText: {
+            fontSize: 16,
+            fontWeight: "600",
+            color: colors.iconColorInverse,
+        },
+
+        dividerContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: 20,
+            gap: 12,
+        },
+
+        dividerLine: {
+            flex: 1,
+            height: 1,
+            backgroundColor: colors.border,
+        },
+
+        dividerText: {
+            fontSize: 11,
+            color: colors.textMuted,
+            fontWeight: "500",
+            letterSpacing: 0.5,
+        },
+
+        socialContainer: {
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 8,
+        },
+
+        socialButton: {
+            width: '100%',
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+            justifyContent: "center",
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 14,
+            backgroundColor: colors.surface,
+            borderWidth: 0.5,
+            borderColor: colors.border,
+        },
+
+        socialIcon: {
+            width: 22,
+            height: 22,
+        },
+
+        signUpContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingTop: 24,
+            gap: 6,
+        },
+
+        trustContainer: {
+            alignItems: 'center',
+            paddingTop: 32,
+            paddingBottom: 20,
+        },
+
+        badgeRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 56,
+            paddingBottom: 12,
+        },
+
+        iconCircle: {
+            width: 56,
+            height: 56,
+            borderRadius: 9999,
+            backgroundColor: colors.surface,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 5,
+            borderWidth: 1,
+            borderColor: colors.borderLight,
+        },
+
+        badgeLabels: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 28,
+        },
+
+        badgeText: {
+            fontSize: 11,
+            color: colors.textMuted,
+            fontWeight: "500",
+            textAlign: "center",
+        },
+    });

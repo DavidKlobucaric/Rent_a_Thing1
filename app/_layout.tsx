@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
-import { LanguageProvider } from "@/src/context/languageContext";
+import { LanguageProvider, useLanguage } from "@/src/context/languageContext";
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from "@/src/context/authContext";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -32,6 +32,7 @@ function RootNavigation() {
     const segments = useSegments();
     const [isReady, setIsReady] = useState(false);
     const colorScheme = useColorScheme();
+    const { t } = useLanguage();
 
     // Auth initialization
     useEffect(() => {
@@ -52,12 +53,12 @@ function RootNavigation() {
         init();
     }, [refreshAuth]);
 
-    // 🌟 Dok se auth učitava, prikaži splash holder (nema flasha)
+
     if (!isReady || isLoading) {
         return <View style={colorScheme === 'dark' ? styles.splashHolderDark : styles.splashHolderLight} />;
     }
 
-    // Auth je spreman - provjeri gdje je korisnik trenutno
+
     const currentSegment = segments[0] as string;
 
     const inAuthGroup = currentSegment === '(auth)' ||
@@ -76,8 +77,7 @@ function RootNavigation() {
         currentSegment === 'edit-listing' ||
         currentSegment === 'my-listings';
 
-    // 🌟 Ako korisnik treba redirect, prikaži Redirect UNUTAR splash holdera
-    // Tako splash ostaje vidljiv dok se ruta mijenja u pozadini
+
     if (!token && inAppGroup) {
         return (
             <View style={colorScheme === 'dark' ? styles.splashHolderDark : styles.splashHolderLight}>
@@ -94,12 +94,11 @@ function RootNavigation() {
         );
     }
 
-    // 🌟 Korisnik je na pravoj ruti - prikaži Stack i sakrij splash kad se layouta
+
     return (
         <View
             style={{ flex: 1 }}
             onLayout={() => {
-                // Sakrij splash tek kad se prava ruta stvarno pojavi na ekranu
                 SplashScreen.hideAsync();
             }}
         >
@@ -109,15 +108,15 @@ function RootNavigation() {
                 <Stack.Screen name="Auth/sign-in" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
                 <Stack.Screen name="Auth/log-in" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
                 <Stack.Screen name="Auth/verification" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
-                <Stack.Screen name="saved-items" options={{ title: 'Saved Items', animation: 'fade', animationDuration: 250 }} />
-                <Stack.Screen name="settings" options={{ title: 'Settings', animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="saved-items" options={{ title: t('profile', 'savedItems'), animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="settings" options={{ title: t('profile', 'settings'), animation: 'fade', animationDuration: 250 }} />
                 <Stack.Screen name="chat" options={{ headerShown: false, animation: 'fade', animationDuration: 250 }} />
-                <Stack.Screen name="support" options={{ title: 'Support', animation: 'fade', animationDuration: 250 }} />
-                <Stack.Screen name="privacy" options={{ title: 'Privacy', animation: 'slide_from_right', animationDuration: 250 }} />
-                <Stack.Screen name="terms" options={{ title: 'Terms', animation: 'slide_from_right', animationDuration: 250 }} />
+                <Stack.Screen name="support" options={{ title: t('profile', 'support'), animation: 'fade', animationDuration: 250 }} />
+                <Stack.Screen name="privacy" options={{ title: t('settings', 'privacy'), animation: 'slide_from_right', animationDuration: 250 }} />
+                <Stack.Screen name="terms" options={{ title: t('common', 'terms'), animation: 'slide_from_right', animationDuration: 250 }} />
                 <Stack.Screen name="item" options={{ headerShown: false, animation: 'slide_from_right', animationDuration: 250 }} />
-                <Stack.Screen name="edit-listing" options={{ title: 'Edit Listing', animation: 'slide_from_right', animationDuration: 250 }} />
-                <Stack.Screen name="my-listings" options={{ title: 'My Listings', animation: 'slide_from_right', animationDuration: 250 }} />
+                <Stack.Screen name="edit-listing" options={{ title: t('edit', 'editListing'), animation: 'slide_from_right', animationDuration: 250 }} />
+                <Stack.Screen name="my-listings" options={{ title: t('profile', 'myListings'), animation: 'slide_from_right', animationDuration: 250 }} />
             </Stack>
         </View>
     );

@@ -62,7 +62,7 @@ const getCategoryIcon = (category: string): IoniconName => {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// ✅ MEMOIZIRANA PIN KOMPONENTA
+// MEMOIZIRANA PIN KOMPONENTA
 // ═══════════════════════════════════════════════════════════════
 interface MapPinProps {
     marker: MapMarker;
@@ -142,7 +142,7 @@ const SelectedMarkerCard = memo(({ marker, colors, styles, isAnimatingOut, onClo
     const categoryIcon = getCategoryIcon(marker.category);
     const prevMarkerRef = useRef<MapMarker | null>(null);
 
-    // Animiraj ulaz samo pri prvom mountu
+
     useEffect(() => {
         Animated.spring(slideAnim, {
             toValue: 0,
@@ -153,7 +153,7 @@ const SelectedMarkerCard = memo(({ marker, colors, styles, isAnimatingOut, onClo
         prevMarkerRef.current = marker;
     }, []);
 
-    // Animiraj izlaz kada isAnimatingOut postane true
+
     useEffect(() => {
         if (isAnimatingOut) {
             Animated.timing(slideAnim, {
@@ -166,10 +166,9 @@ const SelectedMarkerCard = memo(({ marker, colors, styles, isAnimatingOut, onClo
         }
     }, [isAnimatingOut, slideAnim, onAnimationComplete]);
 
-    // 🎯 Kada se marker promijeni (drugi oglas), samo ažuriraj sadržaj bez animacije
+
     useEffect(() => {
         if (prevMarkerRef.current && prevMarkerRef.current.listingId !== marker.listingId) {
-            // Samo ažuriraj referencu, bez animacije - sadržaj će se re-renderati
             prevMarkerRef.current = marker;
         }
     }, [marker]);
@@ -184,7 +183,7 @@ const SelectedMarkerCard = memo(({ marker, colors, styles, isAnimatingOut, onClo
             {/* Drag handle */}
             <View style={styles.dragHandle} />
 
-            {/* Close button - pokreće animaciju zatvaranja */}
+            {/* Close button  */}
             <TouchableOpacity
                 style={styles.closeButton}
                 onPress={onCloseRequest}
@@ -337,27 +336,26 @@ export default function MapScreen() {
         }, [activeCategory, loadMarkers, token, isLoading])
     );
 
-    // 🎯 KLJUČNA PROMJENA: Logika za klik na marker
+
     const handleMarkerPress = useCallback((marker: MapMarker) => {
         setSelectedMarker((prev) => {
-            // 🎯 Ako klikneš na ISTI marker -> zatvori s animacijom (toggle off)
+
             if (prev?.listingId === marker.listingId) {
                 setIsAnimatingOut(true);
-                return prev; // vrati isti da animacija radi
+                return prev;
             }
 
-            // 🎯 Ako je već otvoren i klikneš na DRUGI marker -> samo ažuriraj (bez animacije)
+
             if (prev) {
-                // Zoomaj kameru na novi marker
                 cameraRef.current?.setCamera({
                     centerCoordinate: [marker.longitude!, marker.latitude!],
                     animationDuration: 400,
                 });
-                // Vrati novi marker - SelectedMarkerCard će se re-renderati s novim podacima
+
                 return marker;
             }
 
-            // 🎯 Ako nije otvoren -> otvori novi marker
+
             cameraRef.current?.setCamera({
                 centerCoordinate: [marker.longitude!, marker.latitude!],
                 animationDuration: 400,
@@ -366,12 +364,12 @@ export default function MapScreen() {
         });
     }, []);
 
-    // 🎯 Pokreće animaciju zatvaranja (koristi se za X gumb i klik na mapu)
+
     const handleCloseAnimation = useCallback(() => {
         setIsAnimatingOut(true);
     }, []);
 
-    // 🎯 Poziva se NAKON što animacija završi - briše state
+
     const handleAnimationComplete = useCallback(() => {
         setSelectedMarker(null);
         setIsAnimatingOut(false);
@@ -432,7 +430,7 @@ export default function MapScreen() {
         setActiveCategory(categoryId);
     }, []);
 
-    // 🎯 Klik na prazno područje mape -> zatvori s animacijom
+
     const handleMapPress = useCallback(() => {
         if (selectedMarker && !isAnimatingOut) {
             setIsAnimatingOut(true);
@@ -602,11 +600,39 @@ export default function MapScreen() {
 
 const makeStyles = (colors: typeof Colors.light) =>
     StyleSheet.create({
-        container: { flex: 1, backgroundColor: colors.background },
-        map: { flex: 1 },
-        markerWrapper: { alignItems: 'center', justifyContent: 'flex-end' },
-        searchPin: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary + '30', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.background },
-        searchPinDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 1, borderColor: colors.background },
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+
+        map: {
+            flex: 1,
+        },
+
+        markerWrapper: {
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+        },
+
+        searchPin: {
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: colors.primary + '30',
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: colors.background,
+        },
+
+        searchPinDot: {
+            width: 14,
+            height: 14,
+            borderRadius: 7,
+            borderWidth: 1,
+            borderColor: colors.background,
+        },
+
         pinShadow: {
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 2 },
@@ -614,6 +640,7 @@ const makeStyles = (colors: typeof Colors.light) =>
             shadowRadius: 4,
             elevation: 5,
         },
+
         pin: {
             paddingHorizontal: 10,
             paddingVertical: 6,
@@ -621,31 +648,182 @@ const makeStyles = (colors: typeof Colors.light) =>
             alignItems: 'center',
             justifyContent: 'center',
         },
-        pinContent: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-        pinSelected: { transform: [{ scale: 1.15 }] },
-        pinPrice: { color: '#FFFFFF', fontSize: 12, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 },
-        pinTail: { alignSelf: 'center', width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderTopWidth: 7, borderLeftColor: 'transparent', borderRightColor: 'transparent', marginTop: -1 },
 
-        searchContainer: { position: 'absolute', top: 55, paddingHorizontal: 13, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', zIndex: 10, width: '100%' },
-        inputWrapper: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
-        searchIcon: { fontSize: 18, marginRight: 8, alignSelf: 'center' },
-        input: { flex: 1, height: 42, fontSize: 15, color: colors.text, fontWeight: '400' },
-        clearButton: { padding: 6, marginLeft: 4 },
-        clearButtonText: { fontSize: 18, fontWeight: '600' },
-        button: { justifyContent: 'center', alignItems: 'center', paddingRight: 4 },
-        buttonDisabled: { opacity: 0.6 },
-        categoryContainer: { position: 'absolute', top: 120, left: 0, right: 0, zIndex: 10 },
-        categoryContent: { paddingHorizontal: 12, gap: 10, alignItems: 'center' },
-        CategoryButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 9, paddingHorizontal: 18, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, gap: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
-        CategoryButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-        categoryText: { fontSize: 13, fontWeight: '500', color: colors.textSecondary, letterSpacing: 0.3 },
-        categoryTextActive: { color: colors.iconColorInverse, fontWeight: '600' },
-        markersLoadingBadge: { position: 'absolute', bottom: 30, right: 16, backgroundColor: colors.surface, borderRadius: 20, padding: 12, paddingHorizontal: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 5 },
-        shimmerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-        shimmerCircle: { width: 24, height: 24, borderRadius: 12 },
-        shimmerLine: { width: 80, height: 14, borderRadius: 7 },
+        pinContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+        },
 
-        // 🎯 BOTTOM SHEET STYLES
+        pinSelected: {
+            transform: [{ scale: 1.15 }],
+        },
+
+        pinPrice: {
+            color: '#FFFFFF',
+            fontSize: 12,
+            fontWeight: '700',
+            textShadowColor: 'rgba(0,0,0,0.3)',
+            textShadowOffset: { width: 0, height: 1 },
+            textShadowRadius: 2,
+        },
+
+        pinTail: {
+            alignSelf: 'center',
+            width: 0,
+            height: 0,
+            borderLeftWidth: 6,
+            borderRightWidth: 6,
+            borderTopWidth: 7,
+            borderLeftColor: 'transparent',
+            borderRightColor: 'transparent',
+            marginTop: -1,
+        },
+
+        searchContainer: {
+            position: 'absolute',
+            top: 55,
+            paddingHorizontal: 13,
+            alignSelf: 'center',
+            flexDirection: 'row',
+            alignItems: 'center',
+            zIndex: 10,
+            width: '100%',
+        },
+
+        inputWrapper: {
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 14,
+            paddingVertical: 6,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 14,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 3,
+        },
+
+        searchIcon: {
+            fontSize: 18,
+            marginRight: 8,
+            alignSelf: 'center',
+        },
+
+        input: {
+            flex: 1,
+            height: 42,
+            fontSize: 15,
+            color: colors.text,
+            fontWeight: '400',
+        },
+
+        clearButton: {
+            padding: 6,
+            marginLeft: 4,
+        },
+
+        clearButtonText: {
+            fontSize: 18,
+            fontWeight: '600',
+        },
+
+        button: {
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingRight: 4,
+        },
+
+        buttonDisabled: {
+            opacity: 0.6,
+        },
+
+        categoryContainer: {
+            position: 'absolute',
+            top: 120,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+        },
+
+        categoryContent: {
+            paddingHorizontal: 12,
+            gap: 10,
+            alignItems: 'center',
+        },
+
+        CategoryButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 9,
+            paddingHorizontal: 18,
+            borderRadius: 14,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            gap: 6,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
+        },
+
+        CategoryButtonActive: {
+            backgroundColor: colors.primary,
+            borderColor: colors.primary,
+        },
+
+        categoryText: {
+            fontSize: 13,
+            fontWeight: '500',
+            color: colors.textSecondary,
+            letterSpacing: 0.3,
+        },
+
+        categoryTextActive: {
+            color: colors.iconColorInverse,
+            fontWeight: '600',
+        },
+
+        markersLoadingBadge: {
+            position: 'absolute',
+            bottom: 30,
+            right: 16,
+            backgroundColor: colors.surface,
+            borderRadius: 20,
+            padding: 12,
+            paddingHorizontal: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+            elevation: 5,
+        },
+
+        shimmerRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+        },
+
+        shimmerCircle: {
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+        },
+
+        shimmerLine: {
+            width: 80,
+            height: 14,
+            borderRadius: 7,
+        },
+
         bottomCard: {
             position: 'absolute',
             bottom: 20,
@@ -661,6 +839,7 @@ const makeStyles = (colors: typeof Colors.light) =>
             elevation: 10,
             zIndex: 100,
         },
+
         dragHandle: {
             width: 36,
             height: 4,
@@ -669,31 +848,37 @@ const makeStyles = (colors: typeof Colors.light) =>
             alignSelf: 'center',
             marginBottom: 12,
         },
+
         closeButton: {
             position: 'absolute',
             top: 12,
             right: 12,
             zIndex: 10,
         },
+
         bottomCardContent: {
             flexDirection: 'row',
             marginBottom: 14,
         },
+
         bottomCardImage: {
             width: 80,
             height: 80,
             borderRadius: 12,
             marginRight: 14,
         },
+
         bottomCardImagePlaceholder: {
             backgroundColor: colors.iconCircleBg,
             alignItems: 'center',
             justifyContent: 'center',
         },
+
         bottomCardInfo: {
             flex: 1,
             justifyContent: 'center',
         },
+
         bottomCategoryBadge: {
             flexDirection: 'row',
             alignItems: 'center',
@@ -704,12 +889,14 @@ const makeStyles = (colors: typeof Colors.light) =>
             borderRadius: 6,
             marginBottom: 6,
         },
+
         bottomCategoryText: {
             fontSize: 10,
             fontWeight: '700',
             textTransform: 'uppercase',
             letterSpacing: 0.4,
         },
+
         bottomCardName: {
             fontSize: 16,
             fontWeight: '700',
@@ -717,16 +904,19 @@ const makeStyles = (colors: typeof Colors.light) =>
             marginBottom: 4,
             lineHeight: 20,
         },
+
         bottomCardLocationRow: {
             flexDirection: 'row',
             alignItems: 'center',
             gap: 4,
         },
+
         bottomCardLocation: {
             fontSize: 12,
             color: colors.textMuted,
             flex: 1,
         },
+
         bottomCardFooter: {
             flexDirection: 'row',
             alignItems: 'center',
@@ -735,16 +925,19 @@ const makeStyles = (colors: typeof Colors.light) =>
             borderTopColor: colors.border,
             paddingTop: 14,
         },
+
         bottomCardPriceLabel: {
             fontSize: 11,
             color: colors.textMuted,
             marginBottom: 2,
         },
+
         bottomCardPrice: {
             fontSize: 20,
             fontWeight: '700',
             letterSpacing: -0.3,
         },
+
         viewDetailsButton: {
             flexDirection: 'row',
             alignItems: 'center',
@@ -753,6 +946,7 @@ const makeStyles = (colors: typeof Colors.light) =>
             paddingVertical: 12,
             borderRadius: 12,
         },
+
         viewDetailsText: {
             color: '#FFFFFF',
             fontSize: 14,

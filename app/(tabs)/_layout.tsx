@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import React, { useEffect, useState } from 'react'; // ✅ Dodan useEffect, useState
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useLanguage } from '@/src/context/languageContext';
 import { HapticTab } from '@/components/haptic-tab';
@@ -8,7 +8,7 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // ✅ DODANO
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function TabLayout() {
     const colorScheme = useColorScheme();
@@ -16,29 +16,28 @@ export default function TabLayout() {
     const colors = Colors[colorScheme ?? 'light'];
     const insets = useSafeAreaInsets();
 
-    // ✅ NOVO: Stanja za notifikacije i badge
+
     const [unreadCount, setUnreadCount] = useState(0);
     const [showNotifBadge, setShowNotifBadge] = useState(true);
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                // 1. Pročitaj postavke iz Settings-a
+
                 const settingsStr = await AsyncStorage.getItem('@settings_notifications');
                 if (settingsStr) {
                     const settings = JSON.parse(settingsStr);
-                    // Ako je newMessages false, sakrij badge
                     setShowNotifBadge(settings.newMessages !== false);
                 }
 
-                // 2. Pročitaj broj nepročitanih poruka koji je Inbox/Chat spremio
+
                 const countStr = await AsyncStorage.getItem('@app_unread_count');
                 if (countStr) setUnreadCount(parseInt(countStr, 10) || 0);
             } catch (e) {}
         };
 
         loadData();
-        // Provjeravaj svakih 3 sekunde (jeftino je jer čita samo lokalnu memoriju)
+
         const interval = setInterval(loadData, 3000);
         return () => clearInterval(interval);
     }, []);
@@ -83,10 +82,10 @@ export default function TabLayout() {
                 options={{
                     title: t('tabs', 'inbox'),
                     tabBarIcon: ({ color }) => <MaterialIcons name="mail" size={28} color={color} />,
-                    // ✅ NOVO: Prikazuj badge samo ako je postavka uključena i ima nepročitanih
+
                     tabBarBadge: (showNotifBadge && unreadCount > 0) ? (unreadCount > 99 ? '99+' : unreadCount) : undefined,
                     tabBarBadgeStyle: {
-                        backgroundColor: colors.danger, // Crvena boja
+                        backgroundColor: colors.danger,
                         color: '#FFFFFF',
                         fontSize: 10,
                         fontWeight: '700',

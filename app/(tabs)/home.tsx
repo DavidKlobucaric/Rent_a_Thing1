@@ -590,7 +590,11 @@ export default function HomeScreen() {
 }
 
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
+
+    container: { flex: 1,
+        backgroundColor: colors.background
+    },
+
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -602,7 +606,11 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         backgroundColor: colors.surface,
         borderRadius: 12,
     },
-    searchIcon: { fontSize: 16, marginRight: 10 },
+
+    searchIcon: {
+        fontSize: 16,
+        marginRight: 10
+    },
     searchInput: {
         flex: 1,
         height: 24,
@@ -610,8 +618,19 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         color: colors.text,
         paddingVertical: 0,
     },
-    tabsContainer: { paddingHorizontal: 12, paddingVertical: 8, gap: 10 },
-    tab: { alignItems: 'center', minWidth: 60, paddingHorizontal: 4 },
+
+    tabsContainer: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        gap: 10
+    },
+
+    tab: {
+        alignItems: 'center',
+        minWidth: 60,
+        paddingHorizontal: 4
+    },
+
     iconCircle: {
         width: 50,
         height: 50,
@@ -620,9 +639,11 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+
     iconCircleActive: {
         backgroundColor: colors.primary,
     },
+
     tabLabel: {
         fontSize: 10,
         paddingTop: 6,
@@ -632,7 +653,11 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         letterSpacing: 0.5,
         textTransform: 'uppercase',
     },
-    tabLabelActive: { color: colors.primary },
+
+    tabLabelActive: {
+        color: colors.primary
+    },
+
     itemCard: {
         backgroundColor: colors.card,
         borderRadius: 18,
@@ -660,7 +685,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         right: 0,
         height: 80,
     },
-    // ✅ PROMIJENJENO: left: 10 → right: 10
+
     ownBadge: {
         position: 'absolute',
         top: 10,
@@ -680,7 +705,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         fontWeight: '800',
         letterSpacing: 0.5,
     },
-    // ✅ PROMIJENJENO: left: 8 → right: 8
+
     ownBadgeRec: {
         position: 'absolute',
         top: 8,
@@ -789,7 +814,15 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
-    emptyText: { textAlign: 'center', color: colors.textMuted, paddingVertical: 24, fontSize: 14, marginHorizontal: 20 },
+
+    emptyText: {
+        textAlign: 'center',
+        color: colors.textMuted,
+        paddingVertical: 24,
+        fontSize: 14,
+        marginHorizontal: 20
+    },
+
     sectionTitle: {
         marginTop: 24,
         marginLeft: 20,

@@ -151,34 +151,215 @@ export default function SupportScreen() {
 
 const makeStyles = (colors: typeof Colors.light) =>
     StyleSheet.create({
-        container: { flex: 1, backgroundColor: colors.background },
-        scrollContent: { paddingBottom: 40 },
-        header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.background },
-        backButton: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-        headerTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
-        heroBanner: { alignItems: 'center', paddingHorizontal: 20, paddingTop: 28, paddingBottom: 24 },
-        heroIconBox: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
-        heroTitle: { fontSize: 24, fontWeight: '700', color: colors.text, letterSpacing: -0.3, marginBottom: 8, textAlign: 'center' },
-        heroSubtitle: { fontSize: 15, color: colors.textSecondary, lineHeight: 21, textAlign: 'center', maxWidth: 320 },
-        sectionTitle: { fontSize: 12, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.6, textTransform: 'uppercase', marginHorizontal: 20, marginBottom: 10, marginTop: 8 },
-        contactCard: { marginHorizontal: 20, marginBottom: 24, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
-        contactRow: { flexDirection: 'row', alignItems: 'center', padding: 16 },
-        contactRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
-        contactIconBox: { width: 40, height: 40, borderRadius: 10, backgroundColor: colors.primary + '15', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
-        contactTextContainer: { flex: 1, gap: 2 },
-        contactLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
-        contactDetail: { fontSize: 13, color: colors.textMuted },
-        faqContainer: { marginHorizontal: 20, marginBottom: 24, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
-        faqItem: { paddingHorizontal: 16, paddingVertical: 16 },
-        faqItemBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
-        faqItemOpen: { backgroundColor: colors.primary + '08' },
-        faqHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-        faqQuestion: { fontSize: 15, fontWeight: '600', color: colors.text, flex: 1 },
-        faqQuestionOpen: { color: colors.primary },
-        faqIconBox: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary + '15', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.primary + '30' },
-        faqIconBoxOpen: { backgroundColor: colors.primary, borderColor: colors.primary },
-        faqAnswerContainer: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border },
-        faqAnswer: { fontSize: 14, color: colors.textSecondary, lineHeight: 21 },
-        footerNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 20, paddingVertical: 16, marginTop: 8 },
-        footerNoteText: { fontSize: 13, color: colors.textMuted },
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+
+        scrollContent: {
+            paddingBottom: 40,
+        },
+
+        header: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+            backgroundColor: colors.background,
+        },
+
+        backButton: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+
+        headerTitle: {
+            fontSize: 17,
+            fontWeight: '700',
+            color: colors.text,
+        },
+
+        heroBanner: {
+            alignItems: 'center',
+            paddingHorizontal: 20,
+            paddingTop: 28,
+            paddingBottom: 24,
+        },
+
+        heroIconBox: {
+            width: 64,
+            height: 64,
+            borderRadius: 32,
+            backgroundColor: colors.primary,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 16,
+        },
+
+        heroTitle: {
+            fontSize: 24,
+            fontWeight: '700',
+            color: colors.text,
+            letterSpacing: -0.3,
+            marginBottom: 8,
+            textAlign: 'center',
+        },
+
+        heroSubtitle: {
+            fontSize: 15,
+            color: colors.textSecondary,
+            lineHeight: 21,
+            textAlign: 'center',
+            maxWidth: 320,
+        },
+
+        sectionTitle: {
+            fontSize: 12,
+            fontWeight: '700',
+            color: colors.textMuted,
+            letterSpacing: 0.6,
+            textTransform: 'uppercase',
+            marginHorizontal: 20,
+            marginBottom: 10,
+            marginTop: 8,
+        },
+
+        contactCard: {
+            marginHorizontal: 20,
+            marginBottom: 24,
+            backgroundColor: colors.card,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: colors.border,
+            overflow: 'hidden',
+        },
+
+        contactRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 16,
+        },
+
+        contactRowBorder: {
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+        },
+
+        contactIconBox: {
+            width: 40,
+            height: 40,
+            borderRadius: 10,
+            backgroundColor: colors.primary + '15',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 14,
+        },
+
+        contactTextContainer: {
+            flex: 1,
+            gap: 2,
+        },
+
+        contactLabel: {
+            fontSize: 15,
+            fontWeight: '600',
+            color: colors.text,
+        },
+
+        contactDetail: {
+            fontSize: 13,
+            color: colors.textMuted,
+        },
+
+        faqContainer: {
+            marginHorizontal: 20,
+            marginBottom: 24,
+            backgroundColor: colors.card,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: colors.border,
+            overflow: 'hidden',
+        },
+
+        faqItem: {
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+        },
+
+        faqItemBorder: {
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+        },
+
+        faqItemOpen: {
+            backgroundColor: colors.primary + '08',
+        },
+
+        faqHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+        },
+
+        faqQuestion: {
+            fontSize: 15,
+            fontWeight: '600',
+            color: colors.text,
+            flex: 1,
+        },
+
+        faqQuestionOpen: {
+            color: colors.primary,
+        },
+
+        faqIconBox: {
+            width: 28,
+            height: 28,
+            borderRadius: 14,
+            backgroundColor: colors.primary + '15',
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: colors.primary + '30',
+        },
+
+        faqIconBoxOpen: {
+            backgroundColor: colors.primary,
+            borderColor: colors.primary,
+        },
+
+        faqAnswerContainer: {
+            marginTop: 12,
+            paddingTop: 12,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+        },
+
+        faqAnswer: {
+            fontSize: 14,
+            color: colors.textSecondary,
+            lineHeight: 21,
+        },
+
+        footerNote: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+            marginTop: 8,
+        },
+
+        footerNoteText: {
+            fontSize: 13,
+            color: colors.textMuted,
+        },
     });

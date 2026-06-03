@@ -13,9 +13,7 @@ import { LANGUAGE_NAMES, LANGUAGE_FLAGS } from '@/src/i18n/translations';
 import * as Haptics from 'expo-haptics';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// Uvezi svoj auth context ili funkciju za logout i brisanje računa
-// import { useAuth } from '@/src/context/authContext';
-// import { changePasswordApi, deleteAccountApi } from '@/src/api/userApi';
+
 
 const NOTIF_KEY = '@settings_notifications';
 
@@ -73,7 +71,7 @@ export default function SettingsScreen() {
     const passSheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['50%'], []);
 
-    // Stanja za notifikacije (Spremaju se lokalno!)
+    // Stanja za notifikacije
     const [notifications, setNotifications] = useState({ pushEnabled: true, newMessages: true });
 
     // Stanja za lozinku
@@ -192,29 +190,172 @@ export default function SettingsScreen() {
     );
 }
 
-const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { paddingVertical: 10, paddingHorizontal: 16 },
-    sectionTitle: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, paddingHorizontal: 4, marginBottom: 8 },
-    settingContainer: { borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.border, marginBottom: 20 },
-    settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 14, backgroundColor: colors.card, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-    destructiveItem: { backgroundColor: colors.logoutBg, borderBottomWidth: 0 },
-    settingLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-    iconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-    destructiveIconBox: { backgroundColor: colors.logoutBg },
-    textContainer: { flex: 1, paddingRight: 8 },
-    settingTitle: { fontSize: 15, fontWeight: '500', marginBottom: 2 },
-    settingDescription: { fontSize: 12, color: colors.textMuted, lineHeight: 16 },
-    versionText: { textAlign: 'center', fontSize: 12, marginTop: 10, marginBottom: 30 },
-    sheetContent: { flex: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 32, gap: 12 },
-    sheetTitle: { fontSize: 18, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 10 },
-    sheetList: { gap: 6 },
-    sheetItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-    sheetItemActive: { backgroundColor: colors.primary + '15', borderColor: colors.primary },
-    sheetFlag: { fontSize: 26, marginRight: 14 },
-    sheetItemText: { fontSize: 16, fontWeight: '500', color: colors.text, flex: 1 },
-    sheetItemTextActive: { color: colors.primary, fontWeight: '700' },
-    input: { width: '100%', paddingVertical: 13, paddingHorizontal: 16, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, fontSize: 15, color: colors.text },
-    saveBtn: { width: '100%', paddingVertical: 15, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
-    saveBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
-});
+const makeStyles = (colors: typeof Colors.light) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+
+        scrollContent: {
+            paddingVertical: 10,
+            paddingHorizontal: 16,
+        },
+
+        sectionTitle: {
+            fontSize: 12,
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            letterSpacing: 0.8,
+            paddingHorizontal: 4,
+            marginBottom: 8,
+        },
+
+        settingContainer: {
+            borderRadius: 12,
+            overflow: 'hidden',
+            borderWidth: 1,
+            borderColor: colors.border,
+            marginBottom: 20,
+        },
+
+        settingItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            backgroundColor: colors.card,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: colors.border,
+        },
+
+        destructiveItem: {
+            backgroundColor: colors.logoutBg,
+            borderBottomWidth: 0,
+        },
+
+        settingLeft: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            flex: 1,
+        },
+
+        iconBox: {
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            backgroundColor: colors.surface,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 12,
+        },
+
+        destructiveIconBox: {
+            backgroundColor: colors.logoutBg,
+        },
+
+        textContainer: {
+            flex: 1,
+            paddingRight: 8,
+        },
+
+        settingTitle: {
+            fontSize: 15,
+            fontWeight: '500',
+            marginBottom: 2,
+        },
+
+        settingDescription: {
+            fontSize: 12,
+            color: colors.textMuted,
+            lineHeight: 16,
+        },
+
+        versionText: {
+            textAlign: 'center',
+            fontSize: 12,
+            marginTop: 10,
+            marginBottom: 30,
+        },
+
+        sheetContent: {
+            flex: 1,
+            paddingHorizontal: 20,
+            paddingTop: 8,
+            paddingBottom: 32,
+            gap: 12,
+        },
+
+        sheetTitle: {
+            fontSize: 18,
+            fontWeight: '700',
+            color: colors.text,
+            textAlign: 'center',
+            marginBottom: 10,
+        },
+
+        sheetList: {
+            gap: 6,
+        },
+
+        sheetItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 14,
+            paddingHorizontal: 16,
+            borderRadius: 14,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+
+        sheetItemActive: {
+            backgroundColor: colors.primary + '15',
+            borderColor: colors.primary,
+        },
+
+        sheetFlag: {
+            fontSize: 26,
+            marginRight: 14,
+        },
+
+        sheetItemText: {
+            fontSize: 16,
+            fontWeight: '500',
+            color: colors.text,
+            flex: 1,
+        },
+
+        sheetItemTextActive: {
+            color: colors.primary,
+            fontWeight: '700',
+        },
+
+        input: {
+            width: '100%',
+            paddingVertical: 13,
+            paddingHorizontal: 16,
+            borderRadius: 12,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            fontSize: 15,
+            color: colors.text,
+        },
+
+        saveBtn: {
+            width: '100%',
+            paddingVertical: 15,
+            borderRadius: 12,
+            backgroundColor: colors.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: 10,
+        },
+
+        saveBtnText: {
+            fontSize: 15,
+            fontWeight: '700',
+            color: '#FFFFFF',
+        },
+    });

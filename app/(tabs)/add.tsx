@@ -32,7 +32,7 @@ type DraftData = {
 };
 
 // ────────────────────────────────────────────────────────────────────────────
-// 🎨 CUSTOM MODAL TYPES
+//  CUSTOM MODAL TYPES
 // ────────────────────────────────────────────────────────────────────────────
 type ModalType = 'success' | 'error' | 'warning' | 'info';
 
@@ -58,7 +58,7 @@ const DEFAULT_MODAL: CustomModalConfig = {
 };
 
 // ────────────────────────────────────────────────────────────────────────────
-// 🎨 CUSTOM MODAL COMPONENT
+//  CUSTOM MODAL COMPONENT
 // ────────────────────────────────────────────────────────────────────────────
 function CustomModal({
                          config,
@@ -248,13 +248,13 @@ export default function AddScreen() {
     const [images, setImages] = useState<string[]>([]);
     const [publishing, setPublishing] = useState(false);
 
-    // ✨ Custom modal state
+    // Custom modal state
     const [modal, setModal] = useState<CustomModalConfig>(DEFAULT_MODAL);
 
     const categorySheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['45%'], []);
 
-    // ✨ Modal helpers
+    // Modal helpers
     const showModal = (cfg: Omit<CustomModalConfig, 'visible'>) => {
         setModal({ ...cfg, visible: true });
     };
@@ -379,8 +379,7 @@ export default function AddScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
-            // ── ✅ GEOCODING: Pretvori adresu u koordinate ──────────────
-            // ✅ PROMJENA: null je zamijenjen s undefined zbog TypeScript-a
+
             let latitude: number | undefined = undefined;
             let longitude: number | undefined = undefined;
 
@@ -421,7 +420,7 @@ export default function AddScreen() {
                 imageUrls = uploadResult.urls;
             }
 
-            // ── Create Thing ────────────────────────────────────────────
+
             const thingPayload = {
                 name: title.trim(),
                 category: selectedCategory.toLowerCase(),
@@ -442,7 +441,7 @@ export default function AddScreen() {
             }
             const thingId: number = thingResult.data?.thingId ?? thingResult.data?.id;
 
-            // ── ✅ Create Listing S KOORDINATAMA ────────────────────────
+
             const listingPayload = {
                 thingId,
                 price: Number(dailyRate),
@@ -464,7 +463,7 @@ export default function AddScreen() {
                 return;
             }
 
-            // ── Success! ────────────────────────────────────────────────
+
             setPublishing(false);
             await AsyncStorage.removeItem(DRAFT_KEY);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -758,148 +757,445 @@ export default function AddScreen() {
     );
 }
 
-const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 50, gap: 0 },
-    header: { paddingTop: 20, paddingBottom: 28, alignItems: 'center', gap: 6 },
-    titleText: { fontSize: 30, fontWeight: '700', letterSpacing: -0.5, textAlign: 'center', color: colors.text },
-    bodyText: { fontSize: 15, fontWeight: '400', color: colors.textSecondary, textAlign: 'center', lineHeight: 22, maxWidth: 280 },
-    section: { marginBottom: 4, paddingTop: 20, paddingBottom: 8, borderTopWidth: 1, borderTopColor: colors.border },
-    sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 },
-    sectionTitle: { fontSize: 17, fontWeight: '600', color: colors.text },
-    fieldGroup: { marginBottom: 20 },
-    labelText: { fontSize: 11, fontWeight: '700', color: colors.textSecondary, marginBottom: 8, letterSpacing: 0.6, textTransform: 'uppercase' },
-    input: { width: '100%', paddingVertical: 13, paddingHorizontal: 16, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, fontSize: 15, color: colors.text },
-    descriptionInput: { width: '100%', paddingVertical: 13, paddingHorizontal: 16, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, fontSize: 15, color: colors.text, height: 116, textAlignVertical: 'top' },
-    charCount: { fontSize: 11, color: colors.textMuted, textAlign: 'right', marginTop: 4 },
-    dropdownButton: { width: '100%', paddingVertical: 13, paddingHorizontal: 16, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    dropdownText: { fontSize: 15, color: colors.text },
-    hint: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 9, gap: 5 },
-    hintText: { fontStyle: 'italic', fontSize: 12, color: colors.textMuted, flex: 1, lineHeight: 17 },
-    imageScroll: { marginBottom: 4 },
-    imageScrollContent: { gap: 10, paddingRight: 4 },
-    placeholderImage: { width: 130, height: 130, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center', gap: 6 },
-    placeholderText: { color: colors.textMuted, fontSize: 12, fontWeight: '500', textAlign: 'center' },
-    imageWrapper: { position: 'relative' },
-    imageThumb: { width: 130, height: 130, borderRadius: 12, backgroundColor: colors.surface },
-    removeButton: { position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 9999, padding: 4 },
-    coverBadge: { position: 'absolute', bottom: 8, left: 8, backgroundColor: colors.primary, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-    coverBadgeText: { color: 'white', fontSize: 10, fontWeight: '700' },
-    removeAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, marginTop: 12, alignSelf: 'flex-start', borderRadius: 8, backgroundColor: 'rgba(255, 59, 48, 0.1)' },
-    removeAllText: { fontSize: 13, fontWeight: '600', color: '#FF3B30' },
-    addImageButton: { width: 130, height: 130, borderRadius: 12, borderWidth: 1.5, borderColor: colors.primary, borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface, gap: 6 },
-    addImageText: { color: colors.primary, fontSize: 12, fontWeight: '600', textAlign: 'center' },
-    pricingRow: { flexDirection: 'row', gap: 12, marginBottom: 4 },
-    pricingField: { flex: 1 },
-    priceInputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 14 },
-    currencySymbol: { fontSize: 15, fontWeight: '600', color: colors.textMuted, marginRight: 4 },
-    priceInput: { flex: 1, paddingVertical: 13, fontSize: 15, color: colors.text },
-    actions: { marginTop: 28, gap: 10 },
-    publishButton: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 12, backgroundColor: colors.primary, borderWidth: 1, borderColor: colors.primary },
-    publishButtonText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
-    // Bottom Sheet styles
-    sheetContent: { flex: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 32 },
-    sheetHeader: { alignItems: 'center', paddingVertical: 12, marginBottom: 8 },
-    sheetTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
-    sheetList: { gap: 8 },
-    sheetItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderRadius: 14,
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.border,
-    },
-    sheetItemActive: {
-        backgroundColor: colors.primary + '15',
-        borderColor: colors.primary,
-    },
-    sheetItemText: { fontSize: 16, fontWeight: '500', color: colors.text },
-    sheetItemTextActive: { color: colors.primary, fontWeight: '700' },
+const makeStyles = (colors: typeof Colors.light) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
 
-    // ─── ✨ CUSTOM MODAL STYLES ─────────────────────────────────────────────
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.55)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 24,
-    },
-    modalContainer: {
-        width: '100%',
-        maxWidth: 360,
-        borderRadius: 24,
-        padding: 24,
-        alignItems: 'center',
-        borderWidth: 1,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.25,
-        shadowRadius: 20,
-        elevation: 15,
-    },
-    modalIconWrapper: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 18,
-    },
-    modalIconGradient: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        textAlign: 'center',
-        marginBottom: 8,
-        letterSpacing: -0.3,
-    },
-    modalMessage: {
-        fontSize: 14,
-        textAlign: 'center',
-        lineHeight: 20,
-        marginBottom: 24,
-        paddingHorizontal: 8,
-    },
-    modalButtons: {
-        flexDirection: 'row',
-        gap: 10,
-        width: '100%',
-    },
-    modalButton: {
-        flex: 1,
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    modalButtonPrimary: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    modalButtonSecondary: {
-        borderWidth: 1,
-    },
-    modalButtonText: {
-        fontSize: 15,
-        fontWeight: '600',
-        letterSpacing: 0.2,
-    },
-});
+        scrollContent: {
+            paddingHorizontal: 16,
+            paddingTop: 8,
+            paddingBottom: 50,
+            gap: 0,
+        },
+
+        header: {
+            paddingTop: 20,
+            paddingBottom: 28,
+            alignItems: 'center',
+            gap: 6,
+        },
+
+        titleText: {
+            fontSize: 30,
+            fontWeight: '700',
+            letterSpacing: -0.5,
+            textAlign: 'center',
+            color: colors.text,
+        },
+
+        bodyText: {
+            fontSize: 15,
+            fontWeight: '400',
+            color: colors.textSecondary,
+            textAlign: 'center',
+            lineHeight: 22,
+            maxWidth: 280,
+        },
+
+        section: {
+            marginBottom: 4,
+            paddingTop: 20,
+            paddingBottom: 8,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+        },
+
+        sectionHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: 20,
+        },
+
+        sectionTitle: {
+            fontSize: 17,
+            fontWeight: '600',
+            color: colors.text,
+        },
+
+        fieldGroup: {
+            marginBottom: 20,
+        },
+
+        labelText: {
+            fontSize: 11,
+            fontWeight: '700',
+            color: colors.textSecondary,
+            marginBottom: 8,
+            letterSpacing: 0.6,
+            textTransform: 'uppercase',
+        },
+
+        input: {
+            width: '100%',
+            paddingVertical: 13,
+            paddingHorizontal: 16,
+            borderRadius: 12,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            fontSize: 15,
+            color: colors.text,
+        },
+
+        descriptionInput: {
+            width: '100%',
+            paddingVertical: 13,
+            paddingHorizontal: 16,
+            borderRadius: 12,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            fontSize: 15,
+            color: colors.text,
+            height: 116,
+            textAlignVertical: 'top',
+        },
+
+        charCount: {
+            fontSize: 11,
+            color: colors.textMuted,
+            textAlign: 'right',
+            marginTop: 4,
+        },
+
+        dropdownButton: {
+            width: '100%',
+            paddingVertical: 13,
+            paddingHorizontal: 16,
+            borderRadius: 12,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+
+        dropdownText: {
+            fontSize: 15,
+            color: colors.text,
+        },
+
+        hint: {
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            marginTop: 9,
+            gap: 5,
+        },
+
+        hintText: {
+            fontStyle: 'italic',
+            fontSize: 12,
+            color: colors.textMuted,
+            flex: 1,
+            lineHeight: 17,
+        },
+
+        imageScroll: {
+            marginBottom: 4,
+        },
+
+        imageScrollContent: {
+            gap: 10,
+            paddingRight: 4,
+        },
+
+        placeholderImage: {
+            width: 130,
+            height: 130,
+            borderRadius: 12,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderStyle: 'dashed',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 6,
+        },
+
+        placeholderText: {
+            color: colors.textMuted,
+            fontSize: 12,
+            fontWeight: '500',
+            textAlign: 'center',
+        },
+
+        imageWrapper: {
+            position: 'relative',
+        },
+
+        imageThumb: {
+            width: 130,
+            height: 130,
+            borderRadius: 12,
+            backgroundColor: colors.surface,
+        },
+
+        removeButton: {
+            position: 'absolute',
+            top: 6,
+            right: 6,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            borderRadius: 9999,
+            padding: 4,
+        },
+
+        coverBadge: {
+            position: 'absolute',
+            bottom: 8,
+            left: 8,
+            backgroundColor: colors.primary,
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+            borderRadius: 6,
+        },
+
+        coverBadgeText: {
+            color: 'white',
+            fontSize: 10,
+            fontWeight: '700',
+        },
+
+        removeAllBtn: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            marginTop: 12,
+            alignSelf: 'flex-start',
+            borderRadius: 8,
+            backgroundColor: 'rgba(255, 59, 48, 0.1)',
+        },
+
+        removeAllText: {
+            fontSize: 13,
+            fontWeight: '600',
+            color: '#FF3B30',
+        },
+
+        addImageButton: {
+            width: 130,
+            height: 130,
+            borderRadius: 12,
+            borderWidth: 1.5,
+            borderColor: colors.primary,
+            borderStyle: 'dashed',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: colors.surface,
+            gap: 6,
+        },
+
+        addImageText: {
+            color: colors.primary,
+            fontSize: 12,
+            fontWeight: '600',
+            textAlign: 'center',
+        },
+
+        pricingRow: {
+            flexDirection: 'row',
+            gap: 12,
+            marginBottom: 4,
+        },
+
+        pricingField: {
+            flex: 1,
+        },
+
+        priceInputContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 12,
+            paddingHorizontal: 14,
+        },
+
+        currencySymbol: {
+            fontSize: 15,
+            fontWeight: '600',
+            color: colors.textMuted,
+            marginRight: 4,
+        },
+
+        priceInput: {
+            flex: 1,
+            paddingVertical: 13,
+            fontSize: 15,
+            color: colors.text,
+        },
+
+        actions: {
+            marginTop: 28,
+            gap: 10,
+        },
+
+        publishButton: {
+            width: '100%',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            paddingVertical: 15,
+            borderRadius: 12,
+            backgroundColor: colors.primary,
+            borderWidth: 1,
+            borderColor: colors.primary,
+        },
+
+        publishButtonText: {
+            fontSize: 15,
+            fontWeight: '700',
+            color: '#FFFFFF',
+        },
+
+        sheetContent: {
+            flex: 1,
+            paddingHorizontal: 20,
+            paddingTop: 8,
+            paddingBottom: 32,
+        },
+
+        sheetHeader: {
+            alignItems: 'center',
+            paddingVertical: 12,
+            marginBottom: 8,
+        },
+
+        sheetTitle: {
+            fontSize: 18,
+            fontWeight: '700',
+            color: colors.text,
+        },
+
+        sheetList: {
+            gap: 8,
+        },
+
+        sheetItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingVertical: 16,
+            paddingHorizontal: 20,
+            borderRadius: 14,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+
+        sheetItemActive: {
+            backgroundColor: colors.primary + '15',
+            borderColor: colors.primary,
+        },
+
+        sheetItemText: {
+            fontSize: 16,
+            fontWeight: '500',
+            color: colors.text,
+        },
+
+        sheetItemTextActive: {
+            color: colors.primary,
+            fontWeight: '700',
+        },
+
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.55)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: 24,
+        },
+
+        modalContainer: {
+            width: '100%',
+            maxWidth: 360,
+            borderRadius: 24,
+            padding: 24,
+            alignItems: 'center',
+            borderWidth: 1,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.25,
+            shadowRadius: 20,
+            elevation: 15,
+        },
+
+        modalIconWrapper: {
+            width: 80,
+            height: 80,
+            borderRadius: 40,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 18,
+        },
+
+        modalIconGradient: {
+            width: 64,
+            height: 64,
+            borderRadius: 32,
+            justifyContent: 'center',
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.2,
+            shadowRadius: 8,
+            elevation: 5,
+        },
+
+        modalTitle: {
+            fontSize: 20,
+            fontWeight: '700',
+            textAlign: 'center',
+            marginBottom: 8,
+            letterSpacing: -0.3,
+        },
+
+        modalMessage: {
+            fontSize: 14,
+            textAlign: 'center',
+            lineHeight: 20,
+            marginBottom: 24,
+            paddingHorizontal: 8,
+        },
+
+        modalButtons: {
+            flexDirection: 'row',
+            gap: 10,
+            width: '100%',
+        },
+
+        modalButton: {
+            flex: 1,
+            paddingVertical: 14,
+            borderRadius: 12,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+
+        modalButtonPrimary: {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.15,
+            shadowRadius: 4,
+            elevation: 3,
+        },
+
+        modalButtonSecondary: {
+            borderWidth: 1,
+        },
+
+        modalButtonText: {
+            fontSize: 15,
+            fontWeight: '600',
+            letterSpacing: 0.2,
+        },
+    });

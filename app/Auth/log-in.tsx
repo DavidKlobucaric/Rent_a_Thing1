@@ -30,7 +30,7 @@ export default function LogInScreen() {
 
     const styles = useMemo(() => makeStyles(colors), [colors]);
 
-    // 🔄 Prilikom otvaranja ekrana provjeri ima li zapamćenog Gmaila
+
     useEffect(() => {
         const checkRememberedEmail = async () => {
             const savedEmail = await getRememberedEmail();
@@ -42,7 +42,7 @@ export default function LogInScreen() {
         checkRememberedEmail();
     }, []);
 
-    // 🚀 Čisti poziv loginUser-a (Remember Me logika se odvija iza kulisa u API-ju)
+
     const handleLogIn = useCallback(async () => {
         if (!email.trim() || !password.trim()) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -52,14 +52,14 @@ export default function LogInScreen() {
         setLoading(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        // Prosljeđujemo i rememberMe stanje u naš ažurirani API
+
         const result = await loginUser(email.trim(), password, rememberMe);
         setLoading(false);
 
         if (result.success) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             await refreshAuth();
-            router.replace('/home'); // Auto-login će od ovog trenutka raditi jer je token zapisan
+            router.replace('/home');
         } else {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(t('auth', 'loginFailed'), result.message);
@@ -192,31 +192,202 @@ export default function LogInScreen() {
     );
 }
 
-const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    header: { alignItems: 'center', justifyContent: 'center', paddingTop: 16, paddingBottom: 8 },
-    titleText: { fontWeight: "600", fontSize: 32, letterSpacing: -0.5, color: colors.text },
-    subtitleContainer: { alignItems: 'center', paddingHorizontal: 10, paddingBottom: 20 },
-    subtitleText: { fontSize: 15, fontWeight: "400", textAlign: "center", lineHeight: 24, color: colors.textSecondary },
-    card: { width: '100%', borderRadius: 14, padding: 20, paddingTop: 0, alignSelf: 'center' },
-    labelText: { fontSize: 12, fontWeight: "600", color: colors.text, paddingTop: 16, paddingBottom: 8, letterSpacing: 0.4, textTransform: 'uppercase' },
-    input: { width: '100%', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 0.5, borderColor: colors.border, fontSize: 14, color: colors.text },
-    rememberRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 16, paddingBottom: 8 },
-    rememberMeContainer: { flexDirection: "row", alignItems: "center", gap: 6 },
-    smallText: { fontSize: 13 },
-    mediumText: { fontSize: 15, color: colors.textSecondary },
-    primaryButton: { width: '100%', alignItems: "center", justifyContent: "center", paddingVertical: 10, paddingHorizontal: 20, borderRadius: 14, backgroundColor: colors.primary, marginTop: 20 },
-    primaryButtonText: { fontSize: 16, fontWeight: "600", color: colors.iconColorInverse },
-    dividerContainer: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 20, gap: 12 },
-    dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
-    dividerText: { fontSize: 11, color: colors.textMuted, fontWeight: "500", letterSpacing: 0.5 },
-    socialContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 8 },
-    socialButton: { width: '100%', flexDirection: "row", alignItems: "center", gap: 8, justifyContent: "center", paddingVertical: 10, paddingHorizontal: 20, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 0.5, borderColor: colors.border },
-    socialIcon: { width: 22, height: 22 },
-    signUpContainer: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingTop: 24, gap: 6 },
-    trustContainer: { alignItems: 'center', paddingTop: 32, paddingBottom: 20 },
-    badgeRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 56, paddingBottom: 12 },
-    iconCircle: { width: 56, height: 56, borderRadius: 9999, backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', marginBottom: 5, borderWidth: 1, borderColor: colors.borderLight },
-    badgeLabels: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 28 },
-    badgeText: { fontSize: 11, color: colors.textMuted, fontWeight: "500", textAlign: "center" },
-});
+const makeStyles = (colors: typeof Colors.light) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+
+        header: {
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingTop: 16,
+            paddingBottom: 8,
+        },
+
+        titleText: {
+            fontWeight: "600",
+            fontSize: 32,
+            letterSpacing: -0.5,
+            color: colors.text,
+        },
+
+        subtitleContainer: {
+            alignItems: 'center',
+            paddingHorizontal: 10,
+            paddingBottom: 20,
+        },
+
+        subtitleText: {
+            fontSize: 15,
+            fontWeight: "400",
+            textAlign: "center",
+            lineHeight: 24,
+            color: colors.textSecondary,
+        },
+
+        card: {
+            width: '100%',
+            borderRadius: 14,
+            padding: 20,
+            paddingTop: 0,
+            alignSelf: 'center',
+        },
+
+        labelText: {
+            fontSize: 12,
+            fontWeight: "600",
+            color: colors.text,
+            paddingTop: 16,
+            paddingBottom: 8,
+            letterSpacing: 0.4,
+            textTransform: 'uppercase',
+        },
+
+        input: {
+            width: '100%',
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 14,
+            backgroundColor: colors.surface,
+            borderWidth: 0.5,
+            borderColor: colors.border,
+            fontSize: 14,
+            color: colors.text,
+        },
+
+        rememberRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingTop: 16,
+            paddingBottom: 8,
+        },
+
+        rememberMeContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+        },
+
+        smallText: {
+            fontSize: 13,
+        },
+
+        mediumText: {
+            fontSize: 15,
+            color: colors.textSecondary,
+        },
+
+        primaryButton: {
+            width: '100%',
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 14,
+            backgroundColor: colors.primary,
+            marginTop: 20,
+        },
+
+        primaryButtonText: {
+            fontSize: 16,
+            fontWeight: "600",
+            color: colors.iconColorInverse,
+        },
+
+        dividerContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: 20,
+            gap: 12,
+        },
+
+        dividerLine: {
+            flex: 1,
+            height: 1,
+            backgroundColor: colors.border,
+        },
+
+        dividerText: {
+            fontSize: 11,
+            color: colors.textMuted,
+            fontWeight: "500",
+            letterSpacing: 0.5,
+        },
+
+        socialContainer: {
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 8,
+        },
+
+        socialButton: {
+            width: '100%',
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+            justifyContent: "center",
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 14,
+            backgroundColor: colors.surface,
+            borderWidth: 0.5,
+            borderColor: colors.border,
+        },
+
+        socialIcon: {
+            width: 22,
+            height: 22,
+        },
+
+        signUpContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingTop: 24,
+            gap: 6,
+        },
+
+        trustContainer: {
+            alignItems: 'center',
+            paddingTop: 32,
+            paddingBottom: 20,
+        },
+
+        badgeRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 56,
+            paddingBottom: 12,
+        },
+
+        iconCircle: {
+            width: 56,
+            height: 56,
+            borderRadius: 9999,
+            backgroundColor: colors.surface,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 5,
+            borderWidth: 1,
+            borderColor: colors.borderLight,
+        },
+
+        badgeLabels: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 28,
+        },
+
+        badgeText: {
+            fontSize: 11,
+            color: colors.textMuted,
+            fontWeight: "500",
+            textAlign: "center",
+        },
+    });

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
-    StyleSheet, View, Text, TextInput, TouchableOpacity,
-    Keyboard, ScrollView, Alert, ActivityIndicator, Platform, Dimensions, Share, StatusBar,
+    StyleSheet, View, Text,  TouchableOpacity,
+     ScrollView, ActivityIndicator, Platform, Dimensions, Share, StatusBar,
     Modal, Animated, Easing,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -265,10 +265,10 @@ export default function ListingDetailScreen() {
     const calendarSheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['80%', '95%'], []);
 
-    // ✨ Custom modal state
+
     const [modal, setModal] = useState<CustomModalConfig>(DEFAULT_MODAL);
 
-    // ✨ Modal helpers
+
     const showModal = (cfg: Omit<CustomModalConfig, 'visible'>) => {
         setModal({ ...cfg, visible: true });
     };
@@ -371,7 +371,7 @@ export default function ListingDetailScreen() {
         });
     }, [blockedPeriods]);
 
-    // ✅ POBOLJŠANA LOGIKA: Jedan klik za rezervaciju jednog dana, drugi klik za raspon
+
     const handleDayPress = useCallback((day: DateData) => {
         Haptics.selectionAsync();
         const selectedDate = day.dateString;
@@ -381,7 +381,7 @@ export default function ListingDetailScreen() {
             return;
         }
 
-        // Ako klikne na dan koji je već startDate, postavi endDate na isti dan (rezervacija za 1 dan)
+
         if (startDate === selectedDate && !endDate) {
             setEndDate(selectedDate);
             setSelectingStart(true);
@@ -389,12 +389,12 @@ export default function ListingDetailScreen() {
         }
 
         if (selectingStart) {
-            // Prvi klik: postavi startDate i automatski endDate na isti dan (default za 1 dan)
+
             setStartDate(selectedDate);
-            setEndDate(selectedDate); // ✅ Automatski postavi endDate na isti dan
-            setSelectingStart(false); // ✅ Promijeni u false da sljedeći klik produži raspon
+            setEndDate(selectedDate);
+            setSelectingStart(false);
         } else {
-            // Drugi klik: promijeni endDate
+
             if (startDate && selectedDate >= startDate) {
                 let hasBlocked = false;
                 let current = new Date(startDate);
@@ -411,21 +411,21 @@ export default function ListingDetailScreen() {
                     return;
                 }
                 setEndDate(selectedDate);
-                setSelectingStart(true); // Resetiraj za sljedeći odabir
+                setSelectingStart(true);
             } else {
-                // Kliknuo na raniji dan: resetiraj i postavi novi startDate
+
                 setStartDate(selectedDate);
-                setEndDate(selectedDate); // ✅ Automatski postavi endDate
+                setEndDate(selectedDate);
                 setSelectingStart(false);
             }
         }
     }, [selectingStart, startDate, endDate, isDateBlocked]);
 
-    // ✅ POBOLJŠANI MARKED DATES - Ljepši vizualni prikaz
+
     const markedDates = useMemo(() => {
         const marked: any = {};
 
-        // Blokirani dani
+
         blockedPeriods.forEach(({ startDate: s, endDate: e }) => {
             let current = new Date(s);
             const end = new Date(e);
@@ -451,10 +451,10 @@ export default function ListingDetailScreen() {
             }
         });
 
-        // Odabrani raspon
+
         if (startDate && endDate) {
             if (startDate === endDate) {
-                // Jedan dan
+
                 marked[startDate] = {
                     selected: true,
                     selectedColor: colors.primary,
@@ -471,7 +471,7 @@ export default function ListingDetailScreen() {
                     },
                 };
             } else {
-                // Početni dan
+
                 marked[startDate] = {
                     selected: true,
                     selectedColor: colors.primary,
@@ -491,7 +491,7 @@ export default function ListingDetailScreen() {
                     },
                 };
 
-                // Završni dan
+
                 marked[endDate] = {
                     selected: true,
                     selectedColor: colors.primary,
@@ -511,7 +511,7 @@ export default function ListingDetailScreen() {
                     },
                 };
 
-                // Dani između
+
                 let current = new Date(startDate);
                 const end = new Date(endDate);
                 current.setDate(current.getDate() + 1);
@@ -875,7 +875,7 @@ export default function ListingDetailScreen() {
                         </View>
                     )}
 
-                    {/* ✅ OWNER MANAGEMENT PANEL */}
+                    {/* OWNER MANAGEMENT PANEL */}
                     {isOwnListing && (
                         <View style={styles.ownerPanel}>
                             <View style={styles.ownerPanelHeader}>
@@ -906,7 +906,7 @@ export default function ListingDetailScreen() {
                 </View>
             </ScrollView>
 
-            {/* ✅ BOTTOM BAR */}
+            {/* BOTTOM BAR */}
             {isOwnListing ? (
                 <View style={[styles.bottomBar, styles.bottomBarOwn, { paddingBottom: Math.max(insets.bottom, 12) }]}>
                     <View style={styles.bottomBarOwnInfo}>
@@ -943,8 +943,7 @@ export default function ListingDetailScreen() {
                 </View>
             )}
 
-            {/* 🎨 POBOLJŠANI KALENDAR */}
-            {/* 🎨 POBOLJŠANI KALENDAR */}
+
             <BottomSheet
                 ref={calendarSheetRef}
                 index={-1}
@@ -975,7 +974,7 @@ export default function ListingDetailScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    {/* ✅ UKLONJENO ISTICANJE - bez calendarInfoItemActive */}
+
                     <View style={styles.calendarInfoBar}>
                         <View style={styles.calendarInfoItem}>
                             <Text style={styles.calendarInfoLabel}>
@@ -1077,383 +1076,742 @@ export default function ListingDetailScreen() {
     );
 }
 
-const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { paddingBottom: 20 },
-    backButton: { margin: 16, width: 44, height: 44, borderRadius: 22, backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border },
-    errorText: { textAlign: 'center', color: colors.textMuted, marginTop: 40, fontSize: 15 },
-    imageGallery: { width: SCREEN_WIDTH, height: SCREEN_WIDTH * 0.85, position: 'relative' },
-    galleryImage: { width: SCREEN_WIDTH, height: SCREEN_WIDTH * 0.85 },
-    headerOverlay: { position: 'absolute', top: Platform.OS === 'ios' ? 65 : 45, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, zIndex: 10 },
-    headerRight: { flexDirection: 'row', gap: 12 },
-    headerButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border },
-    imageCounter: { position: 'absolute', bottom: 16, right: 16, backgroundColor: 'rgba(0,0,0,0.65)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14 },
-    imageCounterText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+const makeStyles = (colors: typeof Colors.light) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
 
-    contentContainer: { paddingHorizontal: 20, paddingTop: 24 },
-    topInfoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-    categoryBadge: { backgroundColor: colors.border, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
-    categoryText: { color: colors.textSecondary, fontSize: 11, fontWeight: '700' },
+        scrollContent: {
+            paddingBottom: 20,
+        },
 
-    ownBadgePill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        backgroundColor: colors.primary + '15',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.primary + '30',
-    },
-    ownBadgePillText: {
-        fontSize: 10,
-        fontWeight: '700',
-        color: colors.primary,
-        letterSpacing: 0.5,
-    },
+        backButton: {
+            margin: 16,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: colors.card,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
 
-    title: { fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: 8 },
-    locationRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-    locationText: { fontSize: 14, color: colors.textMuted },
-    priceRow: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 4 },
-    price: { fontSize: 26, fontWeight: '700', color: colors.text },
-    perDay: { fontSize: 14, color: colors.textMuted, marginLeft: 4 },
-    divider: { height: 1, backgroundColor: colors.border, marginVertical: 20 },
-    sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 10 },
-    description: { fontSize: 15, color: colors.textSecondary, lineHeight: 22 },
-    hostCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.surface, padding: 14, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
-    hostInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    hostAvatar: { width: 44, height: 44, borderRadius: 22 },
-    hostTextContainer: { justifyContent: 'center' },
-    hostName: { fontSize: 15, fontWeight: '600', color: colors.text },
-    hostBadges: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-    hostVerified: { fontSize: 12, color: colors.textMuted },
-    contactButton: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.primary },
-    contactButtonText: { fontSize: 13, fontWeight: '600', color: colors.primary },
-    datePickerButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 14 },
-    dateColumn: { flex: 1 },
-    dateLabel: { fontSize: 11, color: colors.textMuted, fontWeight: '600', textTransform: 'uppercase', marginBottom: 2 },
-    dateValue: { fontSize: 14, fontWeight: '500', color: colors.text },
-    dateDivider: { width: 1, height: 30, backgroundColor: colors.border, marginHorizontal: 16 },
-    priceBreakdown: { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border, marginTop: 16, gap: 12 },
-    breakdownRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    breakdownLabel: { fontSize: 14, color: colors.textSecondary },
-    breakdownValue: { fontSize: 14, fontWeight: '600', color: colors.text },
-    breakdownTotal: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12, marginTop: 4 },
-    breakdownTotalLabel: { fontSize: 15, fontWeight: '700', color: colors.text },
-    breakdownTotalValue: { fontSize: 18, fontWeight: '700', color: colors.primary },
+        errorText: {
+            textAlign: 'center',
+            color: colors.textMuted,
+            marginTop: 40,
+            fontSize: 15,
+        },
 
-    ownerPanel: {
-        backgroundColor: colors.surface,
-        borderRadius: 16,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: colors.primary + '30',
-        marginTop: 16,
-        gap: 14,
-    },
-    ownerPanelHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    ownerPanelTitle: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: colors.text,
-    },
-    ownerStatsRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.background,
-        borderRadius: 12,
-        paddingVertical: 14,
-        borderWidth: 1,
-        borderColor: colors.border,
-    },
-    ownerStatBox: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    ownerStatValue: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: colors.text,
-    },
-    ownerStatLabel: {
-        fontSize: 10,
-        color: colors.textMuted,
-        fontWeight: '600',
-        marginTop: 2,
-        textTransform: 'uppercase',
-        letterSpacing: 0.3,
-    },
-    ownerStatDivider: {
-        width: 1,
-        height: 24,
-        backgroundColor: colors.border,
-    },
-    ownerInfoBox: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        gap: 8,
-        paddingTop: 4,
-    },
-    ownerInfoText: {
-        flex: 1,
-        fontSize: 12,
-        color: colors.textMuted,
-        lineHeight: 17,
-    },
+        imageGallery: {
+            width: SCREEN_WIDTH,
+            height: SCREEN_WIDTH * 0.85,
+            position: 'relative',
+        },
 
-    bottomBar: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: colors.card,
-        borderTopWidth: 1,
-        borderTopColor: colors.border,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingTop: 12
-    },
-    bottomBarOwn: {
-        gap: 12,
-    },
-    bottomBarOwnInfo: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    bottomBarOwnText: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: colors.text,
-    },
-    bottomBarOwnButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: colors.primary,
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 12,
-    },
-    bottomBarOwnButtonText: {
-        color: '#fff',
-        fontSize: 15,
-        fontWeight: '600',
-    },
-    bottomPriceInfo: { flexDirection: 'row', alignItems: 'baseline' },
-    bottomPrice: { fontSize: 22, fontWeight: '700', color: colors.text },
-    bottomPerDay: { fontSize: 13, color: colors.textMuted, marginLeft: 2 },
-    bookButton: { backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 },
-    bookButtonDisabled: { opacity: 0.5 },
-    bookButtonText: { color: colors.iconColorInverse, fontSize: 15, fontWeight: '600' },
+        galleryImage: {
+            width: SCREEN_WIDTH,
+            height: SCREEN_WIDTH * 0.85,
+        },
 
-    // 🎨 KALENDAR STYLES
-    sheetContent: { flex: 1, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16, gap: 12 },
-    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
+        headerOverlay: {
+            position: 'absolute',
+            top: Platform.OS === 'ios' ? 65 : 45,
+            left: 0,
+            right: 0,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+            zIndex: 10,
+        },
 
-    // ✅ BIJELA BOJA ZA NASLOV KALENDARA
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#FFFFFF', // Bijela boja
-        marginBottom: 4,
-    },
-    modalSubtitle: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.7)', // Svijetlo bijela za podnaslov
-    },
+        headerRight: {
+            flexDirection: 'row',
+            gap: 12,
+        },
 
-    closeButtonCalendar: { padding: 4 },
+        headerButton: {
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: colors.card,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
 
-    calendarInfoBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.surface,
-        borderRadius: 16,
-        paddingVertical: 14,
-        paddingHorizontal: 12,
-        borderWidth: 1,
-        borderColor: colors.border,
-        gap: 8,
-    },
+        imageCounter: {
+            position: 'absolute',
+            bottom: 16,
+            right: 16,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 14,
+        },
 
-    // ✅ UKLONJENO ISTICANJE (nema više calendarInfoItemActive)
-    calendarInfoItem: {
-        flex: 1,
-        alignItems: 'center',
-        gap: 4,
-    },
+        imageCounterText: {
+            color: '#fff',
+            fontSize: 12,
+            fontWeight: '600',
+        },
 
-    calendarInfoLabel: {
-        fontSize: 10,
-        color: colors.textMuted, // Standardna boja, bez isticanja
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-    },
+        contentContainer: {
+            paddingHorizontal: 20,
+            paddingTop: 24,
+        },
 
-    calendarInfoValue: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: colors.text, // Standardna boja, bez isticanja
-    },
+        topInfoRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12,
+        },
 
-    calendarInfoArrow: {
-        paddingHorizontal: 4,
-    },
-    calendarInfoBadge: {
-        backgroundColor: colors.primary,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 10,
-    },
-    calendarInfoBadgeText: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: '#FFFFFF',
-    },
+        categoryBadge: {
+            backgroundColor: colors.border,
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+            borderRadius: 6,
+        },
 
-    calendarLegend: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 20,
-        paddingVertical: 8,
-    },
-    legendItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    legendDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-    },
-    legendText: {
-        fontSize: 12,
-        color: colors.textMuted,
-        fontWeight: '500',
-    },
+        categoryText: {
+            color: colors.textSecondary,
+            fontSize: 11,
+            fontWeight: '700',
+        },
 
-    calendarWrapper: {
-        flex: 1,
-        marginTop: 4,
-        borderRadius: 16,
-        overflow: 'hidden',
-        backgroundColor: colors.card,
-        borderWidth: 1,
-        borderColor: colors.border,
-        paddingVertical: 8,
-    },
-    modalFooter: { flexDirection: 'row', gap: 12, marginTop: 8, paddingBottom: 8 },
-    modalResetButton: {
-        flex: 1,
-        paddingVertical: 14,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: colors.border,
-        alignItems: 'center',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 6,
-    },
-    modalResetText: { fontSize: 15, fontWeight: '600', color: colors.textSecondary },
-    modalDoneButton: {
-        flex: 2,
-        backgroundColor: colors.primary,
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 6,
-    },
-    modalDoneButtonDisabled: { opacity: 0.5 },
-    modalDoneText: { fontSize: 15, fontWeight: '600', color: colors.iconColorInverse },
+        ownBadgePill: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            backgroundColor: colors.primary + '15',
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: colors.primary + '30',
+        },
 
-    // ─── ✨ CUSTOM MODAL STYLES (Za Success, Error, Warning modale) ─────────────
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.55)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 24,
-    },
-    modalContainer: {
-        width: '100%',
-        maxWidth: 360,
-        borderRadius: 24,
-        padding: 24,
-        alignItems: 'center',
-        borderWidth: 1,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.25,
-        shadowRadius: 20,
-        elevation: 15,
-    },
-    modalIconWrapper: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 18,
-    },
-    modalIconGradient: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    modalMessage: {
-        fontSize: 14,
-        textAlign: 'center',
-        lineHeight: 20,
-        marginBottom: 24,
-        paddingHorizontal: 8,
-    },
-    modalButtons: {
-        flexDirection: 'row',
-        gap: 10,
-        width: '100%',
-    },
-    modalButton: {
-        flex: 1,
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    modalButtonPrimary: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    modalButtonSecondary: {
-        borderWidth: 1,
-    },
-    modalButtonText: {
-        fontSize: 15,
-        fontWeight: '600',
-        letterSpacing: 0.2,
-    },
-});
+        ownBadgePillText: {
+            fontSize: 10,
+            fontWeight: '700',
+            color: colors.primary,
+            letterSpacing: 0.5,
+        },
+
+        title: {
+            fontSize: 24,
+            fontWeight: '700',
+            color: colors.text,
+            marginBottom: 8,
+        },
+
+        locationRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 14,
+        },
+
+        locationText: {
+            fontSize: 14,
+            color: colors.textMuted,
+        },
+
+        priceRow: {
+            flexDirection: 'row',
+            alignItems: 'baseline',
+            marginBottom: 4,
+        },
+
+        price: {
+            fontSize: 26,
+            fontWeight: '700',
+            color: colors.text,
+        },
+
+        perDay: {
+            fontSize: 14,
+            color: colors.textMuted,
+            marginLeft: 4,
+        },
+
+        divider: {
+            height: 1,
+            backgroundColor: colors.border,
+            marginVertical: 20,
+        },
+
+        sectionTitle: {
+            fontSize: 16,
+            fontWeight: '700',
+            color: colors.text,
+            marginBottom: 10,
+        },
+
+        description: {
+            fontSize: 15,
+            color: colors.textSecondary,
+            lineHeight: 22,
+        },
+
+        hostCard: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: colors.surface,
+            padding: 14,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+
+        hostInfo: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+        },
+
+        hostAvatar: {
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+        },
+
+        hostTextContainer: {
+            justifyContent: 'center',
+        },
+
+        hostName: {
+            fontSize: 15,
+            fontWeight: '600',
+            color: colors.text,
+        },
+
+        hostBadges: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            marginTop: 2,
+        },
+
+        hostVerified: {
+            fontSize: 12,
+            color: colors.textMuted,
+        },
+
+        contactButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: colors.primary,
+        },
+
+        contactButtonText: {
+            fontSize: 13,
+            fontWeight: '600',
+            color: colors.primary,
+        },
+
+        datePickerButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 14,
+            padding: 14,
+        },
+
+        dateColumn: {
+            flex: 1,
+        },
+
+        dateLabel: {
+            fontSize: 11,
+            color: colors.textMuted,
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            marginBottom: 2,
+        },
+
+        dateValue: {
+            fontSize: 14,
+            fontWeight: '500',
+            color: colors.text,
+        },
+
+        dateDivider: {
+            width: 1,
+            height: 30,
+            backgroundColor: colors.border,
+            marginHorizontal: 16,
+        },
+
+        priceBreakdown: {
+            backgroundColor: colors.surface,
+            borderRadius: 16,
+            padding: 16,
+            borderWidth: 1,
+            borderColor: colors.border,
+            marginTop: 16,
+            gap: 12,
+        },
+
+        breakdownRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+
+        breakdownLabel: {
+            fontSize: 14,
+            color: colors.textSecondary,
+        },
+
+        breakdownValue: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: colors.text,
+        },
+
+        breakdownTotal: {
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+            paddingTop: 12,
+            marginTop: 4,
+        },
+
+        breakdownTotalLabel: {
+            fontSize: 15,
+            fontWeight: '700',
+            color: colors.text,
+        },
+
+        breakdownTotalValue: {
+            fontSize: 18,
+            fontWeight: '700',
+            color: colors.primary,
+        },
+
+        ownerPanel: {
+            backgroundColor: colors.surface,
+            borderRadius: 16,
+            padding: 16,
+            borderWidth: 1,
+            borderColor: colors.primary + '30',
+            marginTop: 16,
+            gap: 14,
+        },
+
+        ownerPanelHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+        },
+
+        ownerPanelTitle: {
+            fontSize: 15,
+            fontWeight: '700',
+            color: colors.text,
+        },
+
+        ownerStatsRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.background,
+            borderRadius: 12,
+            paddingVertical: 14,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+
+        ownerStatBox: {
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+
+        ownerStatValue: {
+            fontSize: 18,
+            fontWeight: '700',
+            color: colors.text,
+        },
+
+        ownerStatLabel: {
+            fontSize: 10,
+            color: colors.textMuted,
+            fontWeight: '600',
+            marginTop: 2,
+            textTransform: 'uppercase',
+            letterSpacing: 0.3,
+        },
+
+        ownerStatDivider: {
+            width: 1,
+            height: 24,
+            backgroundColor: colors.border,
+        },
+
+        ownerInfoBox: {
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            gap: 8,
+            paddingTop: 4,
+        },
+
+        ownerInfoText: {
+            flex: 1,
+            fontSize: 12,
+            color: colors.textMuted,
+            lineHeight: 17,
+        },
+
+        bottomBar: {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: colors.card,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 20,
+            paddingTop: 12,
+        },
+
+        bottomBarOwn: {
+            gap: 12,
+        },
+
+        bottomBarOwnInfo: {
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+        },
+
+        bottomBarOwnText: {
+            fontSize: 15,
+            fontWeight: '600',
+            color: colors.text,
+        },
+
+        bottomBarOwnButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            backgroundColor: colors.primary,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            borderRadius: 12,
+        },
+
+        bottomBarOwnButtonText: {
+            color: '#fff',
+            fontSize: 15,
+            fontWeight: '600',
+        },
+
+        bottomPriceInfo: {
+            flexDirection: 'row',
+            alignItems: 'baseline',
+        },
+
+        bottomPrice: {
+            fontSize: 22,
+            fontWeight: '700',
+            color: colors.text,
+        },
+
+        bottomPerDay: {
+            fontSize: 13,
+            color: colors.textMuted,
+            marginLeft: 2,
+        },
+
+        bookButton: {
+            backgroundColor: colors.primary,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            borderRadius: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+        },
+
+        bookButtonDisabled: {
+            opacity: 0.5,
+        },
+
+        bookButtonText: {
+            color: colors.iconColorInverse,
+            fontSize: 15,
+            fontWeight: '600',
+        },
+
+        sheetContent: {
+            flex: 1,
+            paddingHorizontal: 20,
+            paddingTop: 8,
+            paddingBottom: 16,
+            gap: 12,
+        },
+
+        modalHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: 8,
+        },
+
+        modalTitle: {
+            fontSize: 20,
+            fontWeight: '700',
+            color: '#FFFFFF',
+            marginBottom: 4,
+        },
+
+        modalSubtitle: {
+            fontSize: 13,
+            color: 'rgba(255,255,255,0.7)',
+        },
+
+        closeButtonCalendar: {
+            padding: 4,
+        },
+
+        calendarInfoBar: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surface,
+            borderRadius: 16,
+            paddingVertical: 14,
+            paddingHorizontal: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            gap: 8,
+        },
+
+        calendarInfoItem: {
+            flex: 1,
+            alignItems: 'center',
+            gap: 4,
+        },
+
+        calendarInfoLabel: {
+            fontSize: 10,
+            color: colors.textMuted,
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+        },
+
+        calendarInfoValue: {
+            fontSize: 15,
+            fontWeight: '700',
+            color: colors.text,
+        },
+
+        calendarInfoArrow: {
+            paddingHorizontal: 4,
+        },
+
+        calendarInfoBadge: {
+            backgroundColor: colors.primary,
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderRadius: 10,
+        },
+
+        calendarInfoBadgeText: {
+            fontSize: 12,
+            fontWeight: '700',
+            color: '#FFFFFF',
+        },
+
+        calendarLegend: {
+            flexDirection: 'row',
+            justifyContent: 'center',
+            gap: 20,
+            paddingVertical: 8,
+        },
+
+        legendItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+        },
+
+        legendDot: {
+            width: 12,
+            height: 12,
+            borderRadius: 6,
+        },
+
+        legendText: {
+            fontSize: 12,
+            color: colors.textMuted,
+            fontWeight: '500',
+        },
+
+        calendarWrapper: {
+            flex: 1,
+            marginTop: 4,
+            borderRadius: 16,
+            overflow: 'hidden',
+            backgroundColor: colors.card,
+            borderWidth: 1,
+            borderColor: colors.border,
+            paddingVertical: 8,
+        },
+
+        modalFooter: {
+            flexDirection: 'row',
+            gap: 12,
+            marginTop: 8,
+            paddingBottom: 8,
+        },
+
+        modalResetButton: {
+            flex: 1,
+            paddingVertical: 14,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: 'center',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            gap: 6,
+        },
+
+        modalResetText: {
+            fontSize: 15,
+            fontWeight: '600',
+            color: colors.textSecondary,
+        },
+
+        modalDoneButton: {
+            flex: 2,
+            backgroundColor: colors.primary,
+            paddingVertical: 14,
+            borderRadius: 12,
+            alignItems: 'center',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            gap: 6,
+        },
+
+        modalDoneButtonDisabled: {
+            opacity: 0.5,
+        },
+
+        modalDoneText: {
+            fontSize: 15,
+            fontWeight: '600',
+            color: colors.iconColorInverse,
+        },
+
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.55)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: 24,
+        },
+
+        modalContainer: {
+            width: '100%',
+            maxWidth: 360,
+            borderRadius: 24,
+            padding: 24,
+            alignItems: 'center',
+            borderWidth: 1,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.25,
+            shadowRadius: 20,
+            elevation: 15,
+        },
+
+        modalIconWrapper: {
+            width: 80,
+            height: 80,
+            borderRadius: 40,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 18,
+        },
+
+        modalIconGradient: {
+            width: 64,
+            height: 64,
+            borderRadius: 32,
+            justifyContent: 'center',
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.2,
+            shadowRadius: 8,
+            elevation: 5,
+        },
+
+        modalTitleText: {
+            fontSize: 20,
+            fontWeight: '700',
+            textAlign: 'center',
+            marginBottom: 8,
+            letterSpacing: -0.3,
+        },
+
+        modalMessage: {
+            fontSize: 14,
+            textAlign: 'center',
+            lineHeight: 20,
+            marginBottom: 24,
+            paddingHorizontal: 8,
+        },
+
+        modalButtons: {
+            flexDirection: 'row',
+            gap: 10,
+            width: '100%',
+        },
+
+        modalButton: {
+            flex: 1,
+            paddingVertical: 14,
+            borderRadius: 12,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+
+        modalButtonPrimary: {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.15,
+            shadowRadius: 4,
+            elevation: 3,
+        },
+
+        modalButtonSecondary: {
+            borderWidth: 1,
+        },
+
+        modalButtonText: {
+            fontSize: 15,
+            fontWeight: '600',
+            letterSpacing: 0.2,
+        },
+    });

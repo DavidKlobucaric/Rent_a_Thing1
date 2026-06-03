@@ -26,6 +26,7 @@ export const translations = {
             cancel: 'Cancel', save: 'Save', delete: 'Delete', remove: 'Remove',
             done: 'Done', reset: 'Reset', confirm: 'Confirm', error: 'Error',
             success: 'Success', loading: 'Loading...', ok: 'OK', change: 'Change',
+            terms: 'Terms',
         },
         index: {
             title: 'Rent-a-Thing',
@@ -117,10 +118,10 @@ export const translations = {
             verifiedHost: 'Verified Host',
             contact: 'Contact',
             selectDates: 'Select Dates',
-            checkIn: 'RENTED FROM', // ✅ PROMIJENJENO
-            checkOut: 'RENTED TO', // ✅ PROMIJENJENO
-            selectStartDate: 'Select Start Date', // ✅ NOVO
-            selectEndDate: 'Select End Date', // ✅ NOVO
+            checkIn: 'RENTED FROM',
+            checkOut: 'RENTED TO',
+            selectStartDate: 'Select Start Date',
+            selectEndDate: 'Select End Date',
             resetDates: 'Reset dates',
             securityDeposit: 'Security deposit',
             total: 'Total',
@@ -280,6 +281,7 @@ export const translations = {
             cancel: 'Odustani', save: 'Spremi', delete: 'Obriši', remove: 'Ukloni',
             done: 'Gotovo', reset: 'Resetiraj', confirm: 'Potvrdi', error: 'Greška',
             success: 'Uspjeh', loading: 'Učitavanje...', ok: 'U redu', change: 'Promijeni',
+            terms: 'Uvjeti',
         },
         index: {
             title: 'Rent-a-Thing', subtitle: 'Iznajmi sve što ti treba',
@@ -544,6 +546,7 @@ export const translations = {
             cancel: 'Abbrechen', save: 'Speichern', delete: 'Löschen', remove: 'Entfernen',
             done: 'Fertig', reset: 'Zurücksetzen', confirm: 'Bestätigen', error: 'Fehler',
             success: 'Erfolg', loading: 'Laden...', ok: 'OK', change: 'Ändern',
+            terms: 'Bedingungen',
         },
         index: {
             title: 'Rent-a-Thing', subtitle: 'Miete alles was du brauchst',
@@ -806,6 +809,7 @@ export const translations = {
             cancel: '取消', save: '保存', delete: '删除', remove: '移除',
             done: '完成', reset: '重置', confirm: '确认', error: '错误',
             success: '成功', loading: '加载中...', ok: '好的', change: '更改',
+            terms: '条款',
         },
         index: {
             title: 'Rent-a-Thing', subtitle: '租你所需',
@@ -1060,6 +1064,7 @@ export const translations = {
             cancel: 'Cancelar', save: 'Guardar', delete: 'Eliminar', remove: 'Quitar',
             done: 'Hecho', reset: 'Restablecer', confirm: 'Confirmar', error: 'Error',
             success: 'Éxito', loading: 'Cargando...', ok: 'OK', change: 'Cambiar',
+            terms: 'Términos',
         },
         index: {
             title: 'Rent-a-Thing', subtitle: 'Alquila todo lo que necesitas',
@@ -1320,6 +1325,7 @@ export const translations = {
             cancel: 'Annuler', save: 'Enregistrer', delete: 'Supprimer', remove: 'Retirer',
             done: 'Terminé', reset: 'Réinitialiser', confirm: 'Confirmer', error: 'Erreur',
             success: 'Succès', loading: 'Chargement...', ok: 'OK', change: 'Changer',
+            terms: 'Conditions',
         },
         index: {
             title: 'Rent-a-Thing', subtitle: 'Louez tout ce dont vous avez besoin',
@@ -1583,6 +1589,7 @@ export const translations = {
             cancel: 'Annulla', save: 'Salva', delete: 'Elimina', remove: 'Rimuovi',
             done: 'Fatto', reset: 'Ripristina', confirm: 'Conferma', error: 'Errore',
             success: 'Successo', loading: 'Caricamento...', ok: 'OK', change: 'Cambia',
+            terms: 'Termini',
         },
         index: {
             title: 'Rent-a-Thing', subtitle: 'Noleggia tutto ciò che ti serve',

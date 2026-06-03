@@ -15,7 +15,7 @@ import { verifyCode, resendCode } from "@/src/api/authApi";
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useLanguage } from '@/src/context/languageContext';
-import * as Haptics from 'expo-haptics'; // ✅ Dodano za taktilni feedback
+import * as Haptics from 'expo-haptics';
 
 export default function VerificationScreen() {
     const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -32,9 +32,9 @@ export default function VerificationScreen() {
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
 
-    // ✅ Stabilan styles - ovisi o scheme (primitive), ne o colors objektu
+
     const styles = useMemo(() => makeStyles(colors), [colors]);
-    // ✅ Optimiziran timer - useCallback za interval cleanup
+
     useEffect(() => {
         if (timer > 0) {
             const interval = setInterval(() => {
@@ -46,7 +46,7 @@ export default function VerificationScreen() {
         }
     }, [timer]);
 
-    // ✅ Memoiziran handleChange
+
     const handleChange = useCallback((text: string, index: number) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         const newCode = [...code];
@@ -57,7 +57,7 @@ export default function VerificationScreen() {
         }
     }, [code]);
 
-    // ✅ Memoiziran handleKeyPress
+
     const handleKeyPress = useCallback((key: string, index: number) => {
         if (key === 'Backspace' && !code[index] && index > 0) {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -65,7 +65,7 @@ export default function VerificationScreen() {
         }
     }, [code]);
 
-    // ✅ Memoiziran handleVerify
+
     const handleVerify = useCallback(async () => {
         const verificationCode = code.join('');
         if (verificationCode.length !== 6) return;
@@ -90,7 +90,7 @@ export default function VerificationScreen() {
         }
     }, [code, email, router, t]);
 
-    // ✅ Memoiziran handleResend
+
     const handleResend = useCallback(async () => {
         if (!canResend || resending) return;
 
@@ -112,14 +112,14 @@ export default function VerificationScreen() {
         }
     }, [canResend, resending, email, t]);
 
-    // ✅ Memoiziran formatTime
+
     const formatTime = useCallback((seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     }, []);
 
-    // ✅ Memoiziran handleChangeEmail
+
     const handleChangeEmail = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.back();

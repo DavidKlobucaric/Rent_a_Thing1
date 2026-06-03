@@ -22,7 +22,7 @@ export default function Index() {
         ? ['#121212', '#0f2b2f']
         : ['#097F8C', '#00646F'];
 
-    // ✅ SIGURNOSNA MREŽA: Ako user ima token, odmah ga prebaci na Home
+
     useEffect(() => {
         if (!isLoading && token) {
             console.log('[INDEX] 🚀 User već prijavljen - redirect na Home');
@@ -30,7 +30,7 @@ export default function Index() {
         }
     }, [token, isLoading]);
 
-    // Onemogući back button na Index stranici
+
     useFocusEffect(
         useCallback(() => {
             const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
@@ -38,7 +38,7 @@ export default function Index() {
         }, [])
     );
 
-    // Dok se auth učitava, prikaži loader (da ne flashne login ekran)
+
     if (isLoading) {
         return (
             <LinearGradient colors={gradientColors} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -47,7 +47,7 @@ export default function Index() {
         );
     }
 
-    // Ako je user već prijavljen, prikaži loader dok se redirect ne dogodi
+
     if (token) {
         return (
             <LinearGradient colors={gradientColors} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -101,16 +101,94 @@ export default function Index() {
     );
 }
 
-const makeStyles = (colors: typeof Colors.light, isDark: boolean) => StyleSheet.create({
-    container: { flex: 1, paddingHorizontal: 28, paddingBottom: 32, justifyContent: 'space-between' },
-    top: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    logo: { width: 300, height: 220, marginBottom: 34 },
-    titleText: { fontSize: 42, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.5, marginTop: 4, textAlign: 'center' },
-    subtitle: { fontSize: 17, color: colors.activeTabText, textAlign: 'center', lineHeight: 24, marginTop: 10, paddingHorizontal: 20, opacity: 0.8 },
-    bottom: { width: '100%', gap: 12 },
-    btnPrimary: { width: '100%', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-    btnPrimaryText: { color: isDark ? '#FFFFFF' : colors.primary, fontWeight: '600', fontSize: 16, letterSpacing: 0.2 },
-    btnSecondary: { width: '100%', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 14, backgroundColor: 'transparent', borderWidth: 0.5, borderColor: colors.activeTabBg },
-    btnSecondaryText: { color: colors.activeTabText, fontWeight: '600', fontSize: 16, letterSpacing: 0.2 },
-    footer: { color: colors.activeTabText, fontSize: 11, letterSpacing: 1.8, marginTop: 8, textAlign: 'center', fontWeight: '500', opacity: 0.8 },
-});
+const makeStyles = (colors: typeof Colors.light, isDark: boolean) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            paddingHorizontal: 28,
+            paddingBottom: 32,
+            justifyContent: 'space-between',
+        },
+
+        top: {
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+
+        logo: {
+            width: 300,
+            height: 220,
+            marginBottom: 34,
+        },
+
+        titleText: {
+            fontSize: 42,
+            fontWeight: '800',
+            color: '#FFFFFF',
+            letterSpacing: 0.5,
+            marginTop: 4,
+            textAlign: 'center',
+        },
+
+        subtitle: {
+            fontSize: 17,
+            color: colors.activeTabText,
+            textAlign: 'center',
+            lineHeight: 24,
+            marginTop: 10,
+            paddingHorizontal: 20,
+            opacity: 0.8,
+        },
+
+        bottom: {
+            width: '100%',
+            gap: 12,
+        },
+
+        btnPrimary: {
+            width: '100%',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 16,
+            borderRadius: 14,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+
+        btnPrimaryText: {
+            color: isDark ? '#FFFFFF' : colors.primary,
+            fontWeight: '600',
+            fontSize: 16,
+            letterSpacing: 0.2,
+        },
+
+        btnSecondary: {
+            width: '100%',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 16,
+            borderRadius: 14,
+            backgroundColor: 'transparent',
+            borderWidth: 0.5,
+            borderColor: colors.activeTabBg,
+        },
+
+        btnSecondaryText: {
+            color: colors.activeTabText,
+            fontWeight: '600',
+            fontSize: 16,
+            letterSpacing: 0.2,
+        },
+
+        footer: {
+            color: colors.activeTabText,
+            fontSize: 11,
+            letterSpacing: 1.8,
+            marginTop: 8,
+            textAlign: 'center',
+            fontWeight: '500',
+            opacity: 0.8,
+        },
+    });

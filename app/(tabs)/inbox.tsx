@@ -9,7 +9,7 @@ import React, { useState, useMemo, useRef, useCallback, useEffect } from "react"
 import { router, useFocusEffect } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
-import { Swipeable } from 'react-native-gesture-handler';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { useLanguage } from '@/src/context/languageContext';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -104,7 +104,7 @@ export default function Inbox() {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
     const swipeableRefs = useRef<Record<number, Swipeable | null>>({});
-    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null); // ✅ NOVO: Ref za interval
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const scheme = useColorScheme() ?? 'light';
     const colors = Colors[scheme];
@@ -114,10 +114,10 @@ export default function Inbox() {
         ? ['#2A2A2A', '#3A3A3A', '#2A2A2A']
         : ['#E0E0E0', '#F5F5F5', '#E0E0E0'];
 
-    // ✅ MODIFICIRANO: Dodan silent parametar za tihi refresh
+
     const loadConversations = useCallback(async (showRefreshing = false, silent = false) => {
         if (showRefreshing) setRefreshing(true);
-        else if (!silent) setLoading(true); // Samo ako nije tihi refresh
+        else if (!silent) setLoading(true);
         setError('');
 
         await new Promise(resolve => setTimeout(resolve, 400));
@@ -136,7 +136,7 @@ export default function Inbox() {
 
     useFocusEffect(
         useCallback(() => {
-            // Inicijalno učitavanje
+
             loadConversations();
 
 
@@ -163,7 +163,7 @@ export default function Inbox() {
             return sum + (c.unreadCount || 0);
         }, 0);
 
-        // Spremi u AsyncStorage da TabLayout može pročitati
+
         AsyncStorage.setItem('@app_unread_count', totalUnread.toString()).catch(() => {});
     }, [conversations, archivedIds]);
 
@@ -418,7 +418,6 @@ export default function Inbox() {
                                     name={filterInfo.icon}
                                     size={16}
                                     color={isActive ? ((colors as any).activeTabText ?? '#fff') : colors.text}
-                                    style={styles.categoryIcon}
                                 />
                                 <Text style={[styles.categoryText, isActive && styles.categoryTextActive]} numberOfLines={1}>
                                     {filterInfo.label}
@@ -584,8 +583,17 @@ export default function Inbox() {
 }
 
 const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { paddingHorizontal: 16, paddingVertical: 16 },
+
+    container: {
+        flex: 1,
+        backgroundColor: colors.background
+    },
+
+    scrollContent: {
+        paddingHorizontal: 16,
+        paddingVertical: 16
+    },
+
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -598,9 +606,27 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         borderColor: colors.border,
         borderRadius: 12
     },
-    searchIcon: { marginRight: 10 },
-    searchInput: { flex: 1, fontSize: 16, color: colors.text, paddingVertical: 0 },
-    categoryContent: { gap: 8, alignItems: 'center', marginTop: 5, marginBottom: 16, paddingHorizontal: 2 },
+
+    searchIcon: {
+        marginRight: 10
+    },
+
+    searchInput: {
+        flex: 1,
+        fontSize: 16,
+        color: colors.text,
+        paddingVertical: 0
+    },
+
+
+    categoryContent: {
+        gap: 8,
+        alignItems: 'center',
+        marginTop: 5,
+        marginBottom: 16,
+        paddingHorizontal: 2
+    },
+
     CategoryButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -613,13 +639,38 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         borderColor: colors.border,
         gap: 6,
     },
-    CategoryButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    categoryIcon: {},
-    categoryText: { fontSize: 13, color: colors.text, fontWeight: '500' },
-    categoryTextActive: { color: (colors as any).activeTabText ?? '#fff', fontWeight: '600' },
-    conversationList: { gap: 10 },
-    swipeWrapper: { borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: colors.border },
-    swipeWrapperUnread: { borderColor: colors.primary + '30', backgroundColor: colors.card },
+    CategoryButtonActive: {
+        backgroundColor: colors.primary,
+        borderColor: colors.primary
+    },
+
+    categoryText: {
+        fontSize: 13,
+        color: colors.text,
+        fontWeight: '500'
+    },
+
+    categoryTextActive: {
+        color: (colors as any).activeTabText ?? '#fff',
+        fontWeight: '600'
+    },
+
+    conversationList: {
+        gap: 10
+    },
+
+    swipeWrapper: {
+        borderRadius: 14,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: colors.border
+    },
+
+    swipeWrapperUnread: {
+        borderColor: colors.primary + '30',
+        backgroundColor: colors.card
+    },
+
     conversationItem: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -629,22 +680,38 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         borderLeftWidth: 4,
         borderLeftColor: 'transparent',
     },
+
     conversationItemUnread: {
         backgroundColor: colors.card,
         borderLeftWidth: 4,
         borderLeftColor: colors.primary,
     },
+
     avatarWrapper: {
         marginRight: 14,
         justifyContent: 'center',
     },
-    avatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: colors.border },
-    convContent: { flex: 1, gap: 4, overflow: 'hidden' },
+
+    avatar: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: colors.border
+    },
+
+
+    convContent: {
+        flex: 1,
+        gap: 4,
+        overflow: 'hidden'
+    },
+
     convHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
+
     convName: {
         fontSize: 15,
         fontWeight: '500',
@@ -652,15 +719,34 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         flexShrink: 1,
         marginRight: 8,
     },
-    convNameUnread: { fontWeight: '700' },
-    timeAgo: { fontSize: 12, color: colors.textMuted, fontWeight: '500', flexShrink: 0 },
-    timeAgoUnread: { color: colors.primary, fontWeight: '600' },
+
+    convNameUnread: {
+        fontWeight: '700'
+    },
+
+    timeAgo: {
+        fontSize: 12,
+        color: colors.textMuted,
+        fontWeight: '500',
+        flexShrink: 0
+    },
+
+    timeAgoUnread: {
+        color: colors.primary,
+        fontWeight: '600'
+    },
+
+
     messageRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
     },
-    itemIcon: { flexShrink: 0 },
+
+    itemIcon: {
+        flexShrink: 0
+    },
+
     itemName: {
         fontSize: 11,
         fontWeight: '600',
@@ -678,13 +764,23 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         flexShrink: 0,
         marginLeft: 4,
     },
-    unreadBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+    unreadBadgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: '700'
+    },
+
     lastMessage: {
         fontSize: 13,
         color: colors.textSecondary,
         flexShrink: 1,
     },
-    lastMessageUnread: { color: colors.text, fontWeight: '500' },
+
+    lastMessageUnread: {
+        color: colors.text,
+        fontWeight: '500'
+    },
+
     systemPill: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -695,7 +791,11 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         borderRadius: 6,
         maxWidth: '100%',
     },
-    pillIcon: { flexShrink: 0 },
+
+    pillIcon: {
+        flexShrink: 0
+    },
+
     systemPillText: {
         fontSize: 10,
         fontWeight: '800',
@@ -703,12 +803,33 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         letterSpacing: 0.5,
         flexShrink: 1,
     },
+
     systemPillTextUnread: {
         fontWeight: '800',
     },
-    emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 8 },
-    emptyTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginTop: 8 },
-    emptySubtitle: { fontSize: 13, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 32, lineHeight: 18 },
+
+    emptyContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 60,
+        gap: 8
+    },
+
+    emptyTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: colors.text,
+        marginTop: 8
+    },
+
+    emptySubtitle: {
+        fontSize: 13,
+        color: colors.textMuted,
+        textAlign: 'center',
+        paddingHorizontal: 32,
+        lineHeight: 18
+    },
+
     retryBtn: {
         marginTop: 12,
         paddingVertical: 10,
@@ -719,11 +840,40 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
-    retryText: { color: '#fff', fontWeight: '600', fontSize: 14 },
-    swipeActions: { flexDirection: 'row', alignItems: 'stretch', justifyContent: 'flex-end' },
-    archiveBtn: { width: 75, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
-    unarchiveBtn: { width: 75, backgroundColor: (colors as any).success, justifyContent: 'center', alignItems: 'center' },
-    deleteBtn: { width: 75, backgroundColor: (colors as any).danger, justifyContent: 'center', alignItems: 'center' },
+
+    retryText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 14
+    },
+
+    swipeActions: {
+        flexDirection: 'row',
+        alignItems: 'stretch',
+        justifyContent: 'flex-end'
+    },
+
+    archiveBtn: {
+        width: 75,
+        backgroundColor: colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+
+    unarchiveBtn: {
+        width: 75,
+        backgroundColor: (colors as any).success,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+
+    deleteBtn: {
+        width: 75,
+        backgroundColor: (colors as any).danger,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+
     shimmerWrapper: {
         borderRadius: 14,
         overflow: 'hidden',
