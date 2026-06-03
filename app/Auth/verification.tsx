@@ -322,6 +322,7 @@ const makeStyles = (colors: typeof Colors.light) => StyleSheet.create({
 
     resendLabel: {
         fontSize: 13,
+        color: colors.primary,
     },
 
     resendText: {
