@@ -8,12 +8,12 @@ import {
     deleteRememberedEmail
 } from "@/src/storage/storageTokens";
 
-// 🌐 AUTOMATSKO DETEKTIRANJE IP ADRESE RAČUNALA (Usklađeno s itemsApi)
+
 const getBackendURL = () => {
     const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
     if (API_BASE_URL) return API_BASE_URL;
 
-    // Automatski izvlačimo IP adresu tvog računala iz Expo hosta
+
     const debuggerHost = Constants.expoConfig?.hostUri;
     const ip = debuggerHost ? debuggerHost.split(":")[0] : null;
 
@@ -99,7 +99,7 @@ export const verifyCode = async (
     }
 };
 
-// 💾 POPRAVLJENA LOGIN FUNKCIJA (Upravlja i sesijom i Gmailom)
+
 export const loginUser = async (
     email: string,
     password: string,
@@ -109,10 +109,10 @@ export const loginUser = async (
         const response = await api.post("auth/login", { email, password });
         const { token, userId, username, email: userEmail } = response.data;
 
-        // 1. Spremanje tokena za potrebe Auto-Logina pri sljedećem otvaranju app-a
+
         await saveAuthData(token, { userId, username, email: userEmail });
 
-        // 2. Spremanje ILI brisanje SAMO email adrese ovisno o kvačici
+
         if (rememberMe) {
             await saveRememberedEmail(email.trim());
         } else {

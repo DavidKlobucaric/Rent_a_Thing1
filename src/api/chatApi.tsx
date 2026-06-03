@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { getAuthToken } from '@/src/storage/storageTokens';
-import { resolveImageUrl } from './itemsApi'; // ✅ NOVO
+import { resolveImageUrl } from './itemsApi';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-// Isti pattern kao itemsApi — automatski dohvaća IP
+
 const getBackendURL = () => {
     const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
     if (API_BASE_URL) return API_BASE_URL;
@@ -81,7 +81,7 @@ const getHeaders = async () => {
     return { Authorization: `Bearer ${token}` };
 };
 
-// ✅ AŽURIRANO: primjenjuje resolveImageUrl na listingImage
+
 const normalizeBookingDetails = (bd: any): BookingDetails | undefined => {
     if (!bd) return undefined;
     return {
@@ -90,7 +90,7 @@ const normalizeBookingDetails = (bd: any): BookingDetails | undefined => {
         deposit: Number(bd.deposit ?? 0),
         totalPrice: Number(bd.totalPrice ?? 0),
         status: (bd.status as string).toLowerCase() as BookingDetails['status'],
-        listingImage: resolveImageUrl(bd.listingImage) ?? bd.listingImage, // ✅ NOVO
+        listingImage: resolveImageUrl(bd.listingImage) ?? bd.listingImage,
     };
 };
 
@@ -254,7 +254,7 @@ export async function cancelBooking(bookingId: number) {
     }
 }
 
-// ✅ NOVO: Dohvaća PIN kod za vlasnika preko dedicated endpointa
+
 export async function getBookingPin(bookingId: number): Promise<{ success: boolean; data?: string; message?: string }> {
     try {
         const headers = await getHeaders();

@@ -376,10 +376,10 @@ export const translations = {
             verifiedHost: 'Potvrđeni domaćin',
             contact: 'Kontakt',
             selectDates: 'Odaberi datume',
-            checkIn: 'IZNAJMLJENO OD', // ✅ PROMIJENJENO
-            checkOut: 'IZNAJMLJENO DO', // ✅ PROMIJENJENO
-            selectStartDate: 'Odaberi početni datum', // ✅ NOVO
-            selectEndDate: 'Odaberi završni datum', // ✅ NOVO
+            checkIn: 'IZNAJMLJENO OD',
+            checkOut: 'IZNAJMLJENO DO',
+            selectStartDate: 'Odaberi početni datum',
+            selectEndDate: 'Odaberi završni datum',
             resetDates: 'Resetiraj datume',
             securityDeposit: 'Sigurnosni polog',
             total: 'Ukupno',
@@ -641,10 +641,10 @@ export const translations = {
             verifiedHost: 'Verifizierter Gastgeber',
             contact: 'Kontakt',
             selectDates: 'Daten wählen',
-            checkIn: 'GEMIETET VOM', // ✅ PROMIJENJENO
-            checkOut: 'GEMIETET BIS', // ✅ PROMIJENJENO
-            selectStartDate: 'Startdatum wählen', // ✅ NOVO
-            selectEndDate: 'Enddatum wählen', // ✅ NOVO
+            checkIn: 'GEMIETET VOM',
+            checkOut: 'GEMIETET BIS',
+            selectStartDate: 'Startdatum wählen',
+            selectEndDate: 'Enddatum wählen',
             resetDates: 'Daten zurücksetzen',
             securityDeposit: 'Kaution',
             total: 'Gesamt',
@@ -899,10 +899,10 @@ export const translations = {
             verifiedHost: '认证房东',
             contact: '联系',
             selectDates: '选择日期',
-            checkIn: '租用起始', // ✅ Ažurirano
-            checkOut: '租用结束', // ✅ Ažurirano
-            selectStartDate: '选择开始日期', // ✅ Novo
-            selectEndDate: '选择结束日期', // ✅ Novo
+            checkIn: '租用起始',
+            checkOut: '租用结束',
+            selectStartDate: '选择开始日期',
+            selectEndDate: '选择结束日期',
             resetDates: '重置日期',
             securityDeposit: '押金',
             total: '总计',
@@ -1159,10 +1159,10 @@ export const translations = {
             verifiedHost: 'Anfitrión verificado',
             contact: 'Contacto',
             selectDates: 'Seleccionar fechas',
-            checkIn: 'ALQUILADO DESDE', // ✅ Ažurirano
-            checkOut: 'ALQUILADO HASTA', // ✅ Ažurirano
-            selectStartDate: 'Seleccionar fecha de inicio', // ✅ Novo
-            selectEndDate: 'Seleccionar fecha de fin', // ✅ Novo
+            checkIn: 'ALQUILADO DESDE',
+            checkOut: 'ALQUILADO HASTA',
+            selectStartDate: 'Seleccionar fecha de inicio',
+            selectEndDate: 'Seleccionar fecha de fin',
             resetDates: 'Restablecer fechas',
             securityDeposit: 'Depósito de seguridad',
             total: 'Total',
@@ -1420,10 +1420,10 @@ export const translations = {
             verifiedHost: 'Hôte vérifié',
             contact: 'Contact',
             selectDates: 'Sélectionner les dates',
-            checkIn: 'LOUÉ DU', // ✅ Ažurirano
-            checkOut: 'LOUÉ AU', // ✅ Ažurirano
-            selectStartDate: 'Sélectionner la date de début', // ✅ Novo
-            selectEndDate: 'Sélectionner la date de fin', // ✅ Novo
+            checkIn: 'LOUÉ DU',
+            checkOut: 'LOUÉ AU',
+            selectStartDate: 'Sélectionner la date de début',
+            selectEndDate: 'Sélectionner la date de fin',
             resetDates: 'Réinitialiser les dates',
             securityDeposit: 'Dépôt de garantie',
             total: 'Total',

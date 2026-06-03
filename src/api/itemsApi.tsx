@@ -200,7 +200,7 @@ const geoCache = {
                 entries.forEach(([k, v]) => this.map.set(k, v));
             }
         } catch {
-            // AsyncStorage fail — nastavi bez cache
+
         }
         this.hydrated = true;
     },
@@ -211,7 +211,7 @@ const geoCache = {
             const entries = [...this.map.entries()].slice(-200);
             await AsyncStorage.setItem(GEO_STORAGE_KEY, JSON.stringify(entries));
         } catch {
-            // Ignoriraj write greške
+
         }
     },
 
@@ -469,7 +469,7 @@ export const getMapMarkers = async (category?: string): Promise<ApiResult<MapMar
 
         const normalized = response.data.map(normalizeMapMarker);
 
-        // Geocode all unique locations in parallel
+
         const uniqueLocations = [...new Set(normalized.map(m => m.location).filter(Boolean))];
         const coordsMap = new Map<string, GeoCoords>();
 
